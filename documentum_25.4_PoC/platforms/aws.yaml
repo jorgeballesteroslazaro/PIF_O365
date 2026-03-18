@@ -43,7 +43,7 @@ dctm-ingress:
     annotations:
       # Description: Defines whether the ALB is internet-facing or internal.
       alb.ingress.kubernetes.io/scheme: internet-facing
-      alb.ingress.kubernetes.io/subnets: subnet-0c4a1017a4ffb7962, subnet-0bbd3ec1319a30772, subnet-0a6ab032a5e03be49
+      alb.ingress.kubernetes.io/subnets: subnet-028cf43e259bdebfc, subnet-04fa20cbc47830f86
       alb.ingress.kubernetes.io/target-type: 'ip'
       alb.ingress.kubernetes.io/target-group-attributes: stickiness.enabled=true,stickiness.lb_cookie.duration_seconds=1200
       alb.ingress.kubernetes.io/load-balancer-attributes: idle_timeout.timeout_seconds=600,client_keep_alive.seconds=3600
@@ -66,7 +66,7 @@ dctm-ingress:
       # Separate annotations for IJMS ingress
     ijmsAnnotations:
       alb.ingress.kubernetes.io/scheme: internet-facing
-      alb.ingress.kubernetes.io/subnets: subnet-02ae170d59c797580,subnet-0bf63da6b5e702c0e
+      alb.ingress.kubernetes.io/subnets: subnet-028cf43e259bdebfc, subnet-04fa20cbc47830f86
       alb.ingress.kubernetes.io/target-type: 'ip'
       alb.ingress.kubernetes.io/target-group-attributes: stickiness.enabled=true,stickiness.lb_cookie.duration_seconds=1200
       alb.ingress.kubernetes.io/load-balancer-attributes: idle_timeout.timeout_seconds=600,client_keep_alive.seconds=3600

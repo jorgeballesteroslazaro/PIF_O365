@@ -332,10 +332,10 @@ global:
   removeDocumentation: true
 
   # Description: Register OpenText Documentum Content Management for Microsoft 365 in Microsoft Entra Admin Center for tenant ID. 
-  mstenantid: "Training_2026_25_4"
+  mstenantid: "c1c86fed-0aa0-465e-92be-5b97e2b584f9"
 
   # Description: Register OpenText Documentum Content Management for Microsoft 365 in Microsoft Entra Admin Center for client ID.
-  msClientId: "Training_2026_25_4"
+  msClientId: "1962684a-9c30-4880-bf0e-d695e991bce7"
 
   # Description: Database IP to be connected.
   db_hostname: &db_hostname db-pg
