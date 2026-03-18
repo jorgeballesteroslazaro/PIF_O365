@@ -1,0 +1,68 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.serviceName | default .Values.global.dmsServiceName }}-configmap-log
+
+data:
+  log4j2.properties: |
+    rootLogger.level = {{ .Values.log4j2.rootLogLevel}}
+    rootLogger.appenderRefs = DMS_LOG, stdout
+    rootLogger.appenderRef.DMS_LOG.ref = File
+    rootLogger.appenderRef.stdout.ref  = STDOUT
+    property.filename = /opt/tomcat/logs/
+    monitorInterval = 5
+    
+    #-----------DMS-------------
+    appender.DMS_LOG.type=RollingFile
+    appender.DMS_LOG.name=File
+    appender.DMS_LOG.fileName=/opt/tomcat/logs/DMSServer.log
+    appender.DMS_LOG.filePattern=/opt/tomcat/DMSServer.log.%i.%d{yyyy-MM-dd}
+    appender.DMS_LOG.layout.type=PatternLayout
+    appender.DMS_LOG.layout.pattern=%d{ABSOLUTE} %5p [%t] %c - %m%n
+    appender.DMS_LOG.policies.type=Policies
+    appender.DMS_LOG.policies.time.type=TimeBasedTriggeringPolicy
+    appender.DMS_LOG.policies.time.interval=1
+    appender.DMS_LOG.policies.time.modulate=true
+    appender.DMS_LOG.policies.size.type=SizeBasedTriggeringPolicy
+    appender.DMS_LOG.policies.size.size=100MB
+    appender.DMS_LOG.strategy.type=DefaultRolloverStrategy
+    appender.DMS_LOG.strategy.max=5
+    
+    
+    logger.DMS_LOG.name = trace
+    logger.DMS_LOG.level = {{ .Values.log4j2.dmsLogLevel }}
+    logger.DMS_LOG.additivity = false
+    logger.DMS_LOG.appenderRef.FILE_TRACE.ref = DMS_LOG
+    
+    
+    #------------------- CONSOLE --------------------------
+    appender.stdout.type=Console
+    appender.stdout.name=STDOUT
+    appender.stdout.layout.type=PatternLayout
+    appender.stdout.layout.pattern=%d{ABSOLUTE} %5p [%t] %c - %m%n
+    appender.stdout.filter.threshold.type = ThresholdFilter
+    appender.stdout.filter.threshold.level = DEBUG
+    
+    
+    #------------------- FILE_TRACE --------------------------
+    appender.FILE_TRACE.type=RollingFile
+    appender.FILE_TRACE.name=FileTrace
+    appender.FILE_TRACE.fileName=/opt/tomcat/logs/Dmslog4j2.log
+    appender.FILE_TRACE.filePattern=/opt/tomcat/Dmslog4j2.log.%i.%d{yyyy-MM-dd}
+    appender.FILE_TRACE.layout.type=PatternLayout
+    appender.FILE_TRACE.layout.pattern=%d{ABSOLUTE} %5p [%t] %c - %m%n
+    appender.FILE_TRACE.policies.type=Policies
+    appender.FILE_TRACE.policies.time.type=TimeBasedTriggeringPolicy
+    appender.FILE_TRACE.policies.time.interval=1
+    appender.FILE_TRACE.policies.time.modulate=true
+    appender.FILE_TRACE.policies.size.type=SizeBasedTriggeringPolicy
+    appender.FILE_TRACE.policies.size.size=100MB
+    appender.FILE_TRACE.strategy.type=DefaultRolloverStrategy
+    appender.FILE_TRACE.strategy.max=5
+  
+    
+    logger.rolling.name = com
+    logger.rolling.level = {{ .Values.log4j2.rollingLogLevel }}
+    logger.rolling.additivity = true
+    logger.rolling.appenderRefs = rolling
+    logger.rolling.appenderRef.rolling.ref = File

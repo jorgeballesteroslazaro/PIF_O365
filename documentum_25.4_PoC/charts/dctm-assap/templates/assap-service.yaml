@@ -1,0 +1,16 @@
+#Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.service.name }}
+  {{- with .Values.service.serviceAnnotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  # VE #4852332 - Adding the default service Type
+  type: {{ .Values.service.type | default  .Values.global.webappServiceType}}
+  ports:
+    - port: {{ .Values.service.port}}
+  selector:
+    app: {{ .Values.deployment.appName }}

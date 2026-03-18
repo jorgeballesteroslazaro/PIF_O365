@@ -1,0 +1,170 @@
+#These are specific configuration values passed for CFCR. Other values for dctm-ingress still need to be configured in main values.yaml only
+content-server:
+  platform: cfcr
+  serviceAnnotations: {}
+
+ijms:
+  serviceAnnotations: {}
+
+docbroker:
+  platform: cfcr
+dctm-ingress:
+  platform: cfcr
+  ingress:
+    class: nginx
+    # Note: If the value of global.internalTlsEnable is set to true, make sure you change the value of 
+    # dctm-ingress.ingress.annotations.nginx.ingress.kubernetes.io/backend-protocol to HTTPS. 
+    annotations:
+      nginx.ingress.kubernetes.io/proxy-body-size: "0"
+      nginx.ingress.kubernetes.io/affinity: cookie
+      nginx.ingress.kubernetes.io/session-cookie-hash: sha1
+      nginx.ingress.kubernetes.io/proxy-connect-timeout: "6000"
+      nginx.ingress.kubernetes.io/proxy-send-timeout: "6000"
+      nginx.ingress.kubernetes.io/proxy-read-timeout: "6000"
+      nginx.ingress.kubernetes.io/session-cookie-path: /
+      nginx.ingress.kubernetes.io/session-cookie-secure: "true"
+      nginx.ingress.kubernetes.io/session-cookie-samesite: None
+      nginx.ingress.kubernetes.io/proxy-buffer-size: "32k"
+      nginx.ingress.kubernetes.io/backend-protocol: HTTP  
+ 
+d2classic:
+    ## serviceAnnotations define custom annotations that need to be assigned to d2classic service.
+    serviceAnnotations: {}
+d2config:
+    ## serviceAnnotations define custom annotations that need to be assigned to d2config service.
+    serviceAnnotations: {}
+d2smartview:
+    ## serviceAnnotations define custom annotations that need to be assigned to d2smartview service.
+    serviceAnnotations: {}
+d2rest:
+    ## serviceAnnotations define custom annotations that need to be assigned to d2rest service.
+    serviceAnnotations: {}
+    
+adminconsole:
+    ## serviceAnnotations define custom annotations that need to be assigned to adminconsole service.
+    serviceAnnotations: {}
+
+smartviewm365:
+    serviceAnnotations: {}   
+       
+oesconnector:
+    serviceAnnotations: {}
+records:
+    service:
+      serviceAnnotations: {}      
+
+da:
+    service:
+      serviceAnnotations: {}
+
+dfs:
+    serviceAnnotations: {}      
+
+dctm-cmis:
+    serviceAnnotations: {}    
+
+contentconnect:
+  platform: cfcr
+  ingress:
+    class: nginx
+    annotations:
+      nginx.ingress.kubernetes.io/proxy-body-size: "0"
+      nginx.ingress.kubernetes.io/affinity: cookie
+      nginx.ingress.kubernetes.io/session-cookie-hash: sha1
+      nginx.ingress.kubernetes.io/proxy-connect-timeout: "60"
+      nginx.ingress.kubernetes.io/proxy-send-timeout: "60"
+      nginx.ingress.kubernetes.io/proxy-read-timeout: "60"
+  serviceAnnotations: {}
+
+vpningress:
+  cloudPlatform: CFCR
+  ingress:
+    class: nginx
+    # Note: If the value of global.internalTlsEnable is set to true, make sure you change the value of 
+    # vpningress.ingress.annotations.nginx.ingress.kubernetes.io/backend-protocol to HTTPS. 
+    annotations:
+      nginx.ingress.kubernetes.io/proxy-body-size: "0"
+      nginx.ingress.kubernetes.io/affinity: cookie
+      nginx.ingress.kubernetes.io/session-cookie-hash: sha1
+      nginx.ingress.kubernetes.io/proxy-connect-timeout: "6000"
+      nginx.ingress.kubernetes.io/proxy-send-timeout: "6000"
+      nginx.ingress.kubernetes.io/proxy-read-timeout: "6000"
+      nginx.ingress.kubernetes.io/proxy-buffer-size: "32k"
+      nginx.ingress.kubernetes.io/backend-protocol: HTTP  
+      nginx.ingress.kubernetes.io/session-cookie-path: /
+      nginx.ingress.kubernetes.io/session-cookie-secure: "true"
+      nginx.ingress.kubernetes.io/session-cookie-samesite: None
+    pathType: ImplementationSpecific
+
+d2publicingress:
+  cloudPlatform: CFCR
+  ingress:
+    class: nginx
+    # Note: If the value of global.internalTlsEnable is set to true, make sure you change the value of 
+    # d2publicingress.ingress.annotations.nginx.ingress.kubernetes.io/backend-protocol to HTTPS.
+    annotations:
+      nginx.ingress.kubernetes.io/proxy-body-size: "0"
+      nginx.ingress.kubernetes.io/affinity: cookie
+      nginx.ingress.kubernetes.io/session-cookie-hash: sha1
+      nginx.ingress.kubernetes.io/proxy-connect-timeout: "6000"
+      nginx.ingress.kubernetes.io/proxy-send-timeout: "6000"
+      nginx.ingress.kubernetes.io/proxy-read-timeout: "6000"
+      nginx.ingress.kubernetes.io/session-cookie-path: /
+      nginx.ingress.kubernetes.io/session-cookie-secure: "true"
+      nginx.ingress.kubernetes.io/session-cookie-samesite: None
+      nginx.ingress.kubernetes.io/proxy-buffer-size: "32k"
+      nginx.ingress.kubernetes.io/backend-protocol: HTTP  
+    pathType: ImplementationSpecific
+      
+appworks-gateway:
+  # Description: Define the service annotations.
+  # You can retain the default value or modify as per your requirement.
+  ingress:
+    ingressClassName: nginx
+    annotations:
+      kubernetes.io/tls-acme: "true"
+      kubernetes.io/ingress.allow-http: "false"
+      nginx.ingress.kubernetes.io/proxy-body-size: 20m
+      nginx.ingress.kubernetes.io/client-max-body-size: 20m
+  service:
+    annotations: []
+    
+otiv:
+# Description: Define the service annotations.
+# You can retain the default value or modify as per your requirement.
+  global:
+      ingressClass: nginx
+      ingressAnnotations:
+        nginx.ingress.kubernetes.io/affinity: cookie
+
+documentum-search:
+  admin:
+    serviceAnnotations: {}
+
+dctm-rest:
+    serviceAnnotations: {}      
+
+xPlore-OneD:
+    indexServerServiceAnnotations: {}      
+    indexAgentServiceAnnotations: {}
+
+
+dtrbase:
+    service:
+      serviceAnnotations: {}
+
+xda:
+   serviceAnnotations: {}      
+
+bps:
+   serviceAnnotations: {}
+
+dctm-workflow-designer:
+   serviceAnnotations: {}
+
+dctm-dcc:
+   serviceAnnotationsSyncagent: {}
+   serviceAnnotationsConsul: {}
+
+dctm-dms:
+    serviceAnnotations: {}

@@ -1,0 +1,32 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.configMap.otdsauth_configMap_name }}  
+data:
+  log4j: |
+    rootLogger.level={{ .Values.otdsauth.log4j.rootLogLevel }}
+    property.logfolderpath=/opt/dctm/dba/log
+    monitorInterval=30
+    #------------------- OTDS_AUTH_TRACE --------------------------
+    appender.OTDS_AUTH_TRACE.type=RollingFile
+    appender.OTDS_AUTH_TRACE.name=otdsauth
+    appender.OTDS_AUTH_TRACE.filePattern=${logfolderpath}/otdsauth.log.%i.%d{yyyy-MM-dd}
+    appender.OTDS_AUTH_TRACE.layout.type=PatternLayout
+    appender.OTDS_AUTH_TRACE.filter.threshold.type=ThresholdFilter
+    appender.OTDS_AUTH_TRACE.filter.threshold.level=DEBUG
+    appender.OTDS_AUTH_TRACE.fileName=${logfolderpath}/otdsauth.log
+    appender.OTDS_AUTH_TRACE.layout.pattern=%d{dd MMM yyyy HH:mm:ss,SSS} %5p [%t] %c - %m%n  
+    appender.OTDS_AUTH_TRACE.policies.type=Policies
+    appender.OTDS_AUTH_TRACE.policies.time.type=TimeBasedTriggeringPolicy
+    appender.OTDS_AUTH_TRACE.policies.time.interval=1
+    appender.OTDS_AUTH_TRACE.policies.time.modulate=true
+    appender.OTDS_AUTH_TRACE.policies.size.type=SizeBasedTriggeringPolicy
+    appender.OTDS_AUTH_TRACE.policies.size.size=10MB
+    appender.OTDS_AUTH_TRACE.strategy.type=DefaultRolloverStrategy
+    appender.OTDS_AUTH_TRACE.strategy.max=5
+    logger.OTDS_AUTH_TRACE.name=com.documentum.cs.otds
+    logger.OTDS_AUTH_TRACE.level={{ .Values.otdsauth.log4j.otdsauthLogLevel }}
+    logger.OTDS_AUTH_TRACE.additivity=false
+    logger.OTDS_AUTH_TRACE.appenderRef.rolling.ref=otdsauth
+
+    

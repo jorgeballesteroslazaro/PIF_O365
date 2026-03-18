@@ -1,0 +1,293 @@
+# Default values for d2config.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+namespace: 
+### Environment ###
+env:
+  tomcatJVMArgs: ""
+  webappName: 
+  # By Default the appTitle is OpenText Documentum Client Configuration that gets displayed on the Browser tab.
+  # Update to a custom appTitle below when required 
+  appTitle: 
+  domain: 
+
+## serviceAnnotations define custom annotations that need to be assigned to d2config service.
+## For example:
+##  cloud.google.com/backend-config: '{"ports": {"80": "abcd-d2config-backend"}}'
+##  cloud.google.com/neg: '{"ingress": true}'
+serviceAnnotations: {}
+
+serviceAccount: 
+  createserviceaccount: true
+  serviceAccountName: 
+
+### Tomcat ###
+tomcat:
+  catalinaHome: /opt/tomcat  
+  connectionTimeoutInMilliseconds:   #Time that the server will wait for an incoming connection to be established before terminating the request in tomcat server
+  maxHttpHeaderSize:   #Max HTTP header size
+  logfilerotation: 7  #Log files are rotated "logfilerotation" times before being removed 
+  logfilesize: 5M  #Log files are rotated only if they grow bigger then "logfilesize" bytes
+  logrotateFrequency: 1d  #Log files are rotated every "logrotateFrequency". Ex., 10m, 10h, 10d
+  maxThreads:  # Max number of threads in the pool
+  keepAliveTimeout:  # Keep-alive timeout in milliseconds
+  acceptCount:  #Max queued connections in the pool in tomcat
+
+### Docbroker ###
+docbroker:
+  count: 2
+  serviceName: 
+  port: 
+
+cs:
+  custom:
+    scriptinPVC: true
+    ##In the case of  hybrid installers approach, volumeMountName value should be custom-script-pvc and scriptPVCname value should be shared-pvc
+    volumeMountName: dcs-data-pvc
+    scriptPVCname: dcs-pg-pvc
+    PVCSubPath: initcontainercustomscripts/dcs-pg
+
+methodsvr:
+  containerName: dcs-pg
+
+session:
+  allowTrustedLogin: 
+
+### Docbase ###
+docbase:
+  name: 
+# if k8s version is < 1.19  default initial delay is set to 250 seconds and 60 seconds if k8s version is >= 1.19
+# Increase the initialDelaySeconds and add the value below if default value is not enough
+# Probes should be disabled only for debugging purposes
+readinessProbe:
+  enable: true
+  initialDelaySeconds: 
+# If k8s version is < 1.19  default initial delay is set to 250 seconds and 60 seconds if k8s version is >= 1.19
+# Increase the initialDelaySeconds to further and add the value below if default value is not enough
+livenessProbe:
+  enable: true
+  initialDelaySeconds: 
+  
+startupProbe:
+  enable: true
+  initialDelaySeconds: 180  
+ 
+
+replicaCount: 1
+
+fsGroup: 
+runAsNonRoot: true
+runAsUser: 1000
+
+images:
+  repository : 
+  name : 
+  tag : 
+  pullPolicy: 
+  pullSecrets:
+
+extensionImage:
+  repository: 
+  name : ot-dctm-client-config
+  tag : 25.4
+  pullPolicy: 
+
+extraInitContainers: []
+### Secret ###
+secret:
+  csConfigName: 
+  
+### extra Environment Variables ###
+extraEnv:  
+
+nameOverride: ""
+fullnameOverride: ""
+
+### Persistent Volume ###
+persistentVolume:
+  vctAccessModes: ReadWriteOnce
+  storageClass: 
+  size: 1Gi
+
+certificate:
+  use_certificate: 
+  dbrserviceName: 
+
+dbrpersistentVolume:
+  dbrdataPVCName: certdbr-data-pvc
+
+### Graylog Enabled by default, set to false if logs mount to PVC ###
+graylog:
+  enable: 
+  volumeClaimTemplate:
+    logVctAccessModes: ReadWriteOnce
+    logVctSize: 2Gi
+    logVctStorageClass: 
+
+serviceType: 
+
+### Port for d2config Service ###
+servicePort: 
+
+### D2Config Extension image ###
+extension:  
+  createPVC: true
+  PVCAccessMode: ReadWriteMany
+  PVCStorageClass: 
+  PVCSize: 4Gi
+  pvcName: 
+  #Update the below parameters in case of Static Provisioning in AWS
+  staticPVName:
+  reclaimPolicy:
+  awsEFSCSIDriver: efs.csi.aws.com
+  awsEFSCSIHandle:
+
+### Custom Configuration ###
+customConfigurations:
+  custom: false
+  hook_approach: false
+  createPVC: false
+  scriptPVCname: d2custom-shared-pvc
+  persistentVolume:
+    awsEFS: false
+    awsEFSCSIDriver: efs.csi.aws.com
+    awsEFSCSIHandle:
+    existVolumePv:
+    reclaimPolicy: Retain
+    storageClass: 
+    size: 2Gi
+  #In a multi repo deployment when d2configs need to be imported in multirepo and if there is/or common config import files across docbases, then update the common config files under "default" as shown in the example below, then update the filename as below
+  #If there are no common config import to be imported files across docbases, then you do not have to give default parameter.
+  #When there are multiple config import files for each docabse, give the config import files with comma separated.
+  #filename: 
+    # - default:DCTM-Reports-Application-22.4.0-Config.zip
+    # - docbase1:D2-Base-Config.zip
+    # - docbase2:D2-Base-Config-1.zip,D2-Base-Config2.zip
+  #Even in case of single repo deployment, provide the docbase name separated by : following with config import files comma separated if there are mutliple config import files
+  #filename: 
+    # - <docbase_name>:D2-Base-Export-Config-1.zip
+  filename: 
+  #By default below are the given config import parameters, customer can add new or edit below default parameters as per their need
+  d2configImportParameters: "-full_import true -reset false"
+  plugins:
+  # Customer need to pass the plugins as an array and "Plugin" word should be part of file naming.
+  # Array for Customer to pass more than one plugin. Below ex : 
+  # - plugin1
+  # - plugin2
+
+  # Customer could pass the custom d2config properties and place under d2config/properties subchart
+  # Customer need to merge with the existing d2config.properties file and place under d2config/properties subchart
+  # Currently have placed a template under d2config/properties for reference
+  settings:
+
+locale: 
+
+ 
+
+resources:
+  limits:
+    cpu: 100m
+    memory: 128Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+###############################################################
+#  BEGIN parameter value definitions for D2-Config configuration files
+###############################################################
+
+# directory in chart holding any .properties config file "coda" files.
+# These files are appended to the corresponding default .properties config
+# file in the resulting config map definition.  This provides a convenient
+# way for solutions built on top of D2 to override settings in D2FS.properties,
+# settings.properties etc.
+configFileOverrideFilesDir: configFileOverrideFiles
+
+d2version: 25.4.0
+
+# parameters used to compose d2config-logback-xml config map
+logback:
+   file: 
+   - /opt/tomcat/logs/
+   - D2-Config
+   - /D2-Config.log
+   fileNamePattern: 
+   - /opt/tomcat/logs/
+   - D2-Config
+   - /D2-Config-%d{yyyy-MM-dd}.log.zip
+   logLevel: info   
+   
+   logback_xml: |-
+
+# parameters used to compose d2config-log4j-properties config map
+log4j:
+   file: 
+   - /opt/tomcat/logs/
+   - D2-Config
+   - /
+   logLevel: WARN   
+   
+   log4j2_properties: |-
+
+#############################################################
+#  END parameter value definitions for D2-Config configuration files
+#############################################################
+
+### New Relic Configuration ###
+
+newrelic:
+  enable: 
+  app_name: DOCUMENTUM_D2CONFIG-PROD-OT2_CFCR_BP2-ECD
+  proxy_host: 
+  proxy_port: 
+  
+configMap:
+  vault_configmap_name: dctm-vault-configmap
+  
+# Set reports_plugin.enable to false, if reports is disabled
+reports_plugin:
+  enable:   
+ 
+vault:
+  enable: 
+  vault_configmap: dctm-vault-configmap
+  createPVC: true
+  PVCName: dsis-binary-pvc
+  pvcAccessModes: ReadWriteMany
+  size: 100Mi
+  storageClass: trident-nfs
+  existVolumePv:  
+  statusCheckRetryCount: 20
+  statusCheckTimeInterval: 1  
+
+D2_Config_properties: |-
+
+dfc_properties: |-
+
+ESAPI_properties: |-
+
+validation_properties: |-
+
+# parameters used to compose d2config-shiro-ini config map
+shiro:
+   # Set this to false if no SSO will be used
+   enable: 
+   SSOType: OTDS
+   connectionRemoteUrlProtocol: 
+   connectionRemoteUrl:
+   OTDS:
+      clientId: 
+      apiSvc: 
+      # The Ingress URL for the OTDS Authentication service
+      authSvc: 
+      appName: OpenText™ Documentum™ Content Management CE 25.4
+   #Additional attribures related to shiro shall be added below
+   shiro_ini: |-
+   
+web_xml: |-   

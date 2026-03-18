@@ -1,0 +1,20 @@
+#Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.service.name }}
+  {{- with .Values.service.serviceAnnotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  type: {{ .Values.service.type | default  .Values.global.webappServiceType}}
+  ports:
+    - name: http
+      port: {{ .Values.service.port }}
+      targetPort: 8080
+    - name: https
+      port: {{ .Values.containers.da.probing.healthPortHttps }}
+      targetPort: 8443
+  selector:
+    app: {{ .Values.deployment.appName }}

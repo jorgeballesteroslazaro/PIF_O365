@@ -1,0 +1,18 @@
+{{- if .Values.global.dctmclientinstaller.enabled }}
+{{- if .Values.extension.createPVC }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ .Values.extension.pvcName }}
+spec:
+  accessModes:
+    - {{ .Values.extension.PVCAccessMode }}
+  storageClassName: {{ .Values.extension.PVCStorageClass | default .Values.global.rwmStorage }}
+  {{- if .Values.extension.staticPVName }}
+  volumeName: {{ .Values.extension.staticPVName | default .Values.global.rwmStorage }}
+  {{- end }}
+  resources:
+    requests:
+      storage: {{ .Values.extension.PVCSize }}
+{{- end }}
+{{- end }}

@@ -1,0 +1,321 @@
+#StatefulSet
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ .Values.serviceName | default .Values.global.dbrServiceName }}
+  {{- with .Values.serviceAnnotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  serviceName: {{ .Values.serviceName | default .Values.global.dbrServiceName }}
+  replicas: {{ .Values.docbroker.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Values.serviceName | default .Values.global.dbrServiceName }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.serviceName | default .Values.global.dbrServiceName }}
+    spec:
+{{- if (empty (.Values.images.pullSecrets | quote) | ternary .Values.global.pullSecretName .Values.images.pullSecrets) }}
+      imagePullSecrets:
+        - name: {{ .Values.images.pullSecrets | default .Values.global.pullSecretName }}
+{{ end }}
+      serviceAccountName: {{ .Values.serviceAccount.serviceAccountName | default .Values.global.documentumserviceaccount }}
+{{ if eq .Values.useInitContainers true }}
+{{- if (empty (.Values.vault.enable | quote) | ternary .Values.global.isVaultEnabled .Values.vault.enable) }}
+      initContainers:
+{{- if .Values.extraInitContainers }}
+{{ include "resolveInitContainers" (dict "initContainerLists" .Values.extraInitContainers "global" .Values.global "nindent" 8) }}
+{{- end }}
+{{- end }}
+{{ end }}
+      containers:
+{{- if or (eq .Values.fluentd_service.graylogEnabled true) (eq .Values.global.grayLogEnable true) }}      
+      - name: fluentd-sidecar-{{ .Values.serviceName | default .Values.global.dbrServiceName }}
+        image: {{ .Values.fluentd_service.image | default .Values.global.fluentdImage | quote }}
+        imagePullPolicy: {{ .Values.fluentd_service.pullPolicy | default .Values.global.pullPolicyType }}
+        readinessProbe:
+          exec: {
+            command: [
+              bash,
+                -c,
+                /fluentd-setup/scripts/fluentd_readiness.sh
+            ]            
+          }
+          initialDelaySeconds: 120
+          periodSeconds: 60
+          failureThreshold: 2
+          timeoutSeconds: 60
+{{ if eq .Values.fluentd_service.liveness.enable true }}
+        livenessProbe:
+          exec: {
+            command: [
+              bash,
+              -c,
+              /fluentd-setup/scripts/fluentd_liveliness.sh
+            ]            
+          }
+          initialDelaySeconds: 240
+          periodSeconds: 120
+          failureThreshold: 2
+          timeoutSeconds: 60
+{{ end }}
+        env:
+        - name: KUBERNETES
+          value: "true"
+        - name: IS_DOCBROKER
+          value: "true"   
+        - name: FLUENTD_LOG_FOLDER_PATH
+          value: fluentd-logging
+        - name: FLUENTD_CONFIG_MAP_PATH
+          value: fluentd-config-map
+        - name: BLACKBOX_ENABLED
+          value: "false" #docbroker does not support blackbox feature, hence only logging fields captured here
+        - name: FLUENTD_LOGGING
+          value: {{ (empty (.Values.fluentd_service.graylogEnabled | quote) | ternary .Values.global.grayLogEnable .Values.fluentd_service.graylogEnabled) | quote }}
+        - name: TAGS
+          value: "[\"linux\",\"apache\"]"
+        - name: NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        - name: NAMESPACE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        volumeMounts:
+        - mountPath: /fluentd-logging
+          name: fluentd-data-logs
+        - mountPath: /fluentd-config-map/config_map
+          name: fluentdconfig-map
+        - mountPath: /fluentd-pod-logs
+          name: shared-logs
+{{ end }}
+      - name: {{ .Values.serviceName | default .Values.global.dbrServiceName }}
+        image: {{ .Values.images.repository | default .Values.global.repository }}/{{ .Values.images.contentserver.name }}:{{ .Values.images.contentserver.tag }}
+        imagePullPolicy: {{ .Values.images.pullPolicy | default .Values.global.pullPolicyType }}
+        readinessProbe:
+          exec: {
+            command: [
+              bash,
+              -c,
+              /opt/dctm_docker/scripts/docbroker_readiness.sh
+            ]            
+          }
+          initialDelaySeconds: 120
+          periodSeconds: 120
+          failureThreshold: 2
+          successThreshold: 1
+          timeoutSeconds: 60
+{{- if .Values.docbroker.liveness.enable }}
+        livenessProbe:
+          exec: {
+            command: [
+              bash,
+              -c,
+              /opt/dctm_docker/scripts/docbroker_liveness.sh
+            ]            
+          }
+          initialDelaySeconds: {{ .Values.docbroker.liveness.initialDelaySeconds }}
+          periodSeconds: {{ .Values.docbroker.liveness.periodSeconds }}
+          failureThreshold: {{ .Values.docbroker.liveness.failureThreshold }}
+          timeoutSeconds: 60
+{{ end }}
+        env:
+        - name: KUBERNETES
+          value: "true"
+        - name: EXT_DOCBROKER_ENABLE_LIVENESS
+          value: {{ .Values.ExtDocbroker.enableLiveness | quote }}
+        - name: OPENSHIFT
+          value: {{ (empty (.Values.openshift.enable | quote) | ternary .Values.global.openshiftEnable .Values.openshift.enable) | quote }}
+{{- if (empty (.Values.newrelic.enable | quote) | ternary .Values.global.newrelic .Values.newrelic.enable) }}
+        - name: NEWRELICDBR_ENABLE
+          value: "true"
+        - name: NEWRELIC_ENABLE
+          value: {{ (empty (.Values.newrelic.enable | quote) | ternary .Values.global.newrelic .Values.newrelic.enable) | quote }}
+        - name: NEWRELIC_PROXY_HOST
+          value: {{ .Values.newrelic.proxy_host | default .Values.global.newrelicProxyHost }}
+        - name: NEWRELIC_C_APP_NAME
+          value: {{ .Values.newrelic.c_app_name }}
+        - name: NEWRELIC_PROXY_PROTOCOL
+          value: {{ .Values.newrelic.proxy_protocol | default .Values.global.newrelicProxyProtocol }}
+        - name: NEWRELIC_PROXY_PORT
+          value: {{ .Values.newrelic.proxy_port | default .Values.global.newrelicProxyPort | quote  }}
+        - name: NEWRELIC_LICENSE_KEY
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.secret.name | default .Values.global.csSecrets }}
+              key: newrelicLicensekey
+{{- end }}
+        - name: onlyDocbroker
+          value: "true"
+        - name: ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.secret.name | default .Values.global.csSecrets }}
+              key: rootPassword
+        - name: INSTALL_OWNER
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.secret.name | default .Values.global.csSecrets }}
+              key: installOwner
+        - name: INSTALL_OWNER_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.secret.name | default .Values.global.csSecrets }}
+              key: installOwnerPassword
+        - name: INSTALLER_UI
+          value: {{ .Values.docbroker.installerUI}}
+        - name: KEEP_TEMP_FILE
+          value: "true"
+        - name: INSTALLER_DEBUG_LOG
+          value: "true"
+        - name: AEK_ALGORITHM
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.secret.name | default .Values.global.csSecrets }}
+              key: aekAlgorithm
+        - name: DM_SECRETLIB_PATH
+          value: "/opt/dctm/secret-library"
+{{ if or (eq .Values.certificate.use_certificate true) (eq .Values.global.useCertificate true) }}
+        - name: DOCBROKER_USE_CERTIFICATES
+          value: {{ (empty (.Values.certificate.use_certificate | quote) | ternary .Values.global.useCertificate .Values.certificate.use_certificate) | quote }}
+        - name: DOCBROKER_CERT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.secret.name | default .Values.global.csSecrets }}
+              key: dbrCertpassword
+        - name: DOCBROKER_AEK_NAME
+          value: {{ .Values.certificate.aekname }}
+        - name: AEK_LOCATION
+          value: {{ .Values.certificate.aeklocation | default .Values.global.aekLocation }}
+        - name: KMS_URL
+          value: {{ .Values.kms.url | default .Values.global.kmsUrl }}
+        - name: KMS_MASTER_KEY_ID
+          value: {{ .Values.kms.masterkey_id }}
+        - name: KMS_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.secret.name | default .Values.global.csSecrets }}
+              key: kmsApiKey
+        - name: DOCBROKER_AEK_PASSPHRASE
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.secret.name | default .Values.global.csSecrets }}
+              key: dbrCertAekPassphrase
+        - name: DOCBROKER_TRUST_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.secret.name | default .Values.global.csSecrets }}
+              key: dbrCertTrustPassword
+        - name: DOCBROKER_PEM_CERT_PRIVATE_KEY
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.secret.name | default .Values.global.csSecrets }}
+              key: dbrCertPemCertPrivKey
+        - name: DOCBROKER_PEM_CERTIFICATE
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.secret.name | default .Values.global.csSecrets }}
+              key: dbrCertPemCertificate
+{{ end }}
+        - name: DOCBROKER_PORT
+          value: {{ .Values.ports.docbrokerPort | quote }}        
+        - name: ExtDocbrokerPort
+          value: {{ .Values.ports.extNativePort | quote }}
+        - name: EXT_DOCBROKER_ENABLE
+          value: {{ (empty (.Values.ExtDocbroker.enable | quote) | ternary .Values.global.externalAccessEnabled .Values.ExtDocbroker.enable) | quote }}
+        - name: DOCBROKER_CONNECT_MODE
+          value: {{ .Values.docbroker.connectMode | default .Values.global.connectMode | quote }}
+        - name: SECRETS_CHANGE
+          value: {{ .Values.docbroker.secretsChange | default .Values.global.secrets_Change | quote}}
+        - name: ENABLE_LOG_STREAMING
+          value: {{ (empty (.Values.docbroker.enableLogStreaming | quote ) | ternary .Values.global.logsStreamToConsole .Values.docbroker.enableLogStreaming) | quote }}
+        - name: IS_VAULT_ENABLED
+          value: {{ (empty (.Values.vault.enable | quote) | ternary .Values.global.isVaultEnabled .Values.vault.enable) | quote }}
+        ports:
+        - containerPort: {{ .Values.ports.docbrokerPort }}
+          name: docbrokerport
+        - containerPort: {{ .Values.ports.docbrokrSSLport }}
+          name: docbrokrsslport
+        volumeMounts:
+        - mountPath: /opt/dctm/kube
+          name: {{ .Values.persistentVolume.vctName }}
+          subPath: kube
+        - mountPath: /opt/dctm/dba/log
+          name: shared-logs
+          subPath: dba
+        - mountPath: /opt/dctm/dba/secure
+          name: {{ .Values.persistentVolume.vctName }}
+          subPath: secure
+{{ if or (eq .Values.certificate.use_certificate true) (eq .Values.global.useCertificate true) }}
+        - mountPath: /opt/dctm/certificate
+          name: {{ .Values.persistentVolume.dbrdataPVCName }}
+          subPath: certificate/{{ .Values.persistentVolume.dbrdataPVCName }}
+{{ end }}
+{{- if (empty (.Values.vault.enable | quote) | ternary .Values.global.isVaultEnabled .Values.vault.enable) }}
+        - mountPath: /opt/dctm_docker/vault_config
+          name: vault-volume
+        - mountPath: /opt/dctm_docker/dsis_binary_volume
+          name: dsis-binary-volume
+          subPath: dsis-binary
+{{- end }}
+        resources:
+          requests:
+            memory: {{ .Values.resources.requests.memory | quote  }}
+            cpu: {{ .Values.resources.requests.cpu | quote  }}
+          limits:
+            memory: {{ .Values.resources.limits.memory | quote  }}
+            cpu: {{ .Values.resources.limits.cpu | quote  }}
+      volumes:
+{{- if or (eq .Values.fluentd_service.graylogEnabled true) (eq .Values.global.grayLogEnable true) }}
+      - name: shared-logs
+        emptyDir: {}
+      - name: fluentd-data-logs
+        emptyDir: {}
+      - name: fluentdconfig-map
+        configMap:
+          #Name of the fluentd config map that we want
+          name: {{ .Values.logging.fluentdConf.fluentd_configMap_name }}
+{{ end }}
+{{ if or (eq .Values.certificate.use_certificate true) (eq .Values.global.useCertificate true) }}
+      - name: {{ .Values.persistentVolume.dbrdataPVCName }}
+        persistentVolumeClaim:
+          claimName: {{ .Values.serviceName | default .Values.global.dbrServiceName }}-pvc
+{{ end }}
+{{- if (empty (.Values.vault.enable | quote) | ternary .Values.global.isVaultEnabled .Values.vault.enable) }}
+      - name: dsis-binary-volume
+        persistentVolumeClaim:
+          claimName: {{ .Values.vault.PVCName }}
+      - name: vault-volume
+        configMap:
+          name: {{ .Values.vault.vault_configmap }}
+{{- end }}
+      restartPolicy: Always
+  volumeClaimTemplates:
+  - metadata:
+      name: {{ .Values.persistentVolume.vctName }}
+    spec:
+      accessModes:
+        - {{ .Values.persistentVolume.accessModes }}
+      resources:
+         requests:
+            storage: {{ .Values.persistentVolume.size }}
+      storageClassName: {{ .Values.persistentVolume.storageClass | default .Values.global.rwoStorage }}
+{{- if (eq (empty (.Values.fluentd_service.graylogEnabled | quote) | ternary .Values.global.grayLogEnable .Values.fluentd_service.graylogEnabled) false) }}   
+  - metadata:
+      name: shared-logs
+    spec:
+      accessModes:
+        - {{ .Values.persistentVolume.logVctAccessModes }}
+      resources:
+         requests:
+            storage: {{ .Values.persistentVolume.logVctSize }}
+      storageClassName: {{ .Values.persistentVolume.logVctStorageClass | default .Values.global.rwoStorage }}
+{{ end }}

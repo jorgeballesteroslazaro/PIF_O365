@@ -1,0 +1,59 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.userName }}-web-xml
+  {{- template "configMap.labels" . }}
+data:
+  web.xml: |-
+    <?xml version="1.0" encoding="UTF-8"?>
+    <web-app xmlns="http://java.sun.com/xml/ns/javaee"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="http://java.sun.com/xml/ns/javaee
+              http://java.sun.com/xml/ns/javaee/web-app_3_0.xsd"
+              version="3.0" >
+        <display-name>D2ControlledPrint</display-name>
+        <servlet>
+            <servlet-name>Controlled Print Services</servlet-name>
+            <servlet-class>org.glassfish.jersey.servlet.ServletContainer</servlet-class>
+            <init-param>
+            <param-name>jersey.config.server.provider.packages</param-name>
+            <param-value>com.documentum.services.rest, com.documentum.services.exception</param-value>
+            </init-param>
+            <load-on-startup>1</load-on-startup>
+        </servlet>
+        <servlet>
+            <servlet-name>Liveness</servlet-name>
+            <servlet-class>com.documentum.services.print.servlet.Liveness</servlet-class>
+            <load-on-startup>1</load-on-startup>
+        </servlet>
+        <servlet>
+            <servlet-name>Readiness</servlet-name>
+            <servlet-class>com.documentum.services.print.servlet.Readiness</servlet-class>
+            <load-on-startup>1</load-on-startup>
+        </servlet>
+        <servlet-mapping>
+            <servlet-name>Liveness</servlet-name>
+            <url-pattern>/live</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>Readiness</servlet-name>
+            <url-pattern>/ready</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>Controlled Print Services</servlet-name>
+            <url-pattern>/rest/*</url-pattern>
+        </servlet-mapping>
+        <servlet>
+            <description>JAX-RS Tools Generated - Do not modify</description>
+            <servlet-name>JAX-RS Servlet</servlet-name>
+            <servlet-class>org.glassfish.jersey.servlet.ServletContainer</servlet-class>
+            <load-on-startup>1</load-on-startup>
+        </servlet>
+        <servlet-mapping>
+            <servlet-name>JAX-RS Servlet</servlet-name>
+            <url-pattern>/jaxrs/*</url-pattern>
+        </servlet-mapping>
+    {{- if $configFileAppendsValues := .Values.web_xml }}
+    {{ $configFileAppendsValues | nindent 4 }}
+    {{- end }}
+    </web-app>

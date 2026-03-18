@@ -1,0 +1,88 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: thumbsrv-server-xml
+data:
+{{- if (eq .Values.global.internalTlsEnable true) }}
+  thumbsrv_configmap.xml: |-
+    <?xml version="1.0" encoding="UTF-8"?>
+    <Server port="8015" shutdown="SHUTDOWN">
+      <Listener className="org.apache.catalina.startup.VersionLoggerListener" />
+      <Listener className="org.apache.catalina.security.SecurityListener" />
+      
+      <Listener className="org.apache.catalina.core.JreMemoryLeakPreventionListener" />
+      <Listener className="org.apache.catalina.mbeans.GlobalResourcesLifecycleListener" />
+      <Listener className="org.apache.catalina.core.ThreadLocalLeakPreventionListener" />
+    
+      <GlobalNamingResources>
+       
+        <Resource name="UserDatabase" auth="Container"
+                  type="org.apache.catalina.UserDatabase"
+                  description="User database that can be updated and saved"
+                  factory="org.apache.catalina.users.MemoryUserDatabaseFactory"
+                  pathname="conf/tomcat-users.xml" />
+      </GlobalNamingResources>
+      <Service name="Catalina">
+        <!-- <Connector port="8081" protocol="HTTP/1.1"
+                   connectionTimeout="{{ default .Values.global.tomcatConnectionTimeout .Values.tomcat.connectionTimeout }}"
+                   redirectPort="8443" /> -->
+        
+        <Connector port="8443"
+               protocol="org.apache.coyote.http11.Http11NioProtocol"
+               maxThreads="{{ default .Values.global.tomcatMaxThreads .Values.tomcat.maxThreads }}"
+               scheme="https"
+               SSLEnabled="true"
+               secure="true">
+        	    <SSLHostConfig ciphers="TLS_AES_256_GCM_SHA384">
+                <Certificate certificateKeystoreFile="/opt/dctm/certificate/ingress.p12" certificateKeystorePassword="INGRESS_KEYSTOREPASSWORD"/>
+            </SSLHostConfig>
+        </Connector>
+        
+        <Engine name="Catalina" defaultHost="localhost">
+          <Realm className="org.apache.catalina.realm.LockOutRealm">
+            <Realm className="org.apache.catalina.realm.UserDatabaseRealm"
+                   resourceName="UserDatabase"/>
+          </Realm>
+          <Host name="localhost"  appBase="webapps"
+                unpackWARs="true" autoDeploy="true">    
+          </Host>
+        </Engine>
+      </Service>
+    </Server>
+
+{{ else }}
+  thumbsrv_configmap.xml: |-
+    <?xml version="1.0" encoding="UTF-8"?>
+    <Server port="8015" shutdown="SHUTDOWN">
+      <Listener className="org.apache.catalina.startup.VersionLoggerListener" />
+      
+      <Listener className="org.apache.catalina.core.AprLifecycleListener" SSLEngine="on" />
+      
+      <Listener className="org.apache.catalina.core.JreMemoryLeakPreventionListener" />
+      <Listener className="org.apache.catalina.mbeans.GlobalResourcesLifecycleListener" />
+      <Listener className="org.apache.catalina.core.ThreadLocalLeakPreventionListener" />
+    
+      <GlobalNamingResources>
+        <Resource name="UserDatabase" auth="Container"
+                  type="org.apache.catalina.UserDatabase"
+                  description="User database that can be updated and saved"
+                  factory="org.apache.catalina.users.MemoryUserDatabaseFactory"
+                  pathname="conf/tomcat-users.xml" />
+      </GlobalNamingResources>
+      <Service name="Catalina">
+        <Connector port="8081" protocol="HTTP/1.1"
+                   connectionTimeout="{{ default .Values.global.tomcatConnectionTimeout .Values.tomcat.connectionTimeout }}"
+                   redirectPort="8443" />
+        <Engine name="Catalina" defaultHost="localhost">
+          <Realm className="org.apache.catalina.realm.LockOutRealm">
+            <Realm className="org.apache.catalina.realm.UserDatabaseRealm"
+                   resourceName="UserDatabase"/>
+          </Realm>
+          <Host name="localhost"  appBase="webapps"
+                unpackWARs="true" autoDeploy="true">    
+          </Host>
+        </Engine>
+      </Service>
+    </Server>
+
+{{- end }}

@@ -1,0 +1,17 @@
+{{- if .Values.persistentVolumeClaimEC.awsEFSCSIHandle }}
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: {{ .Values.persistentVolumeClaimEC.pvcName }}-ext-conf-pv
+spec:
+  capacity:
+    storage: {{ .Values.persistentVolumeClaimEC.PVCsize }}
+  volumeMode: Filesystem
+  accessModes: 
+    - {{ .Values.persistentVolumeClaimEC.PVCAccessMode }}
+  persistentVolumeReclaimPolicy: Delete
+  storageClassName: {{ .Values.persistentVolumeClaimEC.PVCStorageClass | default .Values.global.rwmStorage}}
+  csi:
+    driver: {{ .Values.persistentVolumeClaimEC.awsEFSCSIDriver }}
+    volumeHandle: {{ .Values.persistentVolumeClaimEC.awsEFSCSIHandle }}
+{{- end }}

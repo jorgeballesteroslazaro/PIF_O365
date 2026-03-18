@@ -1,0 +1,973 @@
+{{- if .Capabilities.APIVersions.Has "extensions/v1beta1" }}
+apiVersion: extensions/v1beta1
+{{ else }}
+apiVersion: networking.k8s.io/v1
+{{ end }}
+kind: Ingress
+metadata:
+  name: {{ .Values.ingressPrefix }}-ingress
+  annotations:
+{{- if (.Capabilities.APIVersions.Has "extensions/v1beta1") }}
+{{- if .Values.ingress.class }}
+    kubernetes.io/ingress.class: {{ .Values.ingress.class }}
+{{- end }}
+{{- end }}
+{{- range $key, $value := .Values.ingress.annotations }}
+    {{ $key }}: {{ $value | squote }}
+{{- end }}
+{{- if and (eq .Values.global.internalTlsEnable true) (ne .Values.platform "aws") }}
+    nginx.ingress.kubernetes.io/backend-protocol: HTTPS
+{{- end }}
+spec:
+{{- if not (.Capabilities.APIVersions.Has "extensions/v1beta1") }}
+  ingressClassName: {{ .Values.ingress.class }}
+{{- end }}
+{{- if eq .Values.global.internalTlsEnable true }}
+  tls:
+  - hosts:
+    - {{ .Values.ingress.host | default .Values.global.hostShortName }}.{{ .Values.ingress.clusterDomainName | default .Values.global.ingressDomain}}
+    secretName: {{ .Values.ingress.ingressTLSSecret | default .Values.global.ingressTLSSecret }}
+{{- else if .Values.tls.enable }}
+  tls:
+  - hosts:
+    - {{ .Values.ingress.host | default .Values.global.hostShortName }}.{{ .Values.ingress.clusterDomainName | default .Values.global.ingressDomain}}
+    {{- if (empty (.Values.openshifttls.enable | quote) | ternary .Values.global.openshiftTls .Values.openshifttls.enable) }}
+    secretName: {{ .Values.tls.secretName | default .Values.global.csSecrets }}{{ "-tls" }}
+    {{- else }}
+    secretName: {{ .Values.tls.secretName | default .Values.global.csSecrets }}
+    {{- end}}
+{{- end}}
+  rules:
+{{- if eq .Values.ingress.configureHost true }}
+  - host: {{ .Values.ingress.host | default .Values.global.hostShortName }}.{{ .Values.ingress.clusterDomainName | default .Values.global.ingressDomain}}
+    http:
+{{- else }}
+  - http:
+{{- end }}
+      paths:
+{{- if .Values.extraPaths }}
+{{ toYaml .Values.extraPaths | indent 6 }}
+{{- end }}
+    {{- $cscomponent := index .Values.global "content-server" }}
+    {{- if and $cscomponent.enabled (empty (.Values.jmsService.enable | quote) | ternary true .Values.jmsService.enable) }}
+    {{ if eq .Values.platform "aws" }}
+      - path: /DmMethods/servlet/DoMethod*
+    {{ else }}
+      - path: /DmMethods/servlet/DoMethod
+    {{ end }}
+    {{- if not (.Capabilities.APIVersions.Has "extensions/v1beta1") }}
+        pathType: {{ default "ImplementationSpecific" .Values.jmsService.pathType }}
+        backend:
+          service:
+            name: {{ .Values.jmsService.serviceName | default .Values.global.jmsServiceName }}
+            port:
+              number: {{ .Values.jmsService.servicePort }}
+    {{- else }}
+        backend:
+          serviceName: {{ .Values.jmsService.serviceName | default .Values.global.jmsServiceName }}
+          servicePort: {{ .Values.jmsService.servicePort }}
+    {{- end }}
+    {{- end }}
+    {{- if .Values.jmsBase.enable }}
+    {{ if eq .Values.platform "aws" }}
+      - path: /*
+    {{ else }}
+      - path: /
+    {{ end }}
+    {{- if not (.Capabilities.APIVersions.Has "extensions/v1beta1") }}
+        pathType: {{ default "ImplementationSpecific" .Values.jmsBase.pathType  }}
+        backend:
+          service:
+            name: {{ .Values.jmsBase.serviceName | default .Values.global.jmsServiceName }}
+            port:
+              number: {{ .Values.jmsBase.servicePort }}
+    {{- else }}
+        backend:
+          serviceName: {{ .Values.jmsBase.serviceName | default .Values.global.jmsServiceName }}
+          servicePort: {{ .Values.jmsBase.servicePort }}
+    {{- end }}
+    {{- end }}
+    {{- if and $cscomponent.enabled (empty (.Values.acsService.enable | quote) | ternary true .Values.acsService.enable) }}
+    {{ if eq .Values.platform "aws" }}
+      - path: /ACS/servlet*
+    {{ else }}
+      - path: /ACS/servlet
+    {{ end }}
+    {{- if not (.Capabilities.APIVersions.Has "extensions/v1beta1") }}
+        pathType: {{ default "ImplementationSpecific" .Values.acsService.pathType }}
+        backend:
+          service:
+            name: {{ .Values.acsService.serviceName | default .Values.global.jmsServiceName }}
+            port:
+              number: {{ .Values.acsService.servicePort }}
+    {{- else }}
+        backend:
+          serviceName: {{ .Values.acsService.serviceName | default .Values.global.jmsServiceName }}
+          servicePort: {{ .Values.acsService.servicePort }}
+    {{- end }}
+    {{- end }}
+    {{- if and $cscomponent.enabled (empty (.Values.tnsService.enable | quote) | ternary true .Values.tnsService.enable) }}
+    {{ if eq .Values.platform "aws" }}
+      - path: /thumbsrv/getThumbnail*
+    {{ else }}
+      - path: /thumbsrv/getThumbnail
+    {{ end }}
+    {{- if not (.Capabilities.APIVersions.Has "extensions/v1beta1") }}
+        pathType: {{ default "ImplementationSpecific" .Values.tnsService.pathType }}
+        backend:
+          service:
+            name: {{ .Values.tnsService.serviceName }}
+            port:
+              number: {{ .Values.tnsService.servicePort }}
+    {{- else }}
+        backend:
+          serviceName: {{ .Values.tnsService.serviceName }}
+          servicePort: {{ .Values.tnsService.servicePort }}
+    {{- end }}
+    {{- end }}
+
+    {{- if and (and .Values.global.d2classic.enabled (empty (.Values.d2clientService.enable | quote) | ternary (not .Values.global.multiIngress) .Values.d2clientService.enable)) (and .Values.global.dtrbase.enabled (empty (.Values.dtrbaseService.enable | quote) | ternary (not .Values.global.multiIngress) .Values.dtrbaseService.enable)) }}
+    {{ if eq .Values.platform "aws" }}
+      - path: /D2DCTMReports/*
+    {{ else }}
+      - path: /D2DCTMReports
+    {{ end }}
+    {{- if not (.Capabilities.APIVersions.Has "extensions/v1beta1") }}
+        pathType: {{ default "ImplementationSpecific" .Values.d2clientService.pathType }}
+        backend:
+          service:
+            name: {{ .Values.d2clientService.serviceName }}
+            port:
+              number: {{ template "d2classic.servicePort" .  }}
+    {{- else }}
+        backend:
+          serviceName: {{ .Values.d2clientService.serviceName }}
+          servicePort: {{ template "d2classic.servicePort" .  }}
+    {{- end }}
+    {{- end }}
+
+    {{- $component := index .Values.global "ao-installer" }}
+    {{- if and $component.enabled (empty (.Values.epfmaService.enable | quote) | ternary (not .Values.global.multiIngress) .Values.epfmaService.enable) }}
+    {{ if eq .Values.platform "aws" }}
+      - path: /EPFMA/*
+    {{ else }}
+      - path: /EPFMA
+    {{ end }}
+    {{- if not (.Capabilities.APIVersions.Has "extensions/v1beta1") }}
+        pathType: {{ default "ImplementationSpecific" .Values.d2smartview.pathType }}
+        backend:
+          service:
+            name: {{ .Values.d2smartview.serviceName }}
+            port:
+              number: {{ template "d2smartview.servicePort" .  }}
+    {{- else }}
+        backend:
+          serviceName: {{ .Values.d2smartview.serviceName }}
+          servicePort: {{ template "d2smartview.servicePort" .  }}
+    {{- end }}
+    {{- end }}
+
+    {{- if and .Values.global.d2config.enabled (empty (.Values.d2configService.enable | quote) | ternary (not .Values.global.multiIngress) .Values.d2configService.enable) }}
+    {{ if eq .Values.platform "aws" }}
+      - path: /{{ .Values.d2configService.path | default .Values.global.d2configWebappName}}*
+    {{ else }}
+      - path: /{{ .Values.d2configService.path | default .Values.global.d2configWebappName}}
+    {{ end }}
+    {{- if not (.Capabilities.APIVersions.Has "extensions/v1beta1") }}
+        pathType: {{ default "ImplementationSpecific" .Values.d2configService.pathType }}
+        backend:
+          service:
+            name: {{ .Values.d2configService.serviceName }}
+            port:
+              number: {{ template "d2config.servicePort" .  }}
+    {{- else }}
+        backend:
+          serviceName: {{ .Values.d2configService.serviceName }}
+          servicePort: {{ template "d2config.servicePort" .  }}
+    {{- end }}
+    {{- end }}
+    {{- if and .Values.global.da.enabled (empty (.Values.daService.enable | quote) | ternary (not .Values.global.multiIngress) .Values.daService.enable) }}
+    {{ if eq .Values.platform "aws" }}
+      - path: /da*
+    {{ else }}
+      - path: /da
+    {{ end }}
+    {{- if not (.Capabilities.APIVersions.Has "extensions/v1beta1") }}
+        pathType: {{ default "ImplementationSpecific" .Values.daService.pathType }}
+        backend:
+          service:
+            name: {{ .Values.daService.serviceName }}
+            port:
+              number: {{ .Values.daService.servicePort }}
+    {{- else }}
+        backend:
+          serviceName: {{ .Values.daService.serviceName }}
+          servicePort: {{ .Values.daService.servicePort }}
+    {{- end }}
+    {{- end }}
+    {{- $component := index .Values.global "dctm-rest" }}
+    {{- if and $component.enabled (empty (.Values.restService.enable | quote) | ternary (not .Values.global.multiIngress) .Values.restService.enable) }}
+    {{ if eq .Values.platform "aws" }}
+      - path: /dctm-rest*
+    {{ else }}
+      - path: /dctm-rest
+    {{ end }}
+    {{- if not (.Capabilities.APIVersions.Has "extensions/v1beta1") }}
+        pathType: {{ default "ImplementationSpecific" .Values.restService.pathType }}
+        backend:
+          service:
+            name: {{ .Values.restService.serviceName }}
+            port:
+              number: {{ template "dctm-rest.servicePort" .  }}
+    {{- else }}
+        backend:
+          serviceName: {{ .Values.restService.serviceName }}
+          servicePort: {{ template "dctm-rest.servicePort" .  }}
+    {{- end }}
+    {{- end }}
+    {{- $component := index .Values.global "dctm-cmis" }}
+    {{- if and $component.enabled (empty (.Values.cmisService.enable | quote) | ternary (not .Values.global.multiIngress) .Values.cmisService.enable) }}
+    {{ if eq .Values.platform "aws" }}
+      - path: /dctm-cmis*
+    {{ else }}
+      - path: /dctm-cmis
+    {{ end }}
+    {{- if not (.Capabilities.APIVersions.Has "extensions/v1beta1") }}
+        pathType: {{ default "ImplementationSpecific" .Values.cmisService.pathType }}
+        backend:
+          service:
+            name: {{ .Values.cmisService.serviceName }}
+            port:
+              number: {{ .Values.cmisService.servicePort }}
+    {{- else }}
+        backend:
+          serviceName: {{ .Values.cmisService.serviceName }}
+          servicePort: {{ .Values.cmisService.servicePort }}
+    {{- end }}
+    {{- end }}
+    {{- if .Values.bpsService.enable }}
+    {{ if eq .Values.platform "aws" }}
+      - path: /bps*
+    {{ else }}
+      - path: /bps
+    {{ end }}
+    {{- if not (.Capabilities.APIVersions.Has "extensions/v1beta1") }}
+        pathType: {{ default "ImplementationSpecific" .Values.bpsService.pathType }}
+        backend:
+          service:
+            name: {{ .Values.bpsService.serviceName }}
+            port:
+              number: {{ .Values.bpsService.servicePort }}
+    {{- else }}
+        backend:
+          serviceName: {{ .Values.bpsService.serviceName }}
+          servicePort: {{ .Values.bpsService.servicePort }}
+    {{- end }}
+    {{- end }}
+    {{- if and .Values.global.xda.enabled (empty (.Values.xdaService.enable | quote) | ternary (not .Values.global.multiIngress) .Values.xdaService.enable) }}
+    {{ if eq .Values.platform "aws" }}
+      - path: /xda*
+    {{ else }}
+      - path: /xda
+    {{ end }}
+    {{- if not (.Capabilities.APIVersions.Has "extensions/v1beta1") }}
+        pathType: {{ default "ImplementationSpecific" .Values.xdaService.pathType  }}
+        backend:
+          service:
+            name: {{ .Values.xdaService.serviceName }}
+            port:
+              number: {{ .Values.xdaService.servicePort }}
+    {{- else }}
+        backend:
+          serviceName: {{ .Values.xdaService.serviceName }}
+          servicePort: {{ .Values.xdaService.servicePort }}
+    {{- end }}
+    {{- end }}
+    {{- if and .Values.global.smartviewm365.enabled (empty (.Values.smartviewm365.enable | quote) | ternary (not .Values.global.multiIngress) .Values.smartviewm365.enable) }}
+    {{ if eq .Values.platform "aws" }}
+      - path: /SmartViewM365*
+    {{ else }}
+      - path: /SmartViewM365
+    {{ end }}
+    {{- if not (.Capabilities.APIVersions.Has "extensions/v1beta1") }}
+        pathType: {{ default "ImplementationSpecific" .Values.smartviewm365.pathType }}
+        backend:
+          service:
+            name: {{ .Values.smartviewm365.serviceName }}
+            port:
+              number: {{ .Values.smartviewm365.servicePort }}
+    {{- else }}
+        backend:
+          serviceName: {{ .Values.smartviewm365.serviceName }}
+          servicePort: {{ .Values.smartviewm365.servicePort }}
+    {{- end }}
+    {{- end }}
+    {{- if .Values.dsearchadminService.enable }}
+    {{ if eq .Values.platform "aws" }}
+      - path: /dsearchadmin*
+    {{ else }}
+      - path: /dsearchadmin
+    {{ end }}
+    {{- if not (.Capabilities.APIVersions.Has "extensions/v1beta1") }}
+        pathType: {{ default "ImplementationSpecific" .Values.dsearchadminService.pathType }}
+        backend:
+          service:
+            name: {{ .Values.dsearchadminService.serviceName }}
+            port:
+              number: {{ .Values.dsearchadminService.servicePort }}
+    {{- else }}
+        backend:
+          serviceName: {{ .Values.dsearchadminService.serviceName }}
+          servicePort: {{ .Values.dsearchadminService.servicePort }}
+    {{- end }}
+    {{- end }}
+    {{- $component := index .Values.global "documentum-search" }}
+    {{- if and $component.enabled (empty (.Values.documentumSearchService.enable | quote) | ternary (not .Values.global.multiIngress) .Values.documentumSearchService.enable) }}
+    {{ if eq .Values.platform "aws" }}
+      - path: /admin*
+    {{ else }}
+      - path: /admin
+    {{ end }}
+    {{- if not (.Capabilities.APIVersions.Has "extensions/v1beta1") }}
+        pathType: {{ default "ImplementationSpecific" .Values.documentumSearchService.pathType }}
+        backend:
+          service:
+            name: {{ .Values.documentumSearchService.serviceName }}
+            port:
+              number: {{ .Values.documentumSearchService.servicePort }}
+    {{- else }}
+        backend:
+          serviceName: {{ .Values.documentumSearchService.serviceName }}
+          servicePort: {{ .Values.documentumSearchService.servicePort }}
+    {{- end }}
+    {{- end }}
+    {{- if .Values.indexagentService.enable }}
+    {{ if eq .Values.platform "aws" }}
+      - path: /IndexAgent*
+    {{ else }}
+      - path: /IndexAgent
+    {{ end }}
+    {{- if not (.Capabilities.APIVersions.Has "extensions/v1beta1") }}
+        pathType: {{ default "ImplementationSpecific" .Values.indexagentService.pathType }}
+        backend:
+          service:
+            name: {{ .Values.indexagentService.serviceName }}
+            port:
+              number: {{ .Values.indexagentService.servicePort }}
+    {{- else }}
+        backend:
+          serviceName: {{ .Values.indexagentService.serviceName }}
+          servicePort: {{ .Values.indexagentService.servicePort }}
+    {{- end }}
+    {{- end }}
+    {{- if and .Values.global.dfs.enabled (empty (.Values.dfsService.enable | quote) | ternary (not .Values.global.multiIngress) .Values.dfsService.enable) }}
+    {{ if eq .Values.platform "aws" }}
+      - path: /dfs*
+    {{ else }}
+      - path: /dfs
+    {{ end }}
+    {{- if not (.Capabilities.APIVersions.Has "extensions/v1beta1") }}
+        pathType: {{ default "ImplementationSpecific" .Values.dfsService.pathType }}
+        backend:
+          service:
+            name: {{ .Values.dfsService.serviceName }}
+            port:
+              number: {{ .Values.dfsService.servicePort }}
+    {{- else }}
+        backend:
+          serviceName: {{ .Values.dfsService.serviceName }}
+          servicePort: {{ .Values.dfsService.servicePort }}
+    {{- end }}
+    {{- end -}}
+    {{- $component := index .Values.global "dctm-dms" }}
+    {{- if and $component.enabled (empty (.Values.dmsService.enable | quote) | ternary (not .Values.global.multiIngress) .Values.dmsService.enable) }}
+    {{ if eq .Values.platform "aws" }}
+      - path: /dms-ws*
+    {{ else }}
+      - path: /dms-ws
+    {{ end }}
+    {{- if not (.Capabilities.APIVersions.Has "extensions/v1beta1") }}
+        pathType: {{ default "ImplementationSpecific" .Values.dmsService.pathType }}
+        backend:
+          service:
+            name: {{ .Values.dmsService.serviceName| default .Values.global.dmsServiceName }}
+            port:
+              number: {{ .Values.dmsService.servicePort | default .Values.global.dmsHttpPort }}
+    {{- else }}
+        backend:
+          serviceName: {{ .Values.dmsService.serviceName| default .Values.global.dmsServiceName }}
+          servicePort: {{ .Values.dmsService.servicePort | default .Values.global.dmsHttpPort }}
+    {{- end }}
+    {{- end -}}
+    {{- if .Values.webtopService.enable }}
+    {{ if eq .Values.platform "aws" }}
+      - path: /webtop*
+    {{ else }}
+      - path: /webtop
+    {{ end }}
+    {{- if not (.Capabilities.APIVersions.Has "extensions/v1beta1") }}
+        pathType: {{ default "ImplementationSpecific" .Values.webtopService.pathType }}
+        backend:
+          service:
+            name: {{ .Values.webtopService.serviceName }}
+            port:
+              number: {{ .Values.webtopService.servicePort }}
+    {{- else }}
+        backend:
+          serviceName: {{ .Values.webtopService.serviceName }}
+          servicePort: {{ .Values.webtopService.servicePort }}
+    {{- end }}
+    {{- end -}}
+    {{- if and $cscomponent.enabled (empty (.Values.dmotdsrestService.enable | quote) | ternary true .Values.dmotdsrestService.enable) }}
+    {{ if eq .Values.platform "aws" }}
+      - path: /dmotdsrest*
+    {{ else }}
+      - path: /dmotdsrest
+    {{ end }}
+    {{- if not (.Capabilities.APIVersions.Has "extensions/v1beta1") }}
+        pathType: {{ default "ImplementationSpecific" .Values.dmotdsrestService.pathType }}
+        backend:
+          service:
+            name: {{ .Values.dmotdsrestService.serviceName | default .Values.global.jmsServiceName }}
+            port:
+              number: {{ .Values.dmotdsrestService.servicePort }}
+    {{- else }}
+        backend:
+          serviceName: {{ .Values.dmotdsrestService.serviceName | default .Values.global.jmsServiceName }}
+          servicePort: {{ .Values.dmotdsrestService.servicePort }}
+    {{- end }}
+    {{- end -}}
+    {{- if and .Values.global.otds.enabled (empty (.Values.otdsadmin.enable | quote) | ternary true .Values.otdsadmin.enable) }}
+    {{ if eq .Values.platform "aws" }}
+      - path: /otds-admin*
+    {{ else }}
+      - path: /otds-admin/
+    {{ end }}
+    {{- if not (.Capabilities.APIVersions.Has "extensions/v1beta1") }}
+        pathType: {{ default "ImplementationSpecific" .Values.otdsadmin.pathType }}
+        backend:
+          service:
+            name: {{ .Values.otdsadmin.serviceName }}
+            port:
+              number: {{ .Values.otdsadmin.servicePort }}
+    {{- else }}
+        backend:
+          serviceName: {{ .Values.otdsadmin.serviceName }}
+          servicePort: {{ .Values.otdsadmin.servicePort }}
+    {{- end }}
+    {{- end }}
+    {{- if and .Values.global.otds.enabled (empty (.Values.otdsws.enable | quote) | ternary true .Values.otdsws.enable) }}
+    {{ if eq .Values.platform "aws" }}
+      - path: /otdsws*
+    {{ else }}
+      - path: /otdsws/
+    {{ end }}
+    {{- if not (.Capabilities.APIVersions.Has "extensions/v1beta1") }}
+        pathType: {{ default "ImplementationSpecific" .Values.otdsws.pathType }}
+        backend:
+          service:
+            name: {{ .Values.otdsws.serviceName }}
+            port:
+              number: {{ .Values.otdsws.servicePort }}
+    {{- else }}
+        backend:
+          serviceName: {{ .Values.otdsws.serviceName }}
+          servicePort: {{ .Values.otdsws.servicePort }}
+    {{- end }}
+    {{- end }}
+    {{- if .Values.otdstenant.enable }}
+    {{ if eq .Values.platform "aws" }}
+      - path: /otdstenant*
+    {{ else }}
+      - path: /otdstenant/
+    {{ end }}
+    {{- if not (.Capabilities.APIVersions.Has "extensions/v1beta1") }}
+        pathType: {{ default "ImplementationSpecific" .Values.otdstenant.pathType }}
+        backend:
+          service:
+            name: {{ .Values.otdstenant.serviceName }}
+            port:
+              number: {{ .Values.otdstenant.servicePort }}
+    {{- else }}
+        backend:
+          serviceName: {{ .Values.otdstenant.serviceName }}
+          servicePort: {{ .Values.otdstenant.servicePort }}
+    {{- end }}
+    {{- end }}
+    {{- if and .Values.global.dtrbase.enabled (empty (.Values.dtrbaseService.enable | quote) | ternary (not .Values.global.multiIngress) .Values.dtrbaseService.enable) }}
+    {{ if eq .Values.platform "aws" }}
+      - path: /dtr*
+    {{ else }}
+      - path: /dtr
+    {{ end }}
+    {{- if not (.Capabilities.APIVersions.Has "extensions/v1beta1") }}
+        pathType: {{ default "ImplementationSpecific" .Values.dtrbaseService.pathType }}
+        backend:
+          service:
+            name: {{ .Values.dtrbaseService.serviceName }}
+            port:
+              number: {{ .Values.dtrbaseService.servicePortCore }}
+    {{- else }}
+        backend:
+          serviceName: {{ .Values.dtrbaseService.serviceName }}
+          servicePort: {{ .Values.dtrbaseService.servicePortCore }}
+    {{- end }}
+    {{ if eq .Values.platform "aws" }}
+      - path: /DCTM-Reports/servlet*
+    {{ else }}
+      - path: /DCTM-Reports/servlet
+    {{ end }}
+    {{- if not (.Capabilities.APIVersions.Has "extensions/v1beta1") }}
+        pathType: {{ default "ImplementationSpecific" .Values.dtrbaseService.pathType }}
+        backend:
+          service:
+            name: {{ .Values.dtrbaseService.serviceName }}
+            port:
+              number: {{ .Values.dtrbaseService.servicePortServlet }}
+    {{- else }}
+        backend:
+          serviceName: {{ .Values.dtrbaseService.serviceName }}
+          servicePort: {{ .Values.dtrbaseService.servicePortServlet }}
+    {{- end }}
+    {{- end }}
+    {{- $component := index .Values.global "dctm-workflow-designer" }}
+    {{- if and $component.enabled (empty (.Values.workflowDesignerService.enable | quote) | ternary (not .Values.global.multiIngress) .Values.workflowDesignerService.enable) }}
+    {{ if eq .Values.platform "aws" }}
+      - path: /DocumentumWorkflowDesigner*
+    {{ else }}
+      - path: /DocumentumWorkflowDesigner
+    {{ end }}
+    {{- if not (.Capabilities.APIVersions.Has "extensions/v1beta1") }}
+        pathType: {{ default "ImplementationSpecific" .Values.workflowDesignerService.pathType }}
+        backend:
+          service:
+            name: {{ .Values.workflowDesignerService.serviceName }}
+            port:
+              number: {{ .Values.workflowDesignerService.servicePort }}
+    {{- else }}
+        backend:
+            serviceName: {{ .Values.workflowDesignerService.serviceName }}
+            servicePort: {{ .Values.workflowDesignerService.servicePort }}
+    {{- end }}
+    {{- end }}
+    {{- if .Values.bpm.enable }}
+    {{ if eq .Values.platform "aws" }}
+      - path: /bpm*
+    {{ else }}
+      - path: /bpm
+    {{ end }}
+    {{- if not (.Capabilities.APIVersions.Has "extensions/v1beta1") }}
+        pathType: {{ default "ImplementationSpecific"  .Values.bpm.pathType }}
+        backend:
+          service:
+            name: {{ .Values.bpm.serviceName | default .Values.global.jmsServiceName }}
+            port:
+              number: {{ .Values.bpm.servicePort }}
+    {{- else }}
+        backend:
+            serviceName: {{ .Values.bpm.serviceName | default .Values.global.jmsServiceName }}
+            servicePort: {{ .Values.bpm.servicePort }}
+    {{- end }}
+    {{- end }}
+    {{- if and .Values.global.records.enabled (empty (.Values.recordsService.enable | quote) | ternary (not .Values.global.multiIngress) .Values.recordsService.enable) }}
+    {{ if eq .Values.platform "aws" }}
+      - path: /records*
+    {{ else }}
+      - path: /records
+    {{ end }}
+    {{- if not (.Capabilities.APIVersions.Has "extensions/v1beta1") }}
+        pathType: {{ default "ImplementationSpecific" .Values.recordsService.pathType }}
+        backend:
+          service:
+            name: {{ .Values.recordsService.serviceName }}
+            port:
+              number: {{ .Values.recordsService.servicePort }}
+    {{- else }}
+        backend:
+          serviceName: {{ .Values.recordsService.serviceName }}
+          servicePort: {{ .Values.recordsService.servicePort }}
+    {{- end }}
+    {{- end }}
+    {{- if and .Values.global.d2smartview.enabled (empty (.Values.d2smartview.enable | quote) | ternary (not .Values.global.multiIngress) .Values.d2smartview.enable) }}
+    {{ if eq .Values.platform "aws" }}
+      - path: /{{ .Values.d2smartview.path | default .Values.global.d2smartviewWebappName}}*
+    {{ else }}
+      - path: /{{ .Values.d2smartview.path | default .Values.global.d2smartviewWebappName}}
+    {{ end }}
+    {{- if not (.Capabilities.APIVersions.Has "extensions/v1beta1") }}
+        pathType: {{ default "ImplementationSpecific" .Values.d2smartview.pathType }}
+        backend:
+          service:
+            name: {{ .Values.d2smartview.serviceName }}
+            port:
+              number: {{ template "d2smartview.servicePort" .  }}
+    {{- else }}
+        backend:
+          serviceName: {{ .Values.d2smartview.serviceName }}
+          servicePort: {{ template "d2smartview.servicePort" .  }}
+    {{- end }}
+    {{- end }}
+    {{- if and .Values.global.d2rest.enabled (empty (.Values.d2rest.enable | quote) | ternary (not .Values.global.multiIngress) .Values.d2rest.enable) }}
+    {{ if eq .Values.platform "aws" }}
+      - path: /{{ .Values.d2rest.path | default .Values.global.d2restWebappName}}*
+    {{ else }}
+      - path: /{{ .Values.d2rest.path | default .Values.global.d2restWebappName}}
+    {{ end }}
+    {{- if not (.Capabilities.APIVersions.Has "extensions/v1beta1") }}
+        pathType: {{ default "ImplementationSpecific" .Values.d2rest.pathType}}
+        backend:
+          service:
+            name: {{ .Values.d2rest.serviceName }}
+            port:
+              number: {{ template "d2rest.servicePort" .  }}
+    {{- else }}
+        backend:
+          serviceName: {{ .Values.d2rest.serviceName }}
+          servicePort: {{ template "d2rest.servicePort" .  }}
+    {{- end }}
+    {{- end }}
+    {{- $component := index .Values.global "dctm-dcc" }}
+    {{- if and $component.enabled (empty (.Values.dcc.enable | quote) | ternary (not .Values.global.multiIngress) .Values.dcc.enable) }}
+    {{ if eq .Values.platform "aws" }}
+      - path: /ui*
+    {{ else }}
+      - path: /ui
+    {{ end }}
+    {{- if not (.Capabilities.APIVersions.Has "extensions/v1beta1") }}
+        pathType: {{ default "ImplementationSpecific" .Values.dcc.pathType }}
+        backend:
+          service:
+            name: {{ .Values.dcc.prefix }}-{{ .Values.dcc.consul.prefix }}-service
+            port:
+              number: {{ .Values.dcc.consul.service.servicePort }}
+    {{- else }}
+        backend:
+          serviceName: {{ .Values.dcc.prefix }}-{{ .Values.dcc.consul.prefix }}-service
+          servicePort: {{ .Values.dcc.consul.service.servicePort }}
+    {{- end }}
+    {{ if eq .Values.platform "aws" }}
+      - path: /v1*
+    {{ else }}
+      - path: /v1
+    {{ end }}
+    {{- if not (.Capabilities.APIVersions.Has "extensions/v1beta1") }}
+        pathType: {{ default "ImplementationSpecific" .Values.dcc.pathType }}
+        backend:
+          service:
+            name: {{ .Values.dcc.prefix }}-{{ .Values.dcc.consul.prefix }}-service
+            port:
+              number: {{ .Values.dcc.consul.service.servicePort }}
+    {{- else }}
+        backend:
+          serviceName: {{ .Values.dcc.prefix }}-{{ .Values.dcc.consul.prefix }}-service
+          servicePort: {{ .Values.dcc.consul.service.servicePort }}
+    {{- end }}
+    {{- $component := index .Values.global "dctm-dcc" }}
+    {{- if and $component.enabled (empty (.Values.dcc.syncagent.enabled | quote) | ternary (not .Values.global.multiIngress) .Values.dcc.syncagent.enabled) }}
+    {{ if eq .Values.platform "aws" }}
+      - path: /syncagent*
+    {{ else }}
+      - path: /syncagent
+    {{ end }}
+    {{- if not (.Capabilities.APIVersions.Has "extensions/v1beta1") }}
+        pathType: {{ default "ImplementationSpecific" .Values.dcc.pathType }}
+        backend:
+          service:
+            name: {{ .Values.dcc.prefix }}-{{ .Values.dcc.syncagent.prefix }}-service
+            port:
+              number: {{ .Values.dcc.syncagent.service.servicePort }}
+    {{- else }}
+        backend:
+          serviceName: {{ .Values.dcc.prefix }}-{{ .Values.dcc.syncagent.prefix }}-service
+          servicePort: {{ .Values.dcc.syncagent.service.servicePort }}
+    {{- end }}
+    {{- end }}
+    {{- $component := index .Values.global "dctm-dcc" }}
+    {{- if and $component.enabled (empty (.Values.dcc.syncnshareManual.enabled | quote) | ternary (not .Values.global.multiIngress) .Values.dcc.syncnshareManual.enabled) }}
+    {{ if eq .Values.platform "aws" }}
+      - path: /syncnshare-manual*
+    {{ else }}
+      - path: /syncnshare-manual
+    {{ end }}
+    {{- if not (.Capabilities.APIVersions.Has "extensions/v1beta1") }}
+        pathType: {{ default "ImplementationSpecific" .Values.dcc.pathType }}
+        backend:
+          service:
+            name: {{ .Values.dcc.prefix }}-{{ .Values.dcc.syncnshareManual.prefix }}-service
+            port:
+              number: {{ .Values.dcc.syncnshareManual.service.servicePort }}
+    {{- else }}
+        backend:
+          serviceName: {{ .Values.dcc.prefix }}-{{ .Values.dcc.syncnshareManual.prefix }}-service
+          servicePort: {{ .Values.dcc.syncnshareManual.service.servicePort }}
+    {{- end }}
+    {{- end }}
+    {{ end }}
+    {{- if and .Values.global.contentconnect.enabled (empty (.Values.ccadminService.enable | quote) | ternary (not .Values.global.multiIngress) .Values.ccadminService.enable) }}
+    {{ if eq .Values.platform "aws" }}
+      - path: /{{ .Values.ccadminService.extension }}/service*
+    {{ else }}
+      - path: /{{ .Values.ccadminService.extension }}/service
+    {{ end }}
+    {{- if not (.Capabilities.APIVersions.Has "extensions/v1beta1") }}
+        pathType: {{ default "ImplementationSpecific" .Values.ccService.pathType }}
+        backend:
+          service:
+            name: {{ .Values.ccadminService.serviceName }}
+            port:
+              number: {{ .Values.ccadminService.servicePort }}
+    {{- else }}
+        backend:
+          serviceName: {{ .Values.ccadminService.serviceName }}
+          servicePort: {{ .Values.ccadminService.servicePort }}
+    {{- end }}
+    {{- end }}
+    {{- if and .Values.global.contentconnect.enabled (empty (.Values.ccService.enable | quote) | ternary (not .Values.global.multiIngress) .Values.ccService.enable) }}
+    {{ if eq .Values.platform "aws" }}
+      - path: /{{ .Values.ccService.extension }}*
+    {{ else }}
+      - path: /{{ .Values.ccService.extension }}
+    {{ end }}
+    {{- if not (.Capabilities.APIVersions.Has "extensions/v1beta1") }}
+        pathType: {{ default "ImplementationSpecific" .Values.ccadminService.pathType }}
+        backend:
+          service:
+            name: {{ .Values.ccService.serviceName }}
+            port:
+              number: {{ .Values.ccService.servicePort }}
+    {{- else }}
+        backend:
+          serviceName: {{ .Values.ccService.serviceName }}
+          servicePort: {{ .Values.ccService.servicePort }}
+    {{- end }}
+    {{- end }}
+    {{- if and (and .Values.global.d2classic.enabled (empty (.Values.d2clientService.enable | quote) | ternary (not .Values.global.multiIngress) .Values.d2clientService.enable)) (eq .Values.d2xmlViewerService.enable true)}}
+    {{ if eq .Values.platform "aws" }}
+      - path: /{{ .Values.d2xmlViewerService.path }}*
+    {{ else }}
+      - path: /{{ .Values.d2xmlViewerService.path }}
+    {{ end }}
+    {{- if not (.Capabilities.APIVersions.Has "extensions/v1beta1") }}
+        pathType: {{ default "ImplementationSpecific" .Values.d2xmlViewerService.pathType }}
+        backend:
+          service:
+            name: {{ .Values.d2clientService.serviceName }}
+            port:
+              number: {{ template "d2classic.servicePort" .  }}
+    {{- else }}
+        backend:
+          serviceName: {{ .Values.d2clientService.serviceName }}
+          servicePort: {{ template "d2classic.servicePort" .  }}
+    {{- end }}
+    {{- end }}
+    {{- if and (and .Values.global.d2classic.enabled (empty (.Values.d2clientService.enable | quote) | ternary (not .Values.global.multiIngress) .Values.d2clientService.enable)) (eq .Values.d2lsService.enable true)}}
+    {{ if eq .Values.platform "aws" }}
+      - path: /{{ .Values.d2lsService.path }}*
+    {{ else }}
+      - path: /{{ .Values.d2lsService.path }}
+    {{ end }}
+    {{- if not (.Capabilities.APIVersions.Has "extensions/v1beta1") }}
+        pathType: {{ default "ImplementationSpecific" .Values.d2lsService.pathType }}
+        backend:
+          service:
+            name: {{ .Values.d2clientService.serviceName }}
+            port:
+              number: {{ template "d2classic.servicePort" .  }}
+    {{- else }}
+        backend:
+          serviceName: {{ .Values.d2clientService.serviceName }}
+          servicePort: {{ template "d2classic.servicePort" .  }}
+    {{- end }}
+    {{- end }}
+    {{- if eq .Values.lsprintService.enable true }}
+    {{ if eq .Values.platform "aws" }}
+      - path: /{{ .Values.lsprintService.path }}*
+    {{ else }}
+      - path: /{{ .Values.lsprintService.path }}
+    {{ end }}
+    {{- if not (.Capabilities.APIVersions.Has "extensions/v1beta1") }}
+        pathType: {{ default "ImplementationSpecific" .Values.lsprintService.pathType }}
+        backend:
+          service:
+            name: {{ .Values.lsprintService.serviceName }}
+            port:
+              number: {{ template "lss.servicePort" .  }}
+    {{- else }}
+        backend:
+          serviceName: {{ .Values.lsprintService.serviceName }}
+          servicePort: {{ template "lss.servicePort" .  }}
+    {{- end }}
+    {{- end }}
+    {{- if eq .Values.lssftpService.enable true }}
+    {{ if eq .Values.platform "aws" }}
+      - path: /{{ .Values.lssftpService.path }}*
+    {{ else }}
+      - path: /{{ .Values.lssftpService.path }}
+    {{ end }}
+    {{- if not (.Capabilities.APIVersions.Has "extensions/v1beta1") }}
+        pathType: {{ default "ImplementationSpecific" .Values.lssftpService.pathType }}
+        backend:
+          service:
+            name: {{ .Values.lssftpService.serviceName }}
+            port:
+              number: {{ template "lss.servicePort" .  }}
+    {{- else }}
+        backend:
+          serviceName: {{ .Values.lssftpService.serviceName }}
+          servicePort: {{ template "lss.servicePort" .  }}
+    {{- end }}
+    {{- end }}
+
+    {{- if and .Values.global.adminconsole.enabled (empty (.Values.adminconsole.enable | quote) | ternary (not .Values.global.multiIngress) .Values.adminconsole.enable) }}
+    {{ if eq .Values.platform "aws" }}
+      - path: /{{ .Values.adminconsole.path | default .Values.global.adminConsoleWebappName }}/*
+    {{ else }}
+      - path: /{{ .Values.adminconsole.path | default .Values.global.adminConsoleWebappName }}
+    {{ end }}
+    {{- if not (.Capabilities.APIVersions.Has "extensions/v1beta1") }}
+        pathType: {{ default "ImplementationSpecific" .Values.adminconsole.pathType }}
+        backend:
+          service:
+            name: {{ .Values.adminconsole.serviceName }}
+            port:
+              number: {{ template "adminconsole.servicePort" .  }}
+    {{- else }}
+        backend:
+          serviceName: {{ .Values.adminconsole.serviceName }}
+          servicePort: {{ template "adminconsole.servicePort" .  }}
+    {{- end }}
+    {{- end }}
+
+    {{- $component := index .Values.global "oesconnector" }}
+    {{- if and $component.enabled (empty (.Values.oesconnector.enable | quote) | ternary (not .Values.global.multiIngress) .Values.oesconnector.enable) }}
+    {{ if eq .Values.platform "aws" }}
+      - path: /{{ .Values.global.oesconnectorWebappName }}/*
+    {{ else }}
+      - path: /{{ .Values.global.oesconnectorWebappName }}
+    {{ end }}
+    {{- if not (.Capabilities.APIVersions.Has "extensions/v1beta1") }}
+        pathType: {{ default "ImplementationSpecific" .Values.oesconnector.pathType }}
+        backend:
+          service:
+            name: {{ .Values.oesconnector.serviceName }}
+            port:
+              number: {{ .Values.oesconnector.servicePort }}
+    {{- else }}
+        backend:
+          serviceName: {{ .Values.oesconnector.serviceName }}
+          servicePort: {{ .Values.oesconnector.servicePort }}
+    {{- end }}
+    {{- end }}
+
+    {{- $component := index .Values.global "dctm-assap" }}
+    {{- if and $component.enabled (empty (.Values.assapservice.enable | quote) | ternary (not .Values.global.multiIngress) .Values.assapservice.enable) }}
+    {{- if eq .Values.platform "aws" }}
+      - path: /{{ .Values.assapservice.path }}*
+    {{- else }}
+      - path: /{{ .Values.assapservice.path }}
+    {{- end }}
+    {{- if not (.Capabilities.APIVersions.Has "extensions/v1beta1") }}
+        pathType: {{ default "ImplementationSpecific" .Values.ingress.pathType }}
+        backend:
+          service:
+            name: {{ .Values.assapservice.serviceName }}
+            port:
+              number: {{ .Values.assapservice.servicePort }}
+    {{- else }}
+        backend:
+          serviceName: {{ .Values.assapservice.serviceName }}
+          servicePort: {{ .Values.assapservice.servicePort }}
+    {{- end }}
+    {{- end }}
+
+    {{- $component := index .Values.global "dctm-assap-ilm" }}
+    {{- if and $component.enabled (empty (.Values.assapilmservice.enable | quote) | ternary (not .Values.global.multiIngress) .Values.assapilmservice.enable) }}
+    {{- if eq .Values.platform "aws" }}
+      - path: /{{ .Values.assapilmservice.path }}*
+    {{ else }}
+      - path: /{{ .Values.assapilmservice.path }}
+    {{ end }}
+    {{- if not (.Capabilities.APIVersions.Has "extensions/v1beta1") }}
+        pathType: {{ default "ImplementationSpecific" .Values.assapilmservice.pathType }}
+        backend:
+          service:
+            name: {{ .Values.assapilmservice.serviceName }}
+            port:
+              number: {{ .Values.assapilmservice.servicePort }}
+    {{- else }}
+        backend:
+          serviceName: {{ .Values.assapilmservice.serviceName }}
+          servicePort: {{ .Values.assapilmservice.servicePort }}
+    {{- end }}
+    {{- end }}
+
+    {{- $component := index .Values.global "dctm-cssap" }}
+    {{- if and $component.enabled (empty (.Values.cssapservice.enable | quote) | ternary (not .Values.global.multiIngress) .Values.cssapservice.enable) }}
+    {{- if eq .Values.platform "aws" }}
+      - path: /{{ .Values.cssapservice.path }}*
+    {{- else }}
+      - path: /{{ .Values.cssapservice.path }}
+    {{- end }}
+    {{- if not (.Capabilities.APIVersions.Has "extensions/v1beta1") }}
+        pathType: {{default "ImplementationSpecific" .Values.ingress.pathType }}
+        backend:
+          service:
+            name: {{ .Values.cssapservice.serviceName }}
+            port:
+              number: {{ .Values.cssapservice.servicePort }}
+    {{- else }}
+        backend:
+          serviceName: {{ .Values.cssapservice.serviceName }}
+          servicePort: {{ .Values.cssapservice.servicePort }}
+    {{- end }}
+    {{- end }}
+
+    {{- if and .Values.global.d2classic.enabled (empty (.Values.d2clientService.enable | quote) | ternary (not .Values.global.multiIngress) .Values.d2clientService.enable) }}
+    {{ if eq .Values.platform "aws" }}
+      - path: /{{ .Values.d2clientService.path | default .Values.global.d2classictWebappName}}*
+    {{ else }}
+      - path: /{{ .Values.d2clientService.path | default .Values.global.d2classicWebappName}}
+    {{ end }}
+    {{- if not (.Capabilities.APIVersions.Has "extensions/v1beta1") }}
+        pathType: {{ default "ImplementationSpecific" .Values.d2clientService.pathType }}
+        backend:
+          service:
+            name: {{ .Values.d2clientService.serviceName }}
+            port:
+              number: {{ template "d2classic.servicePort" .  }}
+    {{- else }}
+        backend:
+          serviceName: {{ .Values.d2clientService.serviceName }}
+          servicePort: {{ template "d2classic.servicePort" .  }}
+    {{- end }}
+    {{- end }}
+## This entry must be the last in the configuration file.
+## Reason: Any content added after the ingress section is also being unintentionally included in the dc4sp ingress host
+## configuration. Placing this entry at the end prevents such unintended additions.
+  {{- if eq .Values.dc4spService.enable true }}
+  - host: {{ .Values.dc4spService.host }}.{{ .Values.ingress.clusterDomainName | default .Values.global.ingressDomain}}
+    http:
+      paths:
+    {{ if eq .Values.platform "aws" }}
+      - path: /*
+    {{ else }}
+      - path: /(.*)
+    {{ end }}
+    {{- if not (.Capabilities.APIVersions.Has "extensions/v1beta1") }}
+        backend:
+          service:
+            name: {{ .Values.dc4spService.serviceName }}
+            port:
+              number: {{ template "lss.servicePort" .  }}
+        pathType: {{ default "ImplementationSpecific" .Values.dc4spService.pathType }}
+    {{- else }}
+        backend:
+          serviceName: {{ .Values.dc4spService.serviceName }}
+          servicePort: {{ template "lss.servicePort" .  }}
+    {{- end }}
+  {{- end }}
+    {{- if eq .Values.ingress.configureHost true }}
+    {{- if eq ( .Values.ingress.host | default .Values.global.hostShortName | toString | regexFind "\\b((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(\\.|$)){4}\\b") ("" | toString) }}
+    host: {{ .Values.ingress.host | default .Values.global.hostShortName }}.{{ .Values.ingress.clusterDomainName | default .Values.global.ingressDomain}}
+    {{- end }}
+    {{- end }}

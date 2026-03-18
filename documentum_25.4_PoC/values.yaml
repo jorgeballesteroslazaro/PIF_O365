@@ -1,0 +1,738 @@
+################################################################################################
+#                                                                                              #
+#                                   This is a YAML-formatted file.                             #
+#                          Provide the values for variables to be passed to the templates.     #
+################################################################################################
+
+######################oes-connector################Global Variables##########################################
+######################################Global Variables##########################################
+
+global:
+  # Description: Name of the storage class with Persistent Volume Claim (PVC) access mode as ReadWriteOnce.    
+  #rwoStorage: &rwo_storage_class trident-nfs
+  rwoStorage: &rwo_storage_class efs-sc
+
+  # Description: Name of the storage class with PVC access mode as ReadWriteMany.
+  #rwmStorage: &rwm_storage_class trident-nfs
+  rwmStorage: &rwm_storage_class efs-sc
+
+  # Description: Name of the repository.
+  docbase: PIF
+
+  # Description: Name of the secret configuration file.
+  csSecrets: &cs_secret_name cs-secret-config
+
+  # Description: Indicates to use vault secrets for the deployment instead of plain passwords.
+  isVaultEnabled: &isVaultEnabled false
+
+  # Description: Indicates the type of vault you want to use. 
+  # If you set the value to K8API, in Kubernetes native secrets, OpenText Documentum CM retrieves the
+  # passwords through Kubernetes API directly instead of storing as an environment variable. Set the value of
+  # otds.otdsws.vault.enabled, otiv.global.secretlink.enabled, and appworks-gateway.vault.enabled to false.
+  #
+  # If you set the value to HashiCorp, OpenText Documentum CM retrieves the passwords automatically 
+  # from the HashiCorp Vault server.
+  # Valid values are K8API and HashiCorp.
+  vaultType: # Description: Name of the Kubernetes secret that contains the actual credentials such as
+
+  # database password, installation owner password, and so on.
+  #
+  # Make sure that the name is same as you mentioned while creating a secret using the 
+  # documentum/config/vault_secret.yaml file.
+  #
+  # If you have not created a secret using the documentum/config/vault_secret.yaml file but want to use the secret from any
+  # cloud providers (for example, secret manager in Microsoft Azure, Amazon Web Services, and so on), in External Secret 
+  # Operator (ESO) configuration, synchronize the secret from cloud provider with the value provided for 
+  # global.secretConfigName as target secret.
+  #  
+  # Notes:
+  # 1. If you set the value for global.vaultType to K8API, for OTDS, set the value provided for global.secretConfigName as 
+  # the value for otds.otdsws.customSecretName in the documentum/config/configuration.yml file.
+  # 2. If you set the value for global.vaultType to K8API, for OTIV, set the value provided for global.secretConfigName as 
+  # the value for otiv.global.existingSecret in the documentum/config/configuration.yml file.
+  # 3. If you set the value for global.vaultType to K8API, for AppWorks Gateway, set the value provided for    
+  # global.secretConfigName as the value for appworks-gateway.global.secretName in the 
+  # documentum/config/configuration.yml file.
+  secretConfigName: vault-secret-config
+
+  # Description: User name of the installation owner.
+  installOwnerUsername: dmadmin
+
+  # Description: User name of the global registry user.
+  globalRegistryUsername: dm_bof_registry
+
+  # Description: Indicates whether OTDS is enabled.
+  otdsEnabled: &otds_enabled true
+
+  # Description: Database user name to connect to OTDS.
+  otdsUserName: &otds_db_username postgres
+
+  # Description: Default name for Classic View web application.
+  d2classicWebappName: &d2classic_webapp_name D2
+
+  # Description: Default name for client configuration web application.
+  d2configWebappName: &d2config_webapp_name D2-Config
+
+  # Description: Default name for Client REST API web application.
+  d2restWebappName: &d2rest_webapp_name d2-rest
+
+  # Description: Default name for the Smart View web application.
+  d2smartviewWebappName: &d2smartview_webapp_name D2-Smartview
+
+  # Description: Default name for the Admin Console web application.
+  adminConsoleWebappName: &adminconsole_webapp_name AdminConsole # Description: Default name for the Online Editing Service.
+  oesconnectorWebappName: &oesconnector_webapp_name oes-connector
+
+  # Description: Crypto salt for client token encryption/decryption (must be same across REST, Admin Console, D2-Smartview services in multi-node; 
+  # optional for single-node; up to 8 ASCII characters).
+  cryptoKeySalt:
+
+  # Description: Default timeout value for Client token timeout in seconds for client applications.
+  restApiClientSessionTokenTimeout: 3000
+
+  # Description: Time in milliseconds that the server will wait for an incoming connection to be established before terminating the request in Tomcat server server.xml. 
+  # To customize the timeout for a specific component, update its ConfigMap or override the value in subcomponent values.yaml.
+  tomcatConnectionTimeout: 60000
+
+  # Description: Maximum HTTP header size (in bytes) in Tomcat server server.xml.
+  # To customize the maxHttpHeaderSize for a specific component, update its ConfigMap or override the value in subcomponent values.yaml.
+  tomcatMaxHttpHeaderSize: 8192
+
+  # Description: Maximum number of threads in the pool in Tomcat server server.xml.
+  # To customize the maxThreads for a specific component, update its ConfigMap or override the value in subcomponent values.yaml.
+  tomcatMaxThreads: 200
+
+  # Description: Keep-alive timeout in milliseconds in Tomcat server server.xml.
+  # To customize the keepAliveTimeout for a specific component, update its ConfigMap or override the value in subcomponent values.yaml.
+  tomcatKeepAliveTimeout: 60000
+
+  # Description: Maximum queued connections in the pool in Tomcat server server.xml.
+  # To customize the acceptCount for a specific component, update its ConfigMap or override the value in subcomponent values.yaml.
+  tomcatAcceptCount: 100
+
+  # Description: Service account information.
+  # If you want to use Kubernetes native secrets, make sure that the service account has read access to the global.secretConfigName.
+  #documentumserviceaccount: &documentum_service_account default
+  documentumserviceaccount: &documentum_service_account dctm
+
+  # Description: Indicates to use the common PVC if the PVC already exists.
+  tomcatbase_usecommonpvc: true
+
+  # Description: Name of the common PVC.
+  tomcatbase_commonpvcname: d2-extension-pvc
+
+  # Description: Provide the Ingress URL used for client, Smart View and Client REST API.
+  ingressUrl: dctm-pif.jblnet.local
+
+  # Description: Path where Application Encryption Key (AEK) is available.
+  # Note: If Vault is enabled, the value must be Remote_Vault. If Vault is not enabled, use the default value, Local.
+  aekLocation: Local
+
+  # Unsupported feature
+  kmsUrl: https://kmsurl:port
+
+  # Description: Type of the connection mode. Valid values are native, secure, and dual.
+  connectMode: dual
+
+  # Description: OAuth client information.
+  oauthClient: d2_oauth_client
+
+  # Description: Type of the communication mode.
+  # Note: Make sure that the value is retained as https if global.internalTlsEnable is set to true. 
+  ingressProtocol: &ingress_protocol http
+
+  # Description: Short name of the ingress for Single / Internal Ingress (in case Multi-ingress is enabled).
+  hostShortName: dctm-pif
+
+  # Description: Domain of Single / Internal Ingress Controller in the cluster.
+  ingressDomain: &ingress_domain d2.cfcr-lab.bp-paas.otxlab.net
+
+  # Description: Indicates if multiple ingresses are enabled. By default, the value is false. Set the value to true to enable multiple ingress. 
+  # Note: When the value is set to true, it enables d2publicingress, vpningress, and dctm-ingress.
+  multiIngress: false
+
+  # Description: Short name of the ingress for Public Ingress.
+  publicHostShortName: public-ingress
+
+  # Description: Domain of Public Ingress Controller in the cluster.
+  publicIngressDomain: d2.cfcr-lab.bp-paas.otxlab.net
+
+  # Description: Short name of the ingress for VPN Ingress.
+  vpnHostShortName: vpn-ingress
+
+  # Description: Domain of VPN Ingress Controller in the cluster.
+  vpnIngressDomain: d2.cfcr-lab.bp-paas.otxlab.net
+
+  # Description: Service type of the web application.
+  webappServiceType: &webapp_service_type ClusterIP
+
+  proxy:
+    # Description: Indicates if the proxy configuration is enabled.
+    enabled: false
+
+    # Description: Proxy protocol to use (http or https).
+    protocol:
+
+    # Description: Proxy server host name or IP address.
+    host:
+
+    # Description: Port on which the proxy server listens.
+    port:
+
+    # Description: Comma-separated list of domains or IP addresses that should bypass the proxy.
+    noProxy: localhost,127.0.0.1,*.otxlab.net
+
+  # Description: Indicates to disable writing application logs to PVC when enabled.
+  grayLogEnable: false
+
+  # Description: Name of the Graylog or Logstash server.
+  graylogServer: graylog-proxy-bp.otxlab.net
+
+  # Description: Port that listens for the incoming messages from Fluentd.
+  graylogPort: 9000
+
+  # Description: Indicates the port on which graylog is listening for TCP connections. It is assigned to Documentum CM Server and other products or components.
+  graylogTCPPort: 7075
+
+  # Description: Mandatory static field as per Graylog standards Business Unit.
+  businessUnit: ems_dev
+
+  # Description: Data center information such as lit, wok, all, and so on.
+  datacenter: bp
+
+  # Description: Environment information such as Dev, QA, production, and so on.
+  environment: dev
+
+  # Description: Indicates if Graylog is disabled for xPlore.
+  persistLogs: false
+
+  # Description: Indicates if New Relic is enabled.
+  # Note: If you set the value of this variable to true, the New Relic feature is enabled for the connection broker and Documentum CM Server pods.
+  newrelic: &newrelic_enabled false
+
+  # Description: IP address of the proxy server.
+  newrelicProxyHost: &newrelic_proxy_host bp2-prox01-l001.otxlab.net
+
+  # Description: Port reserved for the New Relic server.
+  newrelicProxyPort: &newrelic_proxy_port 3128
+
+  # Description: Protocol to connect to the pod.
+  newrelicProxyProtocol: &newrelic_proxy_protocol http
+
+  # Description: Indicates if trusted login is enabled for the session. 
+  # Note: As a security best practice, Foundation Java API trusted login for Documentum client applications in a production environment should be disabled.
+  sessionAllowTrustedLogin: false
+
+  # Description: Indicates to enable TLS from Ingress to the web applications server.
+  # Note: If you set the value to true, you must also set the value of global.useCertificate to true.
+  internalTlsEnable: false
+
+  # Description: Indicates if certificate-based communication is enabled.
+  useCertificate: false
+
+  # Description: Name of the secret file that will used at ingress as tls secret when internalTlsEnable is enabled
+  ingressTLSSecret: otds-secret-tls
+
+  # Description: Indicates to create common trust store for service to service communication.When enabled, a shared certificate will be generated to allow services to mutually trust each other. 
+  #Service names must use their fully qualified domain names (FQDN), such as jms-service.svc.cluster.local, to ensure proper trust establishment.
+  #Note: When createCommonTruststore is set to true, ensure that useCertificate is also set to true.
+  createCommonTruststore: false
+
+  # Description: Service name of connection broker. You must provide the fully qualified domain name (FQDN) and it must not exceed 59 characters.
+  dbrServiceName: dbr
+
+  # Description: Port reserved for the connection broker.
+  dbr_port: 1489
+
+  # Description: ConfigMap name of the connection broker.
+  dbrConfigmapName: dbr.configmap
+
+  # Description: PVC name of the connection broker.
+  dbrdataPVCName: certdbr-data-pvc
+
+  # Description: Indicates if deployment in Red Hat OpenShift is enabled.
+  openshiftEnable: false
+
+  # Description: Indicates if deployment in Red Hat OpenShift is enabled with HTTPS configuration.
+  openshiftTls: false
+
+  # Description: Indicates if the external access of the connection broker is enabled.
+  externalAccessEnabled: false
+
+  # Description: Indicates to use the Oracle database.
+  isCSORCLdb: false
+
+  # Description: Administrator user name used to communicate among the replicas in the Apache Kafka cluster.
+  kafka_admin_user_name: kafka-user
+
+  # Description: Topic name provided while deploying the Apache Kafka cluster for storing the events.
+  kafka_topic_name: Cs-Audit-Topic
+
+  # Description: Broker list information of Apache Kafka.
+  kafkaBrokerList: localhost:9092
+
+  # Description: Indicates to write application logs to PVC when enabled.
+  fluentd: false
+
+  # Description: Port on which Fluentd is listening for TCP connection.
+  # Note: This port is used for communication between Foundation Java API Classes based applications and Fluentd.    
+  fluentdTcpPort: 24224
+
+  # Description: Port on which Fluentd is listening for Foundation REST API connection.
+  fluentdRestPort: 8888
+
+  # Description: Port on which Fluentd is listening for UDP connection.
+  # Note: Documentum CM Server uses the UDP connection.
+  fluentdUdpPort: 20001
+
+  # Description: Log level for the Foundation Java API Classes events. 
+  # Set any value from 0 to 5 where 0 is for NO LOG, 1 is for ERROR, 2 is for WARN, 3 is for INFO, 4 is for DEBUG, and 5 is for TRACE.
+  eventLogLevel: 0
+
+  # Description: Indicates if Foundation Java API Classes RPC tracing log is enabled. 
+  dfcRPCTracing: false
+
+  # Description: Indicates the markup service port number.
+  markupPort: &markup_port 80
+
+  # Description: Indicates the publication service port number.
+  publicationPort: &publication_port 80
+
+  ## messaging host and user by the publication and publisher services ##
+
+  # Description: Indicates the messaging host used by the publication and publisher services.
+  msgHost: &msg_host otiv-amqp
+
+  # Description: Indicates the messaging user used by the publication and publisher services.
+  msgUser: &msg_user user
+
+  # Description: Extension name for OpenText Content Connect to be used in accessing Admin Console. You can update the Global variables for ccExtension to any value other than the default value (cc) and this will rename the web application for OpenText Content Connect.
+  ccExtension: &ccExtension cc
+
+  # Description: Indicates the prefix for components to be deployed. You can update the Global variables for dccPrefix to any value other than the default value (dcc) and this will rename the deployment for Documentum Connector for Core Share.
+  dccPrefix: &dccPrefix dcc
+
+  # Description: Indicates if the usage of the logrotate tool is enabled.
+  cslogrotate: false
+
+  # Description: Java Method Server service name created by Documentum CM Server.
+  jmsServiceName: dcs-pg-jms-service
+
+  # Description: Port reserved for Java Method Server.
+  # Note: If you set the value of global.internalTlsEnable to true, set the value of global.jmsPort to 9082.
+  jmsPort: 9080
+
+  # Description: Indicates if any changes to variables are made in cs-secrets. 
+  # To reflect the changes, you must change the value to a different numeric value than the one provided for the previous deployment. 
+  # When you change the value and then run the helm upgrade command, the Documentum CM Server and connection broker pods are recreated automatically.
+  secrets_Change: 1
+
+  # Description: Indicates if the Swagger documentation is available for Client REST API or Smart View. 
+  # Set this variable to true to disable Swagger documentation for Client REST API or Smart View. 
+  removeDocumentation: true
+
+  # Description: Register OpenText Documentum Content Management for Microsoft 365 in Microsoft Entra Admin Center for tenant ID. 
+  mstenantid: "Training_2026_25_4"
+
+  # Description: Register OpenText Documentum Content Management for Microsoft 365 in Microsoft Entra Admin Center for client ID.
+  msClientId: "Training_2026_25_4"
+
+  # Description: Database IP to be connected.
+  db_hostname: &db_hostname db-pg
+
+  # Description: User name of the database.
+  databaseusername: postgres
+
+  # Description: Database port to be connected.
+  dbport: 5432
+
+  # Description: Database type to be connected. Valid values are:
+  # * postgres for PostgreSQL
+  # * oracle for Oracle 
+  dbtype: postgres
+
+  # Description: Indicates to enable SSL for database. Set the value to true to enable the SSL database for PostgreSQL or Oracle.
+  db_ssl: false
+
+  # Description: SSL connection mode that is used to deploy the SSL-enabled PostgreSQL database. The valid values are prefer, require, verify-ca, and verify-full.
+  db_ssl_mode: <ssl_mode>
+
+  # Description: Schema name of the JDBC database. For example, public.
+  # Note: For the Oracle database, set the value to oracle.
+  dbSchema_Name: postgres
+
+  # Description: Database service name.
+  # Note: For the Oracle database, set the value to oracle.
+  db_service: MyPostgres
+
+  # Description: Class name of the JDBC driver.
+  # * For PostgreSQL: org.postgresql.Driver
+  # * For Oracle: oracle.jdbc.driver.OracleDriver
+  # Note: For the Oracle database, set the value to oracle.jdbc.driver.OracleDriver.
+  driverClass_Name: org.postgresql.Driver
+
+  # Description: ConfigMap name of ActiveMQ.
+  amqConfigmap: amq-configmap
+
+  # Description: Name of the ActiveMQ secret configuration file.
+  amqSecret: amq-secret
+
+  # Description: Security context configuration for a pod.
+  fsGroup: 1000
+
+  # Description: License key of New Relic. 
+  licenseKeyName: newrelicLicensekey
+
+  # Description: Indicates if the usage of the logrotate tool is enabled.
+  logrotate_enable: true
+
+  # Description: Frequency of the log rotation.
+  logrotate_interval: 1d
+
+  # Description: Name of the Messaging Service pod.
+  dmsServiceName: dctm-dms
+
+  # Description: HTTP port of the Messaging Service application.
+  dmsHttpPort: 8489
+
+  # Description: Locale code for OpenText Documentum Content Management.
+  locale: en
+
+  # Description: Time in seconds for inactivity logout.
+  inactivityLogout: 900
+
+  # Description: Indicates to stream application logs to standard output stream (STDOUT).
+  logsStreamToConsole: false
+######################################End of Global Variables###################################
+
+otds:
+  ingress:
+    # Description: Indicates if the Kubernetes ingress is enabled. This variable uses the values you specify for otds_ingress_enabled in Global Variables.
+    enabled: &otds_ingress_enabled true
+
+  ########################################################################
+  # Directory Services frontend subchart:
+  # Don't remove the YAML &anchors - only change the parameters behind!
+  # (they are used for cross-referencing to avoid repetitive settings)
+  ########################################################################
+  otdsws:
+    # Description: This variable uses the value that you specified for otdsEnabled in Global Variables.
+    # Note: Controls whether the OTDS frontend gets deployed as a container in Kubernetes. If you have OTDS deployed in a different location, you can set it to false.
+    enabled: *otds_enabled
+
+    # Description: Defines the connection information for the database which is the backend data storage location for OTDS.
+    otdsdb:
+      ## username specifies the account for the database connection
+      # Description: This variable uses the value that you specified for otdsUserName in Global Variables.
+      username: *otds_db_username
+
+    # Description: This variable uses the value that you specified for documentumserviceaccount in Global Variables. 
+    serviceAccountName: *documentum_service_account
+    # Description: pvc.* defines a persistent volume claim
+    # This is only required for the following use cases:
+    # - exporting/importing tenants
+
+    # vault.* define HashiCorp Vault integration settings.
+    # OTDS will read secrets from the HashiCorp Vault server rather than using Kubernetes secrets.
+    vault:
+      # Description: This variable uses the value that you specified for isVaultEnabled in Global Variables.
+      # Note: For additional information about using Kubernetes native secrets (K8API), read the description provided for
+      # global.vaultType.
+      enabled: *isVaultEnabled
+
+content-server:
+  docbroker:
+    # Description: In case of multiple repositories, specify the primary connection broker domain.
+    clusterSpace:
+dctm-ingress:
+  d2clientService:
+    path: *d2classic_webapp_name
+  d2configService:
+    path: *d2config_webapp_name
+  d2smartview:
+    path: *d2smartview_webapp_name
+  d2rest:
+    path: *d2rest_webapp_name
+  tls:
+    secretName: *cs_secret_name
+  dcc:
+    prefix: *dccPrefix
+    consul:
+      prefix: consul
+    syncagent:
+      prefix: syncagent
+    syncnshareManual:
+      prefix: syncagent-manual
+  ccService:
+    extension: *ccExtension
+  ccadminService:
+    extension: *ccExtension
+
+dctm-rest:
+  content_server:
+    # Description: This variable uses the value that you specified for csSecrets in Global Variables.
+    secretName: *cs_secret_name
+
+contentconnect:
+  graylog:
+    # Description: This variable uses the value that you specified for grayLogEnable in Global Variables.
+    enable:
+d2config:
+  logback:
+    # Description: Path of the client configuration logback log file. The d2configWebappName variable enables you to configure webappname. 
+    # Since YAML does not allow String concatenation OOTB, the file variable is converted to an array variable and then to string.
+    # The value of file variable is /opt/tomcat/logs/D2-Config/D2-Config.log
+    # The same applies for fileNamePattern and log4j file variables.
+
+    file:
+      - /opt/tomcat/logs/
+      - *d2config_webapp_name
+      - /D2-Config.log
+      # Description: File name pattern for log rotation.
+    fileNamePattern:
+      - /opt/tomcat/logs/
+      - *d2config_webapp_name
+      - /D2-Config-%d{yyyy-MM-dd}.log.zip
+
+  log4j:
+    # Description: Path of the log4j log file.
+    file:
+      - /opt/tomcat/logs/
+      - *d2config_webapp_name
+      - /
+
+d2classic:
+  # parameters used to compose d2classic-logback-xml config map
+  logback:
+    # Description: Path of the Classic View logback log file. The d2classicWebappName variable enables you to configure webappname. The default value for the d2classicWebappName variable is D2.
+    # Since YAML does not allow String concatenation OOTB, the file variable is converted to an array parameter and then to string.
+    # The value of file variable is /opt/tomcat/logs/D2/D2.log.
+    # The same applies for fileNamePattern and log4j file variables.
+    file:
+      - /opt/tomcat/logs/
+      - *d2classic_webapp_name
+      - /D2.log
+      # Description: File name pattern for log rotation.
+    fileNamePattern:
+      - /opt/tomcat/logs/
+      - *d2classic_webapp_name
+      - /D2-%d{yyyy-MM-dd}.log.zip
+  # parameters used to compose d2classic-log4j-properties config map
+  log4j:
+    # Description: Path of the log4j log file.
+    file:
+      - /opt/tomcat/logs/
+      - *d2classic_webapp_name
+      - /
+
+d2smartview:
+  logback:
+    # Description: Path of the Smart View logback log file. The d2smartviewWebappName variable enables you to configure webappname. 
+    # The default value for the d2smartviewWebappName variable is D2-Smartview.
+    # Since YAML does not allow String concatenation OOTB, the file variable is converted to an array and then to string.
+    # The value of file variable is /opt/tomcat/logs/D2-Smartview/D2-Smartview.log.
+    # The same applies to fileNamePattern and log4j file parameters.
+    file:
+      - /opt/tomcat/logs/
+      - *d2smartview_webapp_name
+      - /D2-Smartview.log
+      # Description: File name pattern for log rotation.
+    fileNamePattern:
+      - /opt/tomcat/logs/
+      - *d2smartview_webapp_name
+      - /D2-Smartview.log.%i
+
+  log4j:
+    # Description: Path of the log4j log file.
+    file:
+      - /opt/tomcat/logs/
+      - *d2smartview_webapp_name
+      - /rest-api-log4j.log
+
+d2rest:
+  logback:
+    # Description: Path of the Client REST API logback log file. The d2restWebappName variable enables you to configure webappname. The default value for the d2restWebappName variable is d2-rest.
+    # Since YAML does not allow String concatenation OOTB, the file variable is converted to an array and then to string.
+    # The value of file variable is /opt/tomcat/logs/d2-rest/rest-api-logback.log.
+    # The same applies for fileNamePattern and log4j file variables.
+    file:
+      - /opt/tomcat/logs/
+      - *d2rest_webapp_name
+      - /rest-api-logback.log
+      # Description: File name pattern for log rotation.
+    fileNamePattern:
+      - /opt/tomcat/logs/
+      - *d2rest_webapp_name
+      - /rest-api-logback-%d{yyyy-MM-dd}-%i.log.zip
+
+  log4j:
+    # Description: Path of the log4j log file.
+    file:
+      - /opt/tomcat/logs/
+      - *d2rest_webapp_name
+      - /rest-api-log4j.log
+
+adminconsole:
+  log4j:
+    # Description: Path of the log4j log file.
+    file:
+      - /opt/tomcat/logs/
+      - AdminConsole
+      - /admin-rest-api.log
+
+appworks-gateway:
+  global:
+    # Description: This variable uses the value that you specified for webappServiceType in Global Variables.
+    serviceType: *webapp_service_type
+
+  database:
+    server:
+      # Description: This variable uses the value that you specified for db_hostname in Global Variables.
+      host: *db_hostname
+
+  newrelic:
+    # Description: This variable uses the value that you specified for newrelic in Global Variables. 
+    enabled: *newrelic_enabled
+
+    # Description: This variable uses the value that you specified for newrelicProxyHost in Global Variables. 
+    proxyHost: *newrelic_proxy_host
+
+    # Description: This variable uses the value that you specified for newrelicProxyPort in Global Variables. 
+    proxyPort: *newrelic_proxy_port
+
+    # Description: This variable uses the value that you specified for newrelicProxyProtocol in Global Variables. 
+    proxyScheme: *newrelic_proxy_protocol
+
+  # ServiceAccount
+  serviceAccount:
+    # Description: This variable uses the value that you specified for documentumserviceaccount in Global Variables. 
+    serviceAccountName: *documentum_service_account
+
+  vault:
+    # Description: Indicates to use vault secrets for the deployment instead of plain passwords.
+    # Note: For additional information about using Kubernetes native secrets (K8API), read the description provided for
+    # global.vaultType.
+    enabled: *isVaultEnabled
+
+    # Description: This variable uses the value that you specified for documentumserviceaccount in Global Variables. 
+    serviceAccount: *documentum_service_account
+  # uncomment the following content and provide values when creating tenant from helm charts
+  # tenants:
+  #     database:
+  #       server:
+  #         port: *db_port
+  #       sslMode: *db_ssl_mode # use require or verify-ca for GCP Cloud SQL database instance
+
+
+otiv:
+  # Default values for Intelligent Viewing
+  global:
+    # Description: 
+    # Defines the storage class (e.g., ReadWriteOnce) to be used for PostgreSQL (non-production) AMQP storage.
+    # If no value is provided after &storageClassName, the cluster's default storage class will be used.
+    # To override the default, specify a custom value, for example: storageClassName: &storageClassName trident-nfs
+    storageClassName: *rwo_storage_class
+
+    # Description: 
+    # Specifies the storage class to be used for IV published artifacts (requires ReadWriteMany access mode).
+    # If no value is provided, the cluster's default storage class will be used.
+    storageClassNameNFS: *rwm_storage_class
+
+    # Description: Defines the public web protocol used to access services. Valid options: 'https' or 'http'.
+    publicWebProtocol: *ingress_protocol
+
+    # Description: Name of the service account used by OTDS and PostgreSQL (non-production) components.
+    serviceAccountName: *documentum_service_account
+
+    # Description:
+    # Database host and user configuration for Config, Publication, Publisher, and Markup services.
+    # Set this to the Kubernetes service name, external IP, or fully qualified domain name (FQDN) of the PostgreSQL, Microsoft SQL Server, or Oracle instance.
+    database:
+      hostname: *db_hostname
+
+    amqp:
+      # Description:
+      # The following properties should only be modified when connecting to an external AMQP broker,rather than the default RabbitMQ container included with this chart.
+      # If using the chart-provided RabbitMQ container:
+      # - the rabbitmq password can be set via the global.amqp.password property, or a pre-existing password value can be established
+      #   by setting assigning it to the rabbitmq-password key in the secret defined by global.existingSecret or existingSecret
+      # If using an external AMQP broker:
+      # - You must provide the password in the secret specified by `global.existingSecret`, and the key must be `rabbitmq-password`.
+      # AMQP/RabbitMQ configuration properties used by the Publication and Publisher services.
+      # Specify the hostname and username of the AMQP broker here.
+      host: *msg_host
+      user: *msg_user
+
+    # Description: Messaging host and user configuration used by the Publication and Publisher services.
+    msgHost: *msg_host
+    msgUser: *msg_user
+
+    # Description: Domain name that defines the ingress URLs.
+    #When multi-ingress is enabled, remove the anchor tag below and replace it with the "publicIngressDomain" name
+    ingressDomainName: *ingress_domain
+
+    # Description: Defaults to publicWebProtocol; set explicitly (for example, otdsWebProtocol: http) only if otdsPublicUrl is not defined.
+    otdsWebProtocol: *ingress_protocol
+    newRelic:
+      # Description: IP address of the proxy server.
+      host: *newrelic_proxy_host
+
+      # Description: Port reserved for the New Relic server.
+      port: *newrelic_proxy_port
+
+    secretlink:
+      # Description: Indicates to use Vault secrets for the deployment instead of plain passwords.
+      # Note: For additional information about using Kubernetes native secrets (K8API), read the description provided for
+      # global.vaultType.
+      enabled: *isVaultEnabled
+
+  amqp:
+    # Description: String to completely override the amqp.fullname template  
+    fullnameOverride: *msg_host
+
+    persistence:
+      storageClass: *rwo_storage_class
+  # These properties apply to the sub-charts.  
+  # Note that the *.image.tag properties currently default to "latest".  
+  # It is recommended during helm install or upgrade to either update these tags  
+  # to specific versions or provide a YAML file with exact versions via the -f option.  
+  # The included latestTags.yaml file contains specific version tags for this purpose.  
+  # Using explicit versions helps ensure clarity and prevents issues caused by  
+  # Docker registries serving outdated cached "latest" images.  
+
+  # Description: Publication service settings.
+  publication:
+    service:
+      # Description: Indicates the publication service port number.
+      port: *publication_port
+
+  # Description: Asset service settings.
+  asset:
+    publication:
+      # Description: Indicates the publication service port number.
+      port: *publication_port
+
+  # Description: Highlight service settings.
+  highlight:
+    publication:
+      # Description: Indicates the publication service port number.
+      port: *publication_port
+
+  # Description: Markup service settings.
+  markup:
+    service:
+      # Description: Indicates the markup service port number.
+      port: *markup_port
+
+  # Description: Publisher settings.
+  publisher:
+    markup:
+      # Description: Indicates the markup service port number.
+      port: *markup_port
+
+smartviewm365:
+  settings:
+    # Description: This variable uses the value that you specified for ingressProtocol in Global Variables.
+    # Note: Set connectionRemoteUrl to the Ingress resource URL for the external user to access the webapp inside the cluster.
+    connectionRemoteUrlProtocol: *ingress_protocol
+    connectionRemoteUrl:

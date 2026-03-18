@@ -1,0 +1,54 @@
+{{- if eq .Values.ingress.enable true }}
+{{- if .Capabilities.APIVersions.Has "networking.k8s.io/v1/Ingress" }}
+apiVersion: networking.k8s.io/v1
+{{ else }}
+apiVersion: extensions/v1beta1
+{{ end }}
+kind: Ingress
+metadata:
+  name: {{ .Values.ingress.name }}-ingress
+  annotations:
+{{- if not (.Capabilities.APIVersions.Has "networking.k8s.io/v1/Ingress") }}
+{{- if .Values.ingress.class }}
+    kubernetes.io/ingress.class: {{ .Values.ingress.class }}
+{{- end }}
+{{- end }}
+{{- range $key, $value := .Values.ingress.annotations }}
+    {{ $key }}: {{ $value | squote }}
+{{- end }}
+spec:
+{{- if .Capabilities.APIVersions.Has "networking.k8s.io/v1/Ingress" }}
+  ingressClassName: {{ .Values.ingress.class }}
+{{- end }}
+  {{- if .Values.ssl.enabled }}
+  tls:
+  - hosts:
+      - {{ .Values.ingress.host }}.{{ .Values.ingress.clusterDomainName }}
+    secretName: {{ .Values.ssl.secret }}
+  {{- end}}
+  rules:
+{{- if eq .Values.ingress.configureHost true }}
+  - host: {{ .Values.ingress.host }}.{{ .Values.ingress.clusterDomainName }}
+    http:
+{{- else }}
+  - http:
+{{- end }}
+      paths:
+      {{ if eq .Values.platform "aws" }}
+        - path: /admin*
+      {{ else }}
+        - path: /admin
+      {{ end }}
+      {{- if .Capabilities.APIVersions.Has "networking.k8s.io/v1/Ingress" }}
+          pathType: ImplementationSpecific
+          backend:
+            service:
+              name: {{ .Values.service.name }}
+              port:
+                number: {{ .Values.service.port }}
+      {{- else }}
+          backend:
+            serviceName: {{ .Values.service.name }}
+            servicePort: {{ .Values.service.port }}
+      {{- end }}
+{{ end }}

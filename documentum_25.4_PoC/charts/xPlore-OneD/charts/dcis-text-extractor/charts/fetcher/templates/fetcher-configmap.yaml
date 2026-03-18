@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fetcher-configmap
+  
+data:
+  {{- if or .Values.ssl.enabled .Values.global.useCertificate }}
+  fetcher.server.url: https://{{ .Values.service.name }}:{{ .Values.service.targetPort }}
+  fetcher.server.url.check: https://{{ .Values.service.name }}:{{ .Values.service.targetPort }}/actuator/info
+  {{- else }}
+  fetcher.server.url: http://{{ .Values.service.name }}:{{ .Values.service.targetPort }}
+  fetcher.server.url.check: http://{{ .Values.service.name }}:{{ .Values.service.targetPort }}/actuator/info
+  {{- end }}

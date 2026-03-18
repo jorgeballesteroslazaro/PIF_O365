@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cs-server-ini-configmap
+data:
+  server-ini: |
+    autoRestart = false #Default is set to false to prevent automatic Docbase restarts. Set to true only during planned downtime to enable auto restart.

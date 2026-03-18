@@ -1,0 +1,9 @@
+{{- if .Values.global.dctmclientinstaller.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: adminconsole-sw-config-json
+  {{- template "configMap.labels" . }}
+data:
+  sw-config.json: |-
+{{- end }}

@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.serviceName | default .Values.global.dbrServiceName }}.configmap
+  namespace:  {{ .Values.configMap.namespace | default .Release.Namespace }}
+
+data:
+  dfc.properties: |
+    dfc.docbroker.host[0]: {{ .Values.serviceName | default .Values.global.dbrServiceName }}.{{ .Values.env.domain | default (include "documentum.envDomain" .) }}
+    dfc.docbroker.port[0]: {{ .Values.docbroker.port }}
+    dfc.globalregistry.repository: {{ .Values.globalregistry.repository | default .Values.global.docbase }}
+    dfc.globalregistry.username: {{ .Values.globalregistry.username | default .Values.global.globalRegistryUsername }}

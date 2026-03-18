@@ -1,0 +1,4 @@
+- passwords|cs-secrets.docbase.password: Password must be 16–64 chars, incl. uppercase, lowercase, number, and -, _, @|^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[-_@])[A-Za-z\d\-_@]{16,64}$
+- passwords|globalRegistryPassword: Password must be 16–64 chars, incl. uppercase, lowercase, number, and -, _, @|^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[-_@])[A-Za-z\d\-_@]{16,64}$
+- passwords|cs-secrets.docbroker.certificate.aekpassphrase: Password must be 16–64 chars, incl. uppercase, lowercase, number, and -, _, @|^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[-_@])[A-Za-z\d\-_@]{16,64}$
+- passwords|cs-secrets.contentserver.install.appserver.admin.password: Password must be 16–64 chars, incl. uppercase, lowercase, number, and -, _, @|^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[-_@])[A-Za-z\d\-_@]{16,64}$

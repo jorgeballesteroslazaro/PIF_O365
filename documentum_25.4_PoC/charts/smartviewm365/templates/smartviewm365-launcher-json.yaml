@@ -1,0 +1,50 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Chart.Name }}-launcher-json
+  namespace: {{ .Values.namespace  | default .Release.Namespace }}
+  {{- template "configMap.labels" . }}
+data:
+   launcher.json: |-
+    {
+        "version": "25.2.0",
+        "app_server_url": "{{- $value := (.Values.ccsv.d2rest_url) | default (include "documentum.publicIngress" .) }}
+                            {{- if eq $value (include "documentum.publicIngress" .)}}
+                              {{- $value = printf  "%s/%s" $value .Values.global.d2restWebappName }}
+                            {{- end }}
+                            {{- $value }}",
+        "log": {
+                "level": "{{.Values.ccsv.loglevel}}",
+                "window": {{.Values.ccsv.window}},
+                "consoleRe":{{.Values.ccsv.consoleRe}},
+                "performanceTimeStamp":{{.Values.ccsv.performancetimestamp}},
+                "timing":{{.Values.ccsv.timing}}
+        },
+        "teamsrootpath": "{{.Values.ccsv.teamsrootpath}}",
+        "sharepointdomains":"{{.Values.ccsv.sharepointdomains}}",
+        "appclientid":"{{.Values.ccsv.clientid |  default .Values.global.msClientId }}",
+        "tenantid":"{{.Values.ccsv.tenantid |  default .Values.global.mstenantid }}",
+        "appredirecturi":"{{- $value := (.Values.ccsv.appredirecturi) | default (include "documentum.publicIngress" .) }}
+                           {{- if eq $value (include "documentum.publicIngress" .)}}
+                             {{- $value = printf  "%s/SmartViewM365/ui" $value }}
+                           {{- end }}
+                           {{- $value }}",
+        "importconfig":"{{.Values.ccsv.importconfig}}",
+        "defaultconfig":"{{.Values.ccsv.defaultconfig}}",
+        "rootreposelection":{{.Values.ccsv.rootreposelection}},
+        "packages": {
+          "aie": {
+            "order": 1,
+            "initScript": "aie-init.js"
+          },
+          "d2": {
+            "order": 2,
+            "initScript": "d2-init.js"
+           },
+          "cc": {
+            "order": 3,
+            "initScript": "cc-init.js"
+           }
+        }
+    }
+

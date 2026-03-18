@@ -1,0 +1,65 @@
+# Description:
+ao-installer:
+  configuration:
+    bravaServerURL: #Brava Enterprise Server URL within double quotes "https://brava.bp-paas.otxlab.net"
+  aoc:
+    # Description: Set this value to true if you want to connect Documentum Content Management for Engineering (DCME) with Core Collaboration for Engineering by using DCME Connector.
+    enabled: true
+    # Description: Specify the Core Collaboration for Engineering supported version. # Supplier Exchange version, v2 or v3
+    xchangeVersion: # Description: Specify the Core Collaboration for Engineering application URL. #URL within double quotes "https://xchange.bp-paas.otxlab.net"
+
+    xchangeUrl: # Description: Specify the Core Collaboration for Engineering ClientID.
+
+    xchangeKeyId: # Description: Specify the Core Collaboration for Engineering Clientsecret.
+
+    xchangePrivateKey: # Description: Sepecify the subscription name for Core Collaboration for Engineering.
+
+    xchangeSubscriptionName: # Description: Specify the Proxyhost.  
+
+    xchangeProxyHost: # Description: Specify the Proxyport.  
+
+    xchangeProxyPort: # Description: The following variables are required to connect DCME with Content Management for SAP integration.    
+  xecm:
+    # Description: Enable this value to true to establish a connection with Content Management. 
+    enabled: false
+  # Description: Enable this value to true to establish a Brava viewer connection.  
+  brava:
+    enabled: false
+
+content-server:
+  otds:
+    # Description:
+    clientCapability: 1
+    userPrivileges: 2
+    userXPrivileges: 32
+  extraVolumeMounts:
+    - mountPath: /opt/dctm/aoblazon
+      name: dcs-vct
+      subPath: aoblazon
+d2config:
+  customConfigurations:
+    # Description: Specify the DCME D2 Configuration file.
+    filename:
+      - <docbase_name>:DCME-25.4_Export_Config.zip,DCTM-Reports-Application-25.4.0-Export-Config.zip
+      # Description: Specify these values to reset or re-configure the DCME D2 config values.
+    d2configImportParameters: "-full_import true -reset false -overwrite true -keep_naming_counter true -keep_url_cache true -keep_mail_server true"
+
+# Description: Describes the values required to enable or disable DCME classic view.
+d2classic:
+  customConfigurations:
+    custom: true
+    hook_approach: true
+  # Description: Specify the DCME release version number.  
+  shiro:
+    OTDS:
+      appName: OpenText™ Documentum™ Content Management for Engineering CE 25.4
+
+# Description: Describes the values required to enable or disable DCME Smart view.      
+d2smartview:
+  customConfigurations:
+    custom: true
+    hook_approach: true
+    createPVC: true
+  restApiRuntime:
+    OTDS:
+      appName: OpenText™ Documentum™ Content Management for Engineering CE 25.4

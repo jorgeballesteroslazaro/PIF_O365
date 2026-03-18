@@ -1,0 +1,376 @@
+# Default values for DCC.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+#Prefix
+prefix:
+
+vault:
+  enabled:
+
+# Kubernetes Namespace in which this Helm chart is deployed
+namespace:
+
+serviceAnnotationsSyncagent: {}
+serviceAnnotationsConsul: {}
+
+serviceAccount:
+  createserviceaccount:
+  serviceAccountName:
+
+images:
+  pullSecrets:
+
+#Consul
+consul:
+  prefix: consul
+  image:
+    repository:
+    name: ot-dctm-dcc-consul
+    tag:
+    pullPolicy:
+  containerPort:
+  replicaCount: 1
+  service:
+    servicePort:
+    targetPort:
+  resources:
+    limits:
+      cpu: 200m
+      memory: 200Mi
+    requests:
+      cpu: 200m
+      memory: 200Mi
+
+## Database configuration ##
+database:
+  dbSchemaName:
+  driverClassName:
+  quartzdbDelegateClass: org.quartz.impl.jdbcjobstore.PostgreSQLDelegate
+  username:
+  password:
+  dbunencryptedpassword:
+  db_host:
+  db_port:
+  #only applicable in case of oracle
+  db_sid:
+  ssl:
+  sslmode:
+  sslrootcert:
+  sslcert:
+  sslkey:
+  db_p12_wallet_file: ewallet.p12
+  db_sso_wallet_file: cwallet.sso
+  # Applicable in case of Vault enabled and using a common DB with CS.
+  # In vault database key is combination of <databaseServiceName>_<username>
+  # ensure databaseServiceName value is same as mentioned in content-server
+  databaseServiceName:
+  # SSL based certificate and key for postgres, default SSL mode is verify-ca only
+  # set sslrootcertRequired to true for sslmode verify-ca/verify-full but can be true or false for sslmode prefer/require
+  sslrootcertRequired:
+  # This is applicable when ssl DB server requires valid client certificate.
+  # set sslcertRequired to true if client certificate and key - sslcert, sslkey are provided.
+  sslcertRequired:
+  dbSchemaInit:    
+    image:
+      repository:
+      name: ot-dctm-dcc-dbschema
+      tag:
+      pullPolicy:
+
+dardeploy:
+  enabled:
+  image:
+    pullPolicy:
+    repository:
+    name: dctm-dcc-dardeployment
+    tag:
+  prefix: dardeployment
+  docbase_name:
+  install_owner:
+  install_owner_password:
+  configmap:
+    dfc:
+      properties:
+        - dfc.docbroker.host[0]= <docbase host>
+        - dfc.docbroker.port[0]= <docbase port>
+        - dfc.globalregistry.repository= <repository>
+        - dfc.globalregistry.username= <username>
+  cs:
+    useCSDfcConfigMap:
+    configMapName:
+    csSecretConfigName:
+    allowTrustedLogin:
+  certificate:
+    useCertificate:
+    dbrServiceName:
+    dbrDataPVCName:
+
+## New Relic Common Configuration ## 
+newrelic:  
+  license_key:
+  proxy_enable:
+  proxy_host: 
+  proxy_port: 
+
+## meta data service ##
+metadata:
+  prefix: metadata
+  enabled:
+  dbSchemaInit:
+    enabled:
+    dbname:
+  configMap:
+    database:
+      ## url specified the url used to connect to the DB for metadata service.      
+      url:
+    serviceRegistry:
+      serverPort:
+      serviceregistry-port:
+      httpsEnabled:
+      serverHost: dcc-metadata-service
+  replicaCount: 1
+  image:
+    repository:
+    name: ot-dctm-dcc-metadataservice
+    tag:
+    pullPolicy:
+  service:
+    servicePort:
+    targetPort:
+  proxy:
+    enabled:
+    proxyHost: 
+    proxyPort: 
+    noProxyHosts: 
+  resources:
+    limits:
+      cpu: 200m
+      memory: 500Mi
+    requests:
+      cpu: 200m
+      memory: 500Mi
+  newrelic:    
+    enabled:
+    app_name:
+
+## Syncagent ##
+syncagent:
+  prefix: syncagent
+  enabled:
+  dbSchemaInit:
+    enabled:
+    dbname:
+  configMap:
+    database:
+      ## url specified the url used to connect to the DB for syncagent service.     
+      url:
+    mail:
+      fromEmailId:
+      toEmailId:
+      bccEmailId:
+      ccEmailId:
+      subject:
+    serviceRegistry:
+      serverPort:
+      server-protocol:
+      serviceregistry-port:
+      serverHost: dcc-syncagent-service
+    proxy:
+      enabled:
+      proxyHost: 
+      proxyPort: 
+      noProxyHosts: 
+  replicaCount: 1
+  image:
+    repository:
+    name: ot-dctm-dcc-syncagent
+    tag:
+    pullPolicy:
+  containerPort:
+  service:
+    servicePort:
+    targetPort:
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 2Gi
+    requests:
+      cpu: 1000m
+      memory: 2Gi
+  newrelic:    
+    enabled:
+    app_name:
+    
+## Syncnshare manual ##
+syncnshareManual:
+  prefix: syncagent-manual
+  enabled:
+  dbSchemaInit:
+    enabled:
+    dbname:
+  configMap:
+    database:
+      ## url specified the url used to connect to the DB for syncshare manual service.
+      url:
+    serviceRegistry:
+      serverPort:
+      server-protocol:
+      serviceregistry-port:
+      serverHost: dcc-syncagent-manual-service
+    setup:
+      sourceRepoName:
+      sourceRepoUser:
+      sourceRepoPassword:
+      sourceRepoUrl:
+      targetRepoUrl:
+      targetRepoClientId:
+      targetRepoClientSecret:
+    proxy:
+      enabled:
+      proxyHost: 
+      proxyPort: 
+      noProxyHosts: 
+  replicaCount: 1
+  image:
+    repository:
+    name: ot-dctm-dcc-syncnshare-manual
+    tag:
+    pullPolicy:
+  containerPort:
+  javaConfigModify:
+  service:
+    servicePort:
+    targetPort:
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+    requests:
+      cpu: 1000m
+      memory: 1Gi
+  newrelic:    
+    enabled:
+    app_name:
+    
+## Core Notification ##
+coreNotification:
+  prefix: core-notification
+  enabled:
+  dbSchemaInit:
+    enabled:
+    dbname:
+  coresharecrt:
+  configMap:
+    database:
+      ## url specified the url used to connect to the DB for core notification service.
+      url:
+    serviceRegistry:
+      serverPort:
+      httpsEnabled:
+      serviceregistry-port:
+      serverHost: dcc-core-notification-service
+    extApiconfig:      
+      dccroboticFQDN: syncagent
+      dccmanualFQDN: syncnshare-manual
+      dccapiuser: 
+      dccapipassword:
+      httpsEnabled:
+      serviceregistry-port:
+      serverHost: dcc-core-notification-service
+  replicaCount: 1
+  image:
+    repository:
+    name: ot-dctm-dcc-corenotificationservice
+    tag:
+    pullPolicy:
+  proxy:
+      enabled:
+      proxyHost: 
+      proxyPort: 
+      noProxyHosts: 
+  service:
+    servicePort:
+    targetPort:
+  resources:
+    limits:
+      cpu: 400m
+      memory: 500Mi
+    requests:
+      cpu: 400m
+      memory: 500Mi
+  newrelic:    
+    enabled:
+    app_name:
+  
+## Mail Service ##
+mailService:
+  prefix: mail
+  enabled:
+  configMap:
+    mailconfig:
+      smtpmailhost:
+      smtpmailport:
+      ##usermail=<Provide the usermail and password if MAIL SERVER requires user credentials>
+      usermail:
+      mailpassword:
+      starttls:
+      authenticationType:
+     # Below details are applicable for microsoft exchange oAuth changes
+     # AuthenticationType type will change to oAuth
+      serviceProvider:
+      tenantId:
+      clientId:
+      clientSecret:
+      tokenUrl:
+      graphApiUrl:
+    serviceRegistry:
+      serverPort:
+      httpsEnabled:
+      serviceregistry-port:
+      serverHost: dcc-mail-service
+  replicaCount: 1
+  image:
+    repository:
+    name: ot-dctm-dcc-mailservice
+    tag:
+    pullPolicy:
+  service:
+    servicePort:
+    targetPort:
+  resources:
+    limits:
+      cpu: 200m
+      memory: 400Mi
+    requests:
+      cpu: 200m
+      memory: 400Mi
+  proxy:
+    enabled:
+    proxyHost:
+    proxyPort:
+    noProxyHosts:
+  newrelic:    
+    enabled:
+    app_name:
+
+## Persistent volume claim ##
+pvc:
+  ## enable if logs needs to be stored in persistent volume
+  enablePV:
+  storageClass:
+  size: 200Mi
+
+ingress:
+  ##enable below if we need to use dcc ingress
+  enableDCCIngress:
+
+certificate:
+  use_certificate:
+  dbrserviceName:
+
+dbrpersistentVolume:
+  dbrdataPVCName:
+
+secret:
+ csConfigName:

@@ -1,0 +1,17 @@
+# Mention the files in same order as used in helm install/upgrade command
+
+files-to-be-processed:
+  - path: "/config/configuration.yml"
+  - path: "/config/constants.yaml"
+  - path: "/config/passwords.yaml"
+  - path: "/config/passwords_vault.yaml"
+  - path: "/config/passwords_k8api.yaml"
+  - path: "/platforms/aws.yaml"
+  - path: "/platforms/azure.yaml"
+  - path: "/platforms/gcp.yaml"
+  - path: "/platforms/openshift.yaml"
+  - path: "/dockerimages-values.yaml"
+  - path: "/documentum-components.yaml"
+  - path: "/addons/ao/ao-config.yaml"
+  - path: "/addons/aviator/aviator-config.yaml"
+  - path: "/addons/lss/ls-config.yaml"

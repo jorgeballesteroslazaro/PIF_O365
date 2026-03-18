@@ -1,0 +1,114 @@
+{{- if .Values.global.ijms.enabled}}
+{{- if .Capabilities.APIVersions.Has "extensions/v1beta1" }}
+apiVersion: extensions/v1beta1
+{{ else }}
+apiVersion: networking.k8s.io/v1
+{{ end }}
+kind: Ingress
+metadata:
+  name: {{ .Values.ingressPrefix }}-ijms-ingress
+  annotations:
+{{- if (.Capabilities.APIVersions.Has "extensions/v1beta1") }}
+{{- if .Values.ingress.class }}
+    kubernetes.io/ingress.class: {{ .Values.ingress.class }}
+{{- end }}
+{{- end }}
+{{- range $key, $value := .Values.ingress.annotations }}
+    {{ $key }}: {{ $value | squote }}
+{{- end }}
+{{- if and (eq .Values.global.internalTlsEnable true) (ne .Values.platform "aws") }}
+    nginx.ingress.kubernetes.io/backend-protocol: HTTPS
+{{- end }}
+{{- if eq .Values.platform "aws" }}
+{{- range $key, $value := .Values.ingress.ijmsAnnotations }}
+    {{ $key }}: {{ $value | squote }}
+{{- end }}
+{{- else }}
+{{- range $key, $value := .Values.ingress.annotations }}
+    {{ $key }}: {{ $value | squote }}
+{{- end }}
+{{- end }}
+spec:
+{{- if not (.Capabilities.APIVersions.Has "extensions/v1beta1") }}
+  ingressClassName: {{ .Values.ingress.class }}
+{{- end }}
+{{- if eq .Values.global.internalTlsEnable true }}
+  tls:
+  - hosts:
+    - {{ .Values.ingress.host | default .Values.global.hostShortName }}.{{ .Values.ingress.clusterDomainName | default .Values.global.ingressDomain}}
+    secretName: {{ .Values.ingress.ingressTLSSecret | default .Values.global.ingressTLSSecret }}
+{{- else if .Values.tls.enable }}
+  tls:
+  - hosts:
+    - {{ printf "%s-ijms" (.Values.ingress.host | default .Values.global.hostShortName) }}.{{ .Values.ingress.clusterDomainName | default .Values.global.ingressDomain }}
+    {{- if (empty (.Values.openshifttls.enable | quote) | ternary .Values.global.openshiftTls .Values.openshifttls.enable) }}
+    secretName: {{ .Values.tls.secretName | default .Values.global.csSecrets }}-tls
+    {{- else }}
+    secretName: {{ .Values.tls.secretName | default .Values.global.csSecrets }}
+    {{- end }}
+{{- end }}
+  rules:
+{{- if eq .Values.ingress.configureHost true }}
+  - host: {{ .Values.ingress.host | default .Values.global.hostShortName }}-ijms.{{ .Values.ingress.clusterDomainName | default .Values.global.ingressDomain }}
+    http:
+{{- else }}
+  - http:
+{{- end }}
+      paths:
+{{- if .Values.extraPaths }}
+{{ toYaml .Values.extraPaths | indent 6 }}
+{{- end }}
+    {{- if eq .Values.platform "aws" }}
+      - path: /DmMethods/servlet/DoMethod*
+    {{- else }}
+      - path: /DmMethods/servlet/DoMethod
+    {{- end }}
+    {{- if .Capabilities.APIVersions.Has "networking.k8s.io/v1/Ingress" }}
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: {{ .Values.ijms.serviceName }}
+            port:
+              number: {{ .Values.ijms.servicePort  }}
+    {{- else }}
+        backend:
+          serviceName: {{ .Values.ijms.serviceName }}
+          servicePort: {{ .Values.ijms.servicePort }}
+    {{- end }}
+    {{- if eq .Values.platform "aws" }}
+      - path: /ACS/servlet*
+    {{- else }}
+      - path: /ACS/servlet
+    {{- end }}
+    {{- if .Capabilities.APIVersions.Has "networking.k8s.io/v1/Ingress" }}
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: {{ .Values.ijms.serviceName }}
+            port:
+              number: {{ .Values.ijms.servicePort  }}
+    {{- else }}
+        backend:
+          serviceName: {{ .Values.ijms.serviceName }}
+          servicePort: {{ .Values.ijms.servicePort  }}
+    {{- end }}
+    {{- if .Values.bpm.enable }}
+    {{- if eq .Values.platform "aws" }}
+      - path: /bpm*
+    {{- else }}
+      - path: /bpm
+    {{- end }}
+    {{- if .Capabilities.APIVersions.Has "networking.k8s.io/v1/Ingress" }}
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: {{ .Values.ijms.serviceName }}
+            port:
+              number: {{ .Values.ijms.servicePort  }}
+    {{- else }}
+        backend:
+          serviceName: {{ .Values.ijms.serviceName }}
+          servicePort: {{ .Values.ijms.servicePort  }}
+    {{- end }}
+    {{- end }}
+    {{- end }}

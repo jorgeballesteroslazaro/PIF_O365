@@ -1,0 +1,22 @@
+{{- if or 
+    (eq .Values.custom.useInitContainers true) 
+    (or 
+      (eq (default false (kindIs "bool" .Values.rest.useCommonPVC | ternary .Values.rest.useCommonPVC false)) false) 
+      (eq (default false (kindIs "bool" .Values.global.tomcatbase_usecommonpvc | ternary .Values.global.tomcatbase_usecommonpvc false)) false)
+    ) 
+}}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ .Values.custom.scriptPVCname }}
+spec:
+  accessModes:
+    - {{ .Values.custom.pvcAccessModes }}
+  storageClassName: {{ default .Values.global.rwmStorage .Values.custom.storageClass }}
+{{ if .Values.custom.existVolumePv }}
+  volumeName: {{ .Values.custom.existVolumePv }}
+{{ end }}
+  resources:
+    requests:
+      storage: {{ .Values.custom.pvcSize }}
+{{- end }}

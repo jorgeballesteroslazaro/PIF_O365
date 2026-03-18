@@ -1,0 +1,74 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.userName }}-logback-xml
+  {{- template "configMap.labels" . }}
+data:
+  logback.xml: |-
+    <?xml version="1.0" encoding="UTF-8"?>
+
+    <configuration scan="true" scanPeriod="60 seconds">
+
+        <appender class="ch.qos.logback.core.rolling.RollingFileAppender" name="RootFileAppender">
+            <file>D2ControlledPrint-logback.log</file>
+            <append>true</append>
+            <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+                <level>{{ .Values.logback.printServerLogLevel }}</level>
+            </filter>
+
+            <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+                <fileNamePattern>D2ControlledPrint-logback-%d{yyyy-MM-dd}.log.zip</fileNamePattern>
+                <MaxHistory>5</MaxHistory>
+            </rollingPolicy>
+
+            <layout class="ch.qos.logback.classic.PatternLayout">
+                <pattern>%-31(%date{yyyy-MM-dd HH:mm:ss.SSS} [%-5level]) [%thread] - %-40(%C{18}[%-20(%mdc{methodName})]) : %message%n</pattern>
+            </layout>
+        </appender>
+
+        <appender class="ch.qos.logback.core.ConsoleAppender" name="RootConsoleAppender">
+            <layout>
+                <pattern>%-31(%date{yyyy-MM-dd HH:mm:ss.SSS} [%-5level]) [%thread] - %-40(%C{39}): %message%n</pattern>
+            </layout>
+        </appender>
+
+        <logger additivity="false" name="com.emc.d2">
+            <level value="{{ .Values.logback.printServerLogLevel }}"/>
+            <appender-ref ref="RootConsoleAppender"/>
+            <appender-ref ref="RootFileAppender"/>
+        </logger>
+
+        <logger additivity="false" name="com.emc.d2fs">
+            <level value="{{ .Values.logback.printServerLogLevel }}"/>
+            <appender-ref ref="RootConsoleAppender"/>
+            <appender-ref ref="RootFileAppender"/>
+        </logger>
+
+        <logger additivity="false" name="com.emc.documentum.d2">
+            <level value="{{ .Values.logback.printServerLogLevel }}"/>
+            <appender-ref ref="RootConsoleAppender"/>
+            <appender-ref ref="RootFileAppender"/>
+        </logger>
+
+        <logger additivity="false" name="com.emc.documentum.d2fs">
+            <level value="{{ .Values.logback.printServerLogLevel }}"/>
+            <appender-ref ref="RootConsoleAppender"/>
+            <appender-ref ref="RootFileAppender"/>
+        </logger>
+
+        <logger additivity="false" name="net">
+            <level value="warn"/>
+            <appender-ref ref="RootConsoleAppender"/>
+        </logger>
+
+        <logger additivity="false" name="org">
+            <level value="warn"/>
+            <appender-ref ref="RootConsoleAppender"/>
+        </logger>
+
+        <root>
+            <level value="${logLevel:-{{ .Values.logback.printServerRootLogLevel }}}"/>
+            <appender-ref ref="RootFileAppender"/>
+            <appender-ref ref="RootConsoleAppender"/>
+        </root>
+    </configuration>

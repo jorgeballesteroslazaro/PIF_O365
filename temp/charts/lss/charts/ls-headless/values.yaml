@@ -1,0 +1,14 @@
+# Default values for ls-headless service.chart.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+servicePort:
+
+dc4spHeadless: 
+  name: dc4sp
+  targetPort: 80
+  addresses: 
+    - ip: <DC4SP IP>
+  ipFamilies: 
+  - IPv4
+  ipFamilyPolicy: SingleStack

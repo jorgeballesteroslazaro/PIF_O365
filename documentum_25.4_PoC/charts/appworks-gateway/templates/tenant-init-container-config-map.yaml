@@ -1,0 +1,60 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: tenant-init-container-config-map
+data:
+  {{- range .Values.tenants}}
+  AWG_{{upper .name }}_DB_USER: {{ .database.appworksdb.user }}
+  AWG_{{upper .name }}_DB_ADMIN_USER: {{ .database.admin.user }}
+  AWG_{{upper .name }}_DB_NAME: {{ .database.appworksdb.database }}
+  AWG_{{upper .name }}_DB_VENDOR: {{ .database.vendor }}
+  AWG_{{upper .name }}_DB_USESSL: {{ .database.useSSL | quote }}
+  AWG_{{upper .name }}_DB_TRUST_DB_CERTS: {{ .database.trustDbCerts | quote }}
+  AWG_{{upper .name }}_DB_SSL_MODE: {{ .database.sslMode | quote }}
+  {{- if eq .database.vendor "PostgreSql" }}
+  AWG_{{upper .name }}_DB_URL: "jdbc:postgresql://{{ .database.server.host }}:{{ .database.server.port }}/{{ .database.appworksdb.database }}"
+  AWG_{{upper .name }}_DB_CONNECTION_URL: "jdbc:postgresql://{{ .database.server.host }}:{{ .database.server.port }}/{{ .database.admin.database }}"
+  AWG_{{upper .name }}_DB_DRIVER: "org.postgresql.Driver"
+  {{- else if  eq .database.vendor "MsSqlServer" }}
+  AWG_{{upper .name }}_DB_URL: "jdbc:sqlserver://{{ .database.server.host }}:{{ .database.server.port }};databaseName={{ .database.appworksdb.database }}"
+  AWG_{{upper .name }}_DB_CONNECTION_URL: "jdbc:sqlserver://{{ .database.server.host }}:{{ .database.server.port }};databaseName={{ .database.appworksdb.database }}"
+  AWG_{{upper .name }}_DB_DRIVER: "com.microsoft.sqlserver.jdbc.SQLServerDriver"
+  {{- else if  eq .database.vendor "Oracle"}}
+  AWG_{{upper .name }}_DB_URL: "jdbc:oracle:thin:@{{ .database.server.host }}:{{ .database.server.port }}:{{ .database.appworksdb.service }}"
+  AWG_{{upper .name }}_DB_CONNECTION_URL: "jdbc:oracle:thin:@{{ .database.server.host }}:{{ .database.server.port }}:{{ .database.appworksdb.service }}"
+  AWG_{{upper .name }}_DB_DRIVER: "oracle.jdbc.OracleDriver"
+  {{- end }}
+  AWG_{{upper .name }}_GATEWAY_URL: {{ .awg.externalurl }}
+  AWG_{{upper .name }}_GATEWAY_NEW_ADMIN_USER: {{ .awg.admin.newadminuser }}
+  AWG_{{upper .name }}_GATEWAY_NEW_RESOURCE_NAME: {{ .otds.resource.new }}
+  AWG_{{upper .name }}_GATEWAY_NEW_PARTITION_NAME: {{ .otds.partition.new }}
+  {{- if .otds.partition.customPartition }}
+  AWG_{{upper .name }}_GATEWAY_CUSTOM_PARTITION_NAME: {{ tpl (toYaml .otds.partition.customPartition) $ | quote }}
+  {{- end }}
+  AWG_{{upper .name }}_OTDS_URL: {{ .otds.server.url }}
+  {{- if hasKey .otds.server "externalurl" }}
+  AWG_{{upper .name }}_OTDS_EXTERNAL_URL: {{ .otds.server.externalurl }}
+  {{- end }}
+  AWG_{{upper .name }}_OTDS_ADMIN_USER: {{ .otds.admin.user }}
+
+  AWG_{{upper .name }}_SIMPLE_LOGGER_LEVEL: {{ .awg.logging.level }}
+  AWG_{{upper .name }}_PUSH_TO_CONSOLE: {{ .awg.settings.pushToConsole | quote }}
+  AWG_{{upper .name }}_PROXY_AUTOMATE: {{ .proxy.automate | quote }}
+  AWG_{{upper .name }}_UNATTENDED_SETUP: "true"
+  AWG_{{upper .name }}_EXIT_ON_SETUP_COMPLETE: "true"
+  {{- end}}
+  
+  
+  {{- if .vault }}
+  #configuration properties for vault
+  AWG_{{upper .name }}_VAULT_ENABLED: {{ .vault.enabled | quote }}
+  AWG_{{upper .name }}_VAULT_TYPE: {{ .vault.type | quote }}
+  AWG_{{upper .name }}_VAULT_HOST: {{ .vault.host | quote }}
+  AWG_{{upper .name }}_VAULT_PORT: {{ .vault.port  | quote }}
+  AWG_{{upper .name }}_VAULT_NAMESPACE: {{ .vault.namespace | quote }}
+  AWG_{{upper .name }}_VAULT_SECRETS: {{ .vault.secrets | quote }}
+  AWG_{{upper .name }}_VAULT_AUTH_CONFIG_PATH: {{ .vault.authConfigPath | quote }}
+  AWG_{{upper .name }}_VAULT_AUTH_PATH: {{ .vault.authPath | quote }}
+  AWG_{{upper .name }}_VAULT_ROLE: {{ .vault.role | quote }}
+  AWG_{{upper .name }}_VAULT_AUTH_TYPE: {{ .vault.authType | quote }}
+  {{- end }}

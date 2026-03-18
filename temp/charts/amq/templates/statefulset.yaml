@@ -1,0 +1,147 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ .Values.service.name }}
+  labels:
+    app: {{ .Values.service.name }}
+    chart: {{ .Chart.Name }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Values.service.name }}
+      release: {{ .Release.Name }}
+  serviceName: {{ .Values.service.name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.service.name }}
+        release: {{ .Release.Name }}
+    spec:
+      {{- if (empty (.Values.pullSecrets | quote) | ternary .Values.global.pullSecretName .Values.pullSecrets) }}
+      imagePullSecrets:
+        - name: {{ .Values.pullSecrets | default .Values.global.pullSecretName }}
+      {{- end }}
+      {{- if or .Values.ssl.enabled .Values.global.useCertificate }}
+      securityContext:
+        runAsUser: 1001
+        runAsGroup: 1001
+        fsGroup: 1001
+        fsGroupChangePolicy: "OnRootMismatch"
+      {{- end }}
+      serviceAccountName: {{ .Values.serviceAccount.serviceAccountName | default .Values.global.documentumserviceaccount }}
+      containers:
+      - name: activemq
+        image: {{ .Values.image.repository }}/{{ .Values.image.name }}:{{ .Values.image.tag }}
+        imagePullPolicy: {{ .Values.image.pullPolicy  | default .Values.global.pullPolicyType }}
+        env:
+        - name: ACTIVEMQ_BROKER_NAME
+          value: {{ .Values.service.name }}
+        - name: ARTEMIS_USER
+          value: "{{ .Values.adminUser.username }}"
+      {{- if or .Values.ssl.enabled .Values.global.useCertificate }}
+        - name: KEYSTORE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.service.name }}-secret
+              key: {{ .Values.ssl.keystorePasswordKey }}
+        - name: TRUSTSTORE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.service.name }}-secret
+              key: {{ .Values.ssl.truststorePasswordKey }}
+        - name: SSL_CONSOLE_PORT
+          value: '{{ .Values.ssl.consolePort | default "8161"}}'
+        - name: ACCEPTOR_PORT
+          value: '{{ .Values.ssl.acceptorPort | default "61617"}}'
+        - name: KEYSTORE_LOCATION
+          value: '{{ .Values.ssl.certificateMountPath | default "/opt/dctm/certificate" }}/{{ .Values.ssl.keyStore | default "common-keystore.p12" }}'
+        - name: TRUSTSTORE_LOCATION
+          value: '{{ .Values.ssl.certificateMountPath | default "/opt/dctm/certificate" }}/{{ .Values.ssl.trustStore | default "common-truststore.p12" }}'
+      {{- end }}
+
+        - name: ARTEMIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.service.name }}-secret
+              key: password
+        - name: JAVA_ARGS
+        {{- if  (not .Values.AMQ_HEAP) }}
+          value:   {{ .Values.JAVA_ARGS }}  -Xms512M -Xmx2G
+        {{- else }}
+          value:   {{ .Values.JAVA_ARGS }}  {{ .Values.AMQ_HEAP }}
+        {{- end }}
+        volumeMounts:
+          - name: data
+            mountPath: /opt/activemq/data
+            subPath: data
+          - name: shared-logs
+            mountPath: /var/lib/artemis-instance/log
+            subPath: log
+      {{- if or .Values.ssl.enabled .Values.global.useCertificate }}
+          - name: common-certificate-volume
+            mountPath: '{{ .Values.ssl.certificateMountPath | default "/opt/dctm/certificate" }}'
+            subPath: 'certificate/{{ .Values.global.dbrdataPVCName | default "certdbr-data-pvc" }}'
+      {{- end }}
+      {{- if or .Values.ssl.enabled .Values.global.useCertificate }}
+          - name: broker-config
+            mountPath: /var/lib/artemis-instance/etc-override/broker.xml
+            subPath: broker.xml
+
+          - name: broker-config
+            mountPath: /var/lib/artemis-instance/etc-override/bootstrap.xml
+            subPath: bootstrap.xml
+      {{- end }}
+        ports:
+        - name: openwire
+          containerPort: {{ .Values.service.broker.ports.internal.openwire | default 61616 }}
+        - name: amqp
+          containerPort: {{ .Values.service.broker.ports.internal.amqp | default 5672 }}
+        - name: web-console
+          containerPort: {{ .Values.service.webConsole.ports.internal.webConsole | default 8161 }}
+       {{- if or .Values.ssl.enabled .Values.global.useCertificate }}
+        - name: ssl
+          containerPort: {{ .Values.ssl.acceptorPort | default 61617 }}
+       {{- end}}
+        readinessProbe:
+          tcpSocket:
+          {{- if or .Values.ssl.enabled .Values.global.useCertificate }}
+            port: {{ .Values.ssl.acceptorPort | default 61617 }}
+          {{- else }}
+            port: {{ .Values.service.broker.ports.internal.openwire | default 61616 }}
+          {{- end}}
+          initialDelaySeconds: {{ .Values.readinessProbe.initialDelaySeconds }}
+          periodSeconds: {{ .Values.readinessProbe.periodSeconds }}
+          failureThreshold: {{ .Values.readinessProbe.failureThreshold }}
+          timeoutSeconds: {{ .Values.readinessProbe.timeoutSeconds }}
+        livenessProbe:
+          tcpSocket:
+          {{- if or .Values.ssl.enabled .Values.global.useCertificate }}
+            port: {{ .Values.ssl.acceptorPort | default 61617 }}
+          {{- else }}
+            port: {{ .Values.service.broker.ports.internal.openwire | default 61616 }}
+          {{- end}}
+          initialDelaySeconds: {{ .Values.livenessProbe.initialDelaySeconds }}
+          periodSeconds: {{ .Values.livenessProbe.periodSeconds }}
+          failureThreshold: {{ .Values.livenessProbe.failureThreshold }}
+          timeoutSeconds: {{ .Values.livenessProbe.timeoutSeconds }}
+        resources:
+{{ toYaml .Values.resources | indent 12 }}
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: {{ .Values.service.name }}-pvc
+      - name: shared-logs
+        emptyDir: {}
+     {{- if or .Values.ssl.enabled .Values.global.useCertificate }}
+      - name: common-certificate-volume
+        persistentVolumeClaim:
+          claimName: '{{ .Values.global.dbrServiceName | default "dbr" }}-pvc'
+     {{- end }}
+  {{- if or .Values.ssl.enabled .Values.global.useCertificate }}
+      - name: broker-config
+        configMap:
+          name: {{ .Values.service.name }}-configmap
+  {{- end }}

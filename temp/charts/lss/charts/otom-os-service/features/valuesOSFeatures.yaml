@@ -1,0 +1,216 @@
+################################################################################################
+#                                                                                              #
+#                                     This is a YAML-formatted file.                           #
+#                                Helm Chart for Output Server environment.                     #
+#                          Declare the variables to be passed to the templates.                #
+################################################################################################
+
+###################################### S E C R E T S ###########################################
+
+    #Enter the password for below mentioned components
+    #Example shown here for password is base64 encoded
+    secrets:
+
+      ####################### OUTPUT SERVER SECRETS #################
+            
+      #Only if Output Server SAP Module is enabled
+      #Enter SAP Password
+      #Example: "T1QxMjM0NTY="
+      SAP_PASSWORD: ""
+      
+      #Only if SCPS Module is enabled
+      #Enter SAP Communication User Password
+      #Example: "VWN3UExtWHFIZmJQQVVaOUdZZ0tiQ295QnlHdVBGQFlnb3lDYlZSTg=="
+      SCPS_USER_PASSWORD: ""
+
+###################################### S E C R E T S   E N D ################################### 
+
+###################################### O U T P U T   S E R V E R    P A R A M E T E R S ########
+
+    #Enter the values for below mentioned environment variables
+    envvariables:
+    
+      #######################################################################   
+      #         OSPRIMARY Container Environment Variables                   #
+      #######################################################################
+      
+      osprimary:
+      
+        #DAZEL_PORTS will enable server to start in particular range
+        #Example: "20000-20020"    
+        DAZEL_PORTS: "20000-20050"
+        
+        #######################################################################   
+        #         OUTPUT SERVER DISTRIBUTOR Environment Variables             #
+        #######################################################################        
+        
+        #Enter 1 to enable Output Server Distributor; if not enter 0 
+        #Example: "1"    
+        ENABLE_OTOS_DISTRIBUTOR: "1"
+        
+        #######################################################################
+        #         OUTPUT SERVER INTERNATIONAL PRINTING Environment Variables  #
+        #######################################################################
+        
+        #Enter 1 to enable International Printing; if not enter 0
+        #Example: "1"    
+        ENABLE_INTERNATIONAL_PRINTING: "1"
+        
+        #Enter 1 to enable EOTE; if not enter 0
+        #Example: "1"
+        ENABLE_IP_EOTE: "1"
+        
+        #######################################################################   
+        #         OUTPUT SERVER SECURE ACCESS Environment Variables           #
+        #######################################################################        
+        
+        #Enter 1 to configure Secure Access; if not enter 0
+        #Example: "1"
+        CONFIGURE_SECURE_ACCESS: "1"
+        
+        #######################################################################   
+        #         OUTPUT SERVER OTOS ANALYTICS Environment Variables          #
+        #######################################################################        
+        
+        #Enter 1 to configure Secure Access; if not enter 0
+        #Example: "1"
+        CONFIGURE_OTOS_ANALYTICS: "1"
+        
+        #######################################################################   
+        #         OUTPUT SERVER IPP Environment Variables           #
+        #######################################################################        
+        
+        #Enter 1 to configure IPP Service; if not enter 0
+        #Example: "1"
+        CONFIGURE_IPP_SERVICE: "1"
+
+        #######################################################################
+        #         OUTPUT SERVER CLOUDFAX SERVICE Environment Variables        #
+        #######################################################################
+        
+        #Enter 1 to configure cloudfax service; if not enter 0
+        #Example: "1"
+        CONFIGURE_CLOUDFAX_SERVICE: "1"
+        
+        #######################################################################   
+        #         OUTPUT SERVER SAP OMSCB Environment Variables               #
+        ####################################################################### 
+
+
+          ###########################################################   
+          #                    OMSCB Environment Variables          #          
+          ###########################################################         
+        
+        #Enter 1 to configure SAP omscb server; if not enter 0
+        #Example: "0"
+        CONFIGURE_SAP_OMSCB: "1"
+        
+        #Enter 1 to enable SAP omscb Message Server; if not enter 0
+        #Example: "0"
+        SAP_MESSAGE_SERVER: "1"
+        
+        #Enter SAP Host server SID Instance number
+        #Example: "mucr3t7c_T7C_00"
+        SAP_INSTANCE: ""
+        
+        #Need to use same values present in sapnwrfc.ini
+        #Enter the GW Hostname
+        #Example: "mucr3t7c"
+        SAP_GWHOST_NAME: ""
+        
+        #Need to use same values present in sapnwrfc.ini
+        #Enter the GW IP Address
+        #Example: "10.145.148.105"
+        SAP_GWHOST_IP_ADDRESS: "" 
+        
+        #Need to use same values present in sapnwrfc.ini    
+        #Enter the AS Hostname
+        #Example: "mucr3t7c"
+        SAP_ASHOST_NAME: ""
+        
+        #Need to use same values present in sapnwrfc.ini
+        #Enter the ASHOST IP Address
+        #Example: "10.145.148.105"
+        SAP_ASHOST_IP_ADDRESS: ""    
+        
+        #The ROMS identifies the characteristics of the
+        #external OMS (OpenText Output Server)
+        SAP_REAL_OMS: ""
+        
+        #Enter the User, who has permissions to update the database 
+        #with callback messages
+        #Example: "OMTEST"
+        SAP_USERNAME: ""
+        
+        #Enter the client number in which user was created
+        #Example: "100"
+        SAP_CLIENT_NUMBER: ""
+        
+        
+          ###########################################################   
+          #                    SAPCON Environment Variables         #          
+          ###########################################################          
+        
+        #Enter 1 to configure SAP sapcon server; if not enter 0
+        #Example: "1"
+        CONFIGURE_SAP_SAPCON: "1"
+        
+        #Enter the RFC destination
+        #Example: "RFC_REK"
+        SAPCON_SERVER_SID: ""
+        
+        #To configure e-mail, set this attribute
+        #Example: "lMailFile1"
+        SAPCON_LOGICAL_EMAIL_DEST: "lMailFile1"
+        
+        #To configure fax, set this attribute
+        #Example: "lFaxFile1"
+        SAPCON_LOGICAL_FAX_DEST: "lFaxFile1"
+        
+        
+          ###########################################################   
+          #             HPOSMAIL/SAP SMTP Environment Variables     #          
+          ###########################################################         
+        
+        #Enter 1 to configure SAP hposmail server; if not enter 0
+        #Example: "0"
+        CONFIGURE_SAP_HPOSMAIL: "1"
+        
+        #To configure e-mail, set this attribute
+        #Example: "lMailFile2"
+        SAPSMTP_LOGICAL_EMAIL_DEST: "lMailFile2"
+        
+        #To configure fax, set this attribute
+        #Example: "lFaxFile2"
+        SAPSMTP_LOGICAL_FAX_DEST: "lFaxFile2"
+        
+         ############################################################
+         #             SCPS Environment Variables                   #
+         ############################################################
+
+        #Enter 1 to configure SCPS. It will configure SCPS and SCPSGW servers; if not enter 0
+        #Example: "0"
+        CONFIGURE_SCPS: "1"
+
+        #Enter SAP S/4 HANA System URL
+        #Example: "https://my402792-api.s4hana.cloud.sap/"
+        SCPS_SAP_URL: ""
+
+        #ENTER SAP Communication User Name
+        #Example: "omtest"
+        SCPS_SAP_USER: ""       
+ 
+        #######################################################################   
+        #         WEB DELIVERY CLIENT Environment Variables                   #
+        #######################################################################
+        
+        #Enter 1 to enable Web Delivery Agent; if not enter 0
+        #Example: "1"
+        ENABLE_WEB_DELIVERY_AGENT: "1"       
+
+        #Enter mw remote server URL path
+        #Web delivery's kubernetes must be mentioned below.
+        #Example: "http://otom-services-om-webdelivery:80/otoswd"
+        MWREMOTE_SERVER_URL: "http://otom-services-om-webdelivery:80/otoswd"
+
+###################################### O U T P U T   S E R V E R    P A R A M E T E R S   E N D 

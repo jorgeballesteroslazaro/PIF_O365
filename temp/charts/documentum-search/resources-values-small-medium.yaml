@@ -1,0 +1,125 @@
+zookeeper:
+  replicaCount: 2
+  HEAP: -Xms750m -Xmx3g
+  resources:
+    requests:
+      cpu: 250m
+      memory: 1Gi
+    limits:
+      cpu: 1000m
+      memory: 4Gi
+  persistence:
+    size: 8Gi
+solr:
+  replicaCount: 2
+  javaMem: "-Xms6g -Xmx9g"
+  resources:
+    requests:
+      cpu: 500m
+      memory: 3Gi
+    limits:
+      cpu: 2000m
+      memory: 12Gi
+  volumeClaimTemplates:
+    storageSize: 143Gi
+  backup:
+    persistence:
+      storageSize: 143Gi
+kafka:
+  replicaCount: 2
+  env:
+    JAVA_OPTS: -Xms375m -Xmx1500m
+  resources:
+    requests:
+      cpu: 500m
+      memory: 500Mi
+    limits:
+      cpu: 2000m
+      memory: 2Gi
+  persistence:
+    size: 48Gi
+parser:
+  replicaCount: 1
+  env:
+    JAVA_OPTS: -Xms750m -Xmx3g
+  resources:
+    requests:
+      cpu: 500m
+      memory: 1Gi
+    limits:
+      cpu: 2000m
+      memory: 4Gi
+  persistence:
+    size: 8Gi
+indexer:
+  replicaCount: 1
+  env:
+    JDK_JAVA_OPTIONS: -Xms375m -Xmx1500m
+    ACTIVEMQ_CONSUMER_WINDOW_SIZE_BYTES: "20971520"
+    ACTIVEMQ_CONSUMER_SIZE: 4
+  resources:
+    requests:
+      cpu: 250m
+      memory: 500Mi
+    limits:
+      cpu: 1000m
+      memory: 2Gi
+coresearch:
+  replicaCount: 1
+  env:
+    JDK_JAVA_OPTIONS: -Xms750m -Xmx3g
+    SOLR_NUM_REPLICAS: 2
+    ACTIVEMQ_CONSUMER_SIZE: 4
+  resources:
+    requests:
+      cpu: 250m
+      memory: 1Gi
+    limits:
+      cpu: 1000m
+      memory: 4Gi
+fetcher:
+  replicaCount: 1
+  env:
+    JAVA_OPTS: -Xms375m -Xmx1500m
+  resources:
+    requests:
+      cpu: 250m
+      memory: 500Mi
+    limits:
+      cpu: 1000m
+      memory: 2Gi
+index-agent:
+  replicaCount: 1
+  env:
+    JAVA_OPTS: -Xms750m -Xmx3g
+  resources:
+    requests:
+      cpu: 500m
+      memory: 1Gi
+    limits:
+      cpu: 2000m
+      memory: 4Gi
+  persistence:
+    size: 8Gi
+search-agent:
+  replicaCount: 1
+  env:
+    JAVA_OPTS: -Xms375m -Xmx1500m
+  resources:
+    requests:
+      cpu: 250m
+      memory: 500Mi
+    limits:
+      cpu: 1000m
+      memory: 2Gi
+admin:
+  replicaCount: 1
+  env:
+    JAVA_OPTS: -Xms375m -Xmx1500m
+  resources:
+    requests:
+      cpu: 250m
+      memory: 500Mi
+    limits:
+      cpu: 1000m
+      memory: 2Gi

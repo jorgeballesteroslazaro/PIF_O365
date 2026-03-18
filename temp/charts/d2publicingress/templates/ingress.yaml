@@ -1,0 +1,442 @@
+{{- if .Capabilities.APIVersions.Has "networking.k8s.io/v1/Ingress" }}
+apiVersion: networking.k8s.io/v1
+{{ else }}
+apiVersion: extensions/v1beta1
+{{ end }}
+kind: Ingress
+metadata:
+  name: {{ .Chart.Name }}
+  annotations:
+{{- if not (.Capabilities.APIVersions.Has "networking.k8s.io/v1/Ingress") }}
+{{- if .Values.ingress.class }}
+    kubernetes.io/ingress.class: {{ .Values.ingress.class }}
+{{- end }}
+{{- end }}
+{{- range $key, $value := .Values.ingress.annotations }}
+    {{ $key }}: {{ $value | squote }}
+{{- end }}
+{{- if eq .Values.cloudPlatform "Azure" }}
+    cert-manager.io/cluster-issuer: letsencrypt
+{{- end }}
+
+spec:
+{{- if .Capabilities.APIVersions.Has "networking.k8s.io/v1/Ingress" }}
+  ingressClassName: {{ .Values.ingress.class }}
+{{- end }}
+{{- if or (.Values.tls.enable) (eq .Values.global.internalTlsEnable true) }}
+  tls:
+  - hosts:
+    - {{ .Values.ingress.hostShortName | default .Values.global.publicHostShortName }}.{{ .Values.ingress.hostDomainName | default .Values.global.publicIngressDomain }}
+    secretName: {{ .Values.tls.secretName | default .Values.global.ingressTLSSecret }}
+{{- end }}
+  rules:
+  - host: {{ .Values.ingress.hostShortName | default .Values.global.publicHostShortName }}.{{ .Values.ingress.hostDomainName | default .Values.global.publicIngressDomain }}
+    http:
+      paths:
+      {{- if and .Values.global.dtrbase.enabled (empty (.Values.dctmreportsd2service.enable | quote) | ternary true .Values.dctmreportsd2service.enable) }}
+      {{- if eq .Values.cloudPlatform "aws" }}
+      - path: /D2DCTMReports*
+      {{- else }}
+      - path: /D2DCTMReports
+      {{- end }}
+      {{- if .Capabilities.APIVersions.Has "networking.k8s.io/v1/Ingress" }}
+        pathType: {{ .Values.ingress.pathType }}
+        backend:
+          service:
+            name: {{ .Values.d2classicservice.serviceName }}
+            port:
+              number: {{ template "d2classic.servicePort" . }}
+      {{- else }}
+        backend:
+          serviceName: {{ .Values.d2classicservice.serviceName }}
+          servicePort: {{ template "d2classic.servicePort" . }}
+      {{- end }}
+      {{- end }}
+
+      {{- $component := index .Values.global "ao-installer" }}
+      {{- if and $component.enabled (empty (.Values.epfmaService.enable | quote) | ternary (not .Values.global.multiIngress) .Values.epfmaService.enable) }}
+      {{- if eq .Values.cloudPlatform "aws" }}
+      - path: /EPFMA/*
+      {{- else }}
+      - path: /EPFMA
+      {{- end }}
+      {{- if .Capabilities.APIVersions.Has "networking.k8s.io/v1/Ingress" }}
+        pathType: {{ .Values.ingress.pathType }}
+        backend:
+          service:
+            name: {{ .Values.d2smartviewservice.serviceName }}
+            port:
+              number: {{ template "d2smartview.servicePort" . }}
+      {{- else }}
+        backend:
+          serviceName: {{ .Values.d2smartviewservice.serviceName }}
+          servicePort: {{ template "d2smartview.servicePort" . }}
+      {{- end }}
+      {{- end }}
+
+      {{- if and .Values.global.d2smartview.enabled (empty (.Values.d2smartviewservice.enable | quote) | ternary true .Values.d2smartviewservice.enable) }}
+      {{- if eq .Values.cloudPlatform "aws" }}
+      - path: /{{ .Values.d2smartviewservice.path | default .Values.global.d2smartviewWebappName}}*
+      {{- else }}
+      - path: /{{ .Values.d2smartviewservice.path | default .Values.global.d2smartviewWebappName}}
+      {{- end }}
+      {{- if .Capabilities.APIVersions.Has "networking.k8s.io/v1/Ingress" }}
+        pathType: {{ .Values.ingress.pathType }}
+        backend:
+          service:
+            name: {{ .Values.d2smartviewservice.serviceName }}
+            port:
+              number: {{ template "d2smartview.servicePort" . }}
+      {{- else }}
+        backend:
+          serviceName: {{ .Values.d2smartviewservice.serviceName }}
+          servicePort: {{ template "d2smartview.servicePort" . }}
+      {{- end }}
+      {{- end }}
+      {{- if and .Values.global.d2rest.enabled (empty (.Values.d2restservice.enable | quote) | ternary true .Values.d2restservice.enable) }}
+      {{- if eq .Values.cloudPlatform "aws" }}
+      - path: /{{ .Values.d2restservice.path | default .Values.global.d2restWebappName}}*
+      {{- else }}
+      - path: /{{ .Values.d2restservice.path | default .Values.global.d2restWebappName}}
+      {{- end }}
+      {{- if .Capabilities.APIVersions.Has "networking.k8s.io/v1/Ingress" }}
+        pathType: {{ .Values.ingress.pathType }}
+        backend:
+          service:
+            name: {{ .Values.d2restservice.serviceName }}
+            port:
+              number: {{ template "d2rest.servicePort" . }}
+      {{- else }}
+        backend:
+          serviceName: {{ .Values.d2restservice.serviceName }}
+          servicePort: {{ template "d2rest.servicePort" . }}
+      {{- end }}
+    {{- end }}
+
+    {{- $component := index .Values.global "dctm-rest" }}
+    {{- if and $component.enabled (empty (.Values.dctmrestservice.enable | quote) | ternary true .Values.dctmrestservice.enable ) }}
+      {{- if eq .Values.cloudPlatform "aws" }}
+      - path: /{{ .Values.dctmrestservice.path }}*
+      {{- else }}
+      - path: /{{ .Values.dctmrestservice.path }}
+      {{- end }}
+      {{- if .Capabilities.APIVersions.Has "networking.k8s.io/v1/Ingress" }}
+        pathType: {{ .Values.ingress.pathType }}
+        backend:
+          service:
+            name: {{ .Values.dctmrestservice.serviceName }}
+            port:
+              number: {{ template "dctm-rest.servicePort" .  }}
+      {{- else }}
+        backend:
+          serviceName: {{ .Values.dctmrestservice.serviceName }}
+          servicePort: {{ template "dctm-rest.servicePort" .  }}
+      {{- end }}
+    {{- end }}
+
+
+    {{- if and .Values.global.dtrbase.enabled (empty (.Values.dtrbaseService.enable | quote) | ternary true .Values.dtrbaseService.enable) }}
+    {{ if eq .Values.cloudPlatform "aws" }}
+      - path: /{{ .Values.dtrbaseService.path }}*
+     {{ else }}
+      - path: /{{ .Values.dtrbaseService.path }}
+     {{ end }}
+    {{- if $.Capabilities.APIVersions.Has "networking.k8s.io/v1/Ingress" }}
+        pathType: {{ .Values.ingress.pathType }}
+        backend:
+          service:
+            name: {{ .Values.dtrbaseService.serviceName }}
+            port:
+              number: {{ .Values.dtrbaseService.servicePortCore }}
+    {{- else }}
+        backend:
+          serviceName: {{ .Values.dtrbaseService.serviceName }}
+          servicePort: {{ .Values.dtrbaseService.servicePortCore }}
+    {{- end }}
+    {{ if eq .Values.cloudPlatform "aws" }}
+      - path: /{{ .Values.dctmreportsd2service.path }}/servlet*
+    {{ else }}
+      - path: /{{ .Values.dctmreportsd2service.path }}/servlet
+    {{ end }}
+     {{- if $.Capabilities.APIVersions.Has "networking.k8s.io/v1/Ingress" }}
+        pathType: {{ .Values.ingress.pathType }}
+        backend:
+          service:
+            name: {{ .Values.dtrbaseService.serviceName }}
+            port:
+              number: {{ .Values.dtrbaseService.servicePortServlet }}
+    {{- else }}
+        backend:
+          serviceName: {{ .Values.dtrbaseService.serviceName }}
+          servicePort: {{ .Values.dtrbaseService.servicePortServlet }}
+    {{- end }}
+    {{- end }}
+    {{- if and .Values.global.otds.enabled (empty (.Values.otdsws.enable | quote) | ternary true .Values.otdsws.enable) }}
+      {{- if eq .Values.cloudPlatform "aws" }}
+      - path: /{{ .Values.otdsws.path }}*
+      {{- else }}
+      - path: /{{ .Values.otdsws.path }}
+      {{- end }}
+      {{- if .Capabilities.APIVersions.Has "networking.k8s.io/v1/Ingress" }}
+        pathType: {{ .Values.ingress.pathType }}
+        backend:
+          service:
+            name: {{ .Values.otdsws.serviceName }}
+            port:
+              number: {{ .Values.otdsws.servicePort }}
+      {{- else }}
+        backend:
+          serviceName: {{ .Values.otdsws.serviceName }}
+          servicePort: {{ .Values.otdsws.servicePort }}
+      {{- end }}
+    {{- end }}
+
+    {{- if and .Values.global.contentconnect.enabled (empty (.Values.contentConnectService.enable | quote) | ternary true .Values.contentConnectService.enable) }}
+      {{- if eq .Values.cloudPlatform "aws" }}
+      - path: /{{ .Values.contentConnectService.path }}/service*
+      {{- else }}
+      - path: /{{ .Values.contentConnectService.path }}/service
+      {{- end }}
+      {{- if .Capabilities.APIVersions.Has "networking.k8s.io/v1/Ingress" }}
+        pathType: {{ .Values.ingress.pathType }}
+        backend:
+          service:
+            name: cc-admin
+            port:
+              number: 80
+      {{- else }}
+        backend:
+          serviceName: cc-admin
+          servicePort: 80
+      {{- end }}
+      {{- if eq .Values.cloudPlatform "aws" }}
+      - path: /{{ .Values.contentConnectService.path }}*
+      {{- else }}
+      - path: /{{ .Values.contentConnectService.path }}
+      {{- end }}
+      {{- if .Capabilities.APIVersions.Has "networking.k8s.io/v1/Ingress" }}
+        pathType: {{ .Values.ingress.pathType }}
+        backend:
+          service:
+            name: cc
+            port:
+              number: 8080
+      {{- else }}
+        backend:
+          serviceName: cc
+          servicePort: 8080
+      {{- end }}
+    {{- end }}
+
+    {{- if and .Values.global.smartviewm365.enabled (empty (.Values.smartviewm365.enable | quote) | ternary true .Values.smartviewm365.enable) }}
+    {{ if eq .Values.cloudPlatform "aws" }}
+      - path: /{{ .Values.smartviewm365.path }}*
+    {{ else }}
+      - path: /{{ .Values.smartviewm365.path }}
+    {{ end }}
+    {{- if .Capabilities.APIVersions.Has "networking.k8s.io/v1/Ingress" }}
+        pathType: {{ .Values.ingress.pathType }}
+        backend:
+          service:
+            name: {{ .Values.smartviewm365.serviceName }}
+            port:
+              number: {{ .Values.smartviewm365.servicePort }}
+    {{- else }}
+        backend:
+          serviceName: {{ .Values.smartviewm365.serviceName }}
+          servicePort: {{ .Values.smartviewm365.servicePort }}
+    {{- end }}
+    {{- end }}
+
+    {{- if and .Values.global.records.enabled (empty (.Values.recordsService.enable | quote) | ternary true .Values.recordsService.enable) }}
+    {{ if eq .Values.cloudPlatform "aws" }}
+      - path: /{{ .Values.recordsService.path }}*
+    {{ else }}
+      - path: /{{ .Values.recordsService.path }}
+    {{ end }}
+    {{- if .Capabilities.APIVersions.Has "networking.k8s.io/v1/Ingress" }}
+        pathType: {{ .Values.ingress.pathType }}
+        backend:
+          service:
+            name: {{ .Values.recordsService.serviceName }}
+            port:
+              number: {{ .Values.recordsService.servicePort }}
+    {{- else }}
+        backend:
+          serviceName: {{ .Values.recordsService.serviceName }}
+          servicePort: {{ .Values.recordsService.servicePort }}
+    {{- end }}
+    {{- end }}
+
+    {{- $component := index .Values.global "dctm-dcc" }}
+    {{- if and $component.enabled (empty (.Values.dcc.syncnshareManual.enabled | quote) | ternary true .Values.dcc.syncnshareManual.enabled ) }}
+    {{ if eq .Values.cloudPlatform "aws" }}
+      - path: /{{ .Values.dcc.syncnshareManual.path }}*
+    {{ else }}
+      - path: /{{ .Values.dcc.syncnshareManual.path }}
+    {{ end }}
+    {{- if .Capabilities.APIVersions.Has "networking.k8s.io/v1/Ingress" }}
+        pathType: {{ default "ImplementationSpecific" .Values.dcc.pathType }}
+        backend:
+          service:
+            name: {{ .Values.dcc.prefix | default .Values.global.dccPrefix }}-{{ .Values.dcc.syncnshareManual.prefix }}-service
+            port:
+              number: {{ .Values.dcc.syncnshareManual.service.servicePort }}
+    {{- else }}
+        backend:
+          serviceName: {{ .Values.dcc.prefix | default .Values.global.dccPrefix }}-{{ .Values.dcc.syncnshareManual.prefix }}-service
+          servicePort: {{ .Values.dcc.syncnshareManual.service.servicePort }}
+    {{- end }}
+    {{- end }}
+
+    {{- if and (eq ( .Values.d2classicservice.enable | default .Values.global.d2classic.enabled) true) (eq ( .Values.d2xmlViewerService.enable | default .Values.global.d2classic.enabled ) true) }}
+    {{ if eq .Values.cloudPlatform "aws" }}
+      - path: /{{ .Values.d2xmlViewerService.path }}*
+    {{ else }}
+      - path: /{{ .Values.d2xmlViewerService.path }}
+    {{ end }}
+    {{- if .Capabilities.APIVersions.Has "networking.k8s.io/v1/Ingress" }}
+        pathType: {{ .Values.ingress.pathType }}
+        backend:
+          service:
+            name: {{ .Values.d2classicservice.serviceName }}
+            port:
+              number: {{ template "d2classic.servicePort" .  }}
+      {{- else }}
+        backend:
+          serviceName: {{ .Values.d2classicservice.serviceName }}
+          servicePort: {{ template "d2classic.servicePort" .  }}
+      {{- end }}
+    {{- end }}
+
+
+    {{- if and (eq ( .Values.d2classicservice.enable | default .Values.global.d2classic.enabled ) true) (eq ( .Values.d2lsService.enable | default .Values.global.lss.enabled ) true) }}
+    {{ if eq .Values.cloudPlatform "aws" }}
+      - path: /{{ .Values.d2lsService.path }}*
+    {{ else }}
+      - path: /{{ .Values.d2lsService.path }}
+    {{ end }}
+    {{- if .Capabilities.APIVersions.Has "networking.k8s.io/v1/Ingress" }}
+        pathType: {{ .Values.ingress.pathType }}
+        backend:
+          service:
+            name: {{ .Values.d2classicservice.serviceName }}
+            port:
+              number: {{ template "d2classic.servicePort" .  }}
+      {{- else }}
+        backend:
+          serviceName: {{ .Values.d2classicservice.serviceName }}
+          servicePort: {{ template "d2classic.servicePort" .  }}
+      {{- end }}
+    {{- end }}
+
+
+    {{- if and .Values.global.oesconnector.enabled (empty (.Values.oes.enable | quote) | ternary true .Values.oes.enable) }}
+    {{- if eq .Values.cloudPlatform "aws" }}
+      - path: /{{ .Values.oes.path | default .Values.global.oesconnectorWebappName}}*
+    {{- else }}
+      - path: /{{ .Values.oes.path | default .Values.global.oesconnectorWebappName}}
+    {{- end }}
+    {{- if .Capabilities.APIVersions.Has "networking.k8s.io/v1/Ingress" }}
+        pathType: {{ .Values.ingress.pathType }}
+        backend:
+          service:
+            name: {{ .Values.oes.serviceName }}
+            port:
+              number: {{ .Values.oes.servicePort }}
+    {{- else }}
+        backend:
+          serviceName: {{ .Values.oes.serviceName }}
+          servicePort: {{ .Values.oes.servicePort }}
+    {{- end }}
+    {{- end }}
+
+    {{- if eq ( .Values.lsprintService.enable | default .Values.global.lss.enabled ) true }}
+    {{ if eq .Values.cloudPlatform "aws" }}
+      - path: /{{ .Values.lsprintService.path }}*
+    {{ else }}
+      - path: /{{ .Values.lsprintService.path }}
+    {{ end }}
+    {{- if .Capabilities.APIVersions.Has "networking.k8s.io/v1/Ingress" }}
+        pathType: {{ default "ImplementationSpecific" .Values.lsprintService.pathType }}
+        backend:
+          service:
+            name: {{ .Values.lsprintService.serviceName }}
+            port:
+              number: {{ template "lss.servicePort" . }}
+    {{- else }}
+        backend:
+          serviceName: {{ .Values.lsprintService.serviceName }}
+          servicePort: {{ template "lss.servicePort" . }}
+    {{- end }}
+    {{- end }}
+
+
+    {{- $component := index .Values.global "content-server" }}
+    {{- if and $component.enabled (empty (.Values.dmotdsrestService.enable | quote) | ternary true .Values.dmotdsrestService.enable ) }}
+    {{ if eq .Values.cloudPlatform "aws" }}
+      - path: /dmotdsrest*
+    {{ else }}
+      - path: /dmotdsrest
+    {{ end }}
+    {{- if .Capabilities.APIVersions.Has "networking.k8s.io/v1/Ingress" }}
+        pathType: {{ default "ImplementationSpecific" .Values.dmotdsrestService.pathType }}
+        backend:
+          service:
+            name: {{ .Values.dmotdsrestService.serviceName }}
+            port:
+              number: {{ .Values.dmotdsrestService.servicePort }}
+    {{- else }}
+        backend:
+          serviceName: {{ .Values.dmotdsrestService.serviceName }}
+          servicePort: {{ .Values.dmotdsrestService.servicePort }}
+    {{- end }}
+    {{- end -}}
+
+    {{- if and .Values.global.d2classic.enabled (empty (.Values.d2classicservice.enable | quote) | ternary true .Values.d2classicservice.enable) }}
+    {{- if eq .Values.cloudPlatform "aws" }}
+      - path: /{{ .Values.d2classicservice.path | default .Values.global.d2classicWebappName}}*
+    {{- else }}
+      - path: /{{ .Values.d2classicservice.path | default .Values.global.d2classicWebappName}}
+    {{- end }}
+    {{- if .Capabilities.APIVersions.Has "networking.k8s.io/v1/Ingress" }}
+        pathType: {{ .Values.ingress.pathType }}
+        backend:
+          service:
+            name: {{ .Values.d2classicservice.serviceName }}
+            port:
+              number: {{ template "d2classic.servicePort" . }}
+    {{- else }}
+        backend:
+          serviceName: {{ .Values.d2classicservice.serviceName }}
+          servicePort: {{ template "d2classic.servicePort" . }}
+    {{- end }}
+    {{- end }}
+{{- if .Values.extraPaths }}
+{{ toYaml .Values.extraPaths | indent 6 }}
+{{- end }}
+## This entry must be the last in the configuration file.
+## Reason: Any content added after the ingress section is also being unintentionally included in the dc4sp ingress host
+## configuration. Placing this entry at the end prevents such unintended additions.
+{{- if eq ( .Values.dc4spService.enable | default .Values.global.lss.enabled ) true }}
+  - host: {{ .Values.dc4spService.host }}.{{ .Values.ingress.hostDomainName | default .Values.global.publicIngressDomain }}
+    http:
+      paths:
+    {{ if eq .Values.cloudPlatform "aws" }}
+      - path: /*
+    {{ else }}
+      - path: /(.*)
+    {{ end }}
+    {{- if .Capabilities.APIVersions.Has "networking.k8s.io/v1/Ingress" }}
+        backend:
+          service:
+            name: {{ .Values.dc4spService.serviceName }}
+            port:
+              number: {{ template "lss.servicePort" . }}
+        pathType: {{ default "ImplementationSpecific" .Values.dc4spService.pathType }}
+    {{- else }}
+        backend:
+          serviceName: {{ .Values.dc4spService.serviceName }}
+          servicePort: {{ template "lss.servicePort" . }}
+    {{- end }}
+{{- end }}

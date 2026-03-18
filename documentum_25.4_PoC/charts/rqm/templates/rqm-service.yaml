@@ -1,0 +1,21 @@
+#Servics
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.serviceName }}  
+  namespace: {{ .Values.namespace | default .Release.Namespace}}
+{{- with .Values.serviceAnnotations }}
+annotations:
+  {{- toYaml . | nindent 4 }}
+{{- end }}
+spec:  
+  ports:
+  - port: {{ .Values.containers.rqm.rqmadminport }}
+    name: rqmadminport
+  - port: {{ .Values.containers.rqm.rqmjettyport }}
+    name: rqmjettyport  
+  - port: {{ .Values.containers.rqm.docbrokerport | default .Values.global.dbr_port}}
+    name: docbrokerport     
+  clusterIP: None
+  selector:
+    app: {{ .Values.serviceName }}

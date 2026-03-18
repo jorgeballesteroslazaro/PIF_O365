@@ -1,0 +1,326 @@
+---
+
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ .Values.service.name }}
+  labels:
+{{ include "solr.common.labels" . | indent 4 }}
+    app.kubernetes.io/component: server
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: "{{ include "solr.name" . }}"
+      app.kubernetes.io/instance: "{{ .Release.Name }}"
+      app.kubernetes.io/component: "server"
+  serviceName: {{ include "solr.headless-service-name" . }}
+  {{ if gt (int .Values.replicaCount) 1 }}
+  replicas: {{ .Values.replicaCount }}
+  {{ else }}
+  replicas: 2
+  {{ end }}
+  updateStrategy:
+    {{ toYaml .Values.updateStrategy | indent 4}}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: "{{ include "solr.name" . }}"
+        app.kubernetes.io/instance: "{{ .Release.Name }}"
+        app.kubernetes.io/component: "server"
+      annotations:
+{{ toYaml .Values.podAnnotations | indent 8 }}
+    spec:
+      serviceAccountName: {{ .Values.serviceAccount.serviceAccountName | default .Values.global.documentumserviceaccount }}
+      {{- if (empty (.Values.global.pullSecrets | quote) | ternary .Values.global.pullSecretName .Values.global.pullSecrets) }}
+      imagePullSecrets:
+        - name: {{ .Values.global.pullSecrets | default .Values.global.pullSecretName }}
+      {{ end }}
+      {{- if .Values.schedulerName }}
+      schedulerName: "{{ .Values.schedulerName }}"
+      {{- end }}
+      securityContext:
+        fsGroup: 8983
+      affinity:
+{{ tpl (toYaml .Values.affinity) .  | indent 8 }}
+      tolerations:
+{{ tpl (toYaml .Values.tolerations) .  | indent 8 }}
+      terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
+      volumes:
+        - name: "shared-logs"
+          emptyDir: {}                                    
+        - name: "solr-config"
+          emptyDir: {}
+        {{- if .Values.backup.enabled }}
+        - name: {{ .Values.service.name }}-backup-pvc
+          persistentVolumeClaim:
+            claimName: {{ .Values.service.name }}-backup-pvc
+        {{- end }}
+        {{- if or .Values.ssl.enabled .Values.global.useCertificate }}
+        - name: common-certificate-volume
+          persistentVolumeClaim:
+            claimName: '{{ .Values.global.dbrServiceName | default "dbr" }}-pvc'
+        {{- end }}
+        - name: solr-xml
+          configMap:
+            name: {{ include "solr.configmap-name" . }}
+            items:
+              - key: solr.xml
+                path: solr.xml
+{{- if not ( eq .Values.initScript  "" ) }}
+        - name: solr-init-script
+          configMap:
+            name: {{ include "solr.custom-script.configmap-name" . }}
+            items:
+              - key: solr-init.sh
+                path: solr-init.sh
+{{- end }}
+        {{- if (empty (.Values.newrelic.enable | quote) | ternary .Values.global.newrelic .Values.newrelic.enable) }}
+        - name: newrelic-config-map
+          configMap:
+            name: solr-newrelic-config
+            items:
+              - key: newrelic.yml
+                path: newrelic.yml
+        {{- end }}
+      initContainers:
+        - name: check-zk
+          image:  {{ .Values.global.zkstatus_image | default .Values.global.zkStatusImage }}
+          imagePullPolicy: {{ .Values.image.pullPolicy | default .Values.global.pullPolicyType }}
+          env:
+           - name: ZK_HOST
+             valueFrom:
+               configMapKeyRef:
+                 name: zoo-search-configmap
+                 key: zk.host
+          command:
+            - 'sh'
+            - '-c'
+            - |
+              ZKHOST=`echo ${ZK_HOST%%:*}`
+              java -jar zk-status-checker.jar $ZKHOST
+              STATUS="${?}"
+              echo "$STATUS"
+              if [ $STATUS -ne 0 ] ; then
+                 exit 1;
+              else
+                 exit 0;
+              fi
+        - name: "cp-solr-xml"
+          image:  {{ .Values.global.zkstatus_image | default .Values.global.zkStatusImage }}
+          imagePullPolicy: {{ .Values.image.pullPolicy | default .Values.global.pullPolicyType }}
+        {{- if .Values.backup.enabled }}
+        - name: change-permissions
+          image: {{ .Values.global.zkstatus_image | default .Values.global.zkStatusImage }}
+          imagePullPolicy: {{ .Values.image.pullPolicy | default .Values.global.pullPolicyType }}
+          command: ['sh', '-c', 'chown -R 8983:8983 /var/solr/data/pvcbackupstorage']
+          volumeMounts:
+            - name: {{ .Values.service.name }}-backup-pvc
+              mountPath: /var/solr/data/pvcbackupstorage
+        {{- end }}
+          command: ['sh', '-c', 'cp /tmp/solr.xml /tmp-config/solr.xml']
+          volumeMounts:
+            - name: "solr-xml"
+              mountPath: "/tmp"
+            - name: "solr-config"
+              mountPath: "/tmp-config"
+      containers:
+        - name: solr
+          image: {{ .Values.image.repository  | default .Values.global.repository }}/{{ .Values.image.name }}:{{ .Values.image.tag }}
+          securityContext:
+            runAsUser: 8983
+          imagePullPolicy: {{ .Values.image.pullPolicy | default .Values.global.pullPolicyType }}
+          resources:
+{{ toYaml .Values.resources | indent 12 }}
+          ports:
+            - containerPort: {{ .Values.port }}
+              name: solr-client
+          env:
+            - name: "SOLR_JAVA_MEM"
+              value: "{{ .Values.javaMem }}"
+            - name: "SOLR_HOME"
+              value: "/var/solr/data"  #"/opt/solr/server/home"
+            - name: "SOLR_PORT"
+              value: "{{ .Values.port }}"
+          {{- if or .Values.ssl.enabled .Values.global.useCertificate }}
+            - name: "SOLR_SSL_ENABLED"
+              value: "true"
+            - name: "SOLR_SSL_KEY_STORE"
+              value: '{{ .Values.ssl.certificateMountPath | default "/opt/dctm/certificate" }}/{{ .Values.ssl.keyStore | default "common-keystore.p12" }}'
+            - name: "SOLR_SSL_KEY_STORE_PASSWORD"
+              valueFrom:
+                secretKeyRef:
+                  name: '{{ .Values.secrets.cs.name  | default .Values.global.csSecrets }}'
+                  key: commontruststorepassword
+            - name: "SOLR_SSL_TRUST_STORE"
+              value: '{{ .Values.ssl.certificateMountPath | default "/opt/dctm/certificate" }}/{{ .Values.ssl.trustStore | default "common-truststore.p12" }}'
+            - name: "SOLR_SSL_TRUST_STORE_PASSWORD"
+              valueFrom:
+                secretKeyRef:
+                  name: '{{ .Values.secrets.cs.name  | default .Values.global.csSecrets }}'
+                  key: commontruststorepassword
+            - name: "SOLR_SSL_NEED_CLIENT_AUTH"
+              value: "false"
+            - name: "SOLR_ZK_CREDS_AND_ACLS"
+              value: >-
+                -Dzookeeper.client.secure=true
+                -Dzookeeper.clientCnxnSocket=org.apache.zookeeper.ClientCnxnSocketNetty
+                -Dzookeeper.ssl.trustStore.location={{ .Values.ssl.certificateMountPath | default "/opt/dctm/certificate" }}/{{ .Values.ssl.trustStore | default "common-truststore.p12" }}
+                -Dzookeeper.ssl.trustStore.password=$(SOLR_SSL_TRUST_STORE_PASSWORD)
+                -Dzookeeper.ssl.keyStore.location={{ .Values.ssl.certificateMountPath | default "/opt/dctm/certificate" }}/{{ .Values.ssl.keyStore | default "common-keystore.p12" }}
+                -Dzookeeper.ssl.keyStore.password=$(SOLR_SSL_KEY_STORE_PASSWORD)
+                -Dzookeeper.ssl.trustStore.type=PKCS12
+                -Dzookeeper.ssl.hostnameVerification=false
+                -Dzookeeper.ssl.protocol=TLSv1.3
+          {{- end}}
+            - name: "POD_HOSTNAME"
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: "SOLR_HOST"
+              value: "$(POD_HOSTNAME).{{ include "solr.headless-service-name" . }}.{{ .Release.Namespace }}"
+            - name: ZK_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: zoo-search-configmap
+                  key: zk.host  
+            - name: "SOLR_LOG_LEVEL"
+              value: "{{ .Values.logLevel }}"
+            - name: SOLR_USER
+              value: "solr"
+            - name: SOLR_PLACEMENTPLUGIN_DEFAULT
+              value: random
+            - name: SOLR_AUTH_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secrets.cs.name | default .Values.global.csSecrets }}
+                  key: solr_auth_password
+  {{- if .Values.extraEnvVars }}
+{{ toYaml .Values.extraEnvVars | indent 12 }}
+{{- end }}
+
+            {{- if (empty (.Values.newrelic.enable | quote) | ternary .Values.global.newrelic .Values.newrelic.enable) }}
+            - name: NEWRELIC_ENABLE
+              value: {{ .Values.newrelic.enable | default .Values.global.newrelic | quote  }}
+            - name: SOLR_SECURITY_MANAGER_ENABLED
+              value: "false"
+            - name: NEWRELIC_APP_NAME
+              value: {{ .Values.newrelic.app_name }}.{{ .Release.Namespace }}
+            - name: NEWRELIC_PROXY_HOST
+              value: {{ .Values.global.newrelic_proxy_host | default .Values.global.newrelicProxyHost }}
+            - name: NEWRELIC_PROXY_PROTOCOL
+              value: {{ .Values.global.newrelic_proxy_protocol | default .Values.global.newrelicProxyProtocol }}
+            - name: NEWRELIC_PROXY_PORT
+              value: {{ .Values.global.newrelic_proxy_port | default .Values.global.newrelicProxyPort | quote  }}
+            {{- end }}
+            {{- if (empty (.Values.newrelic.enable | quote) | ternary .Values.global.newrelic .Values.newrelic.enable) }}
+               {{- if or .Values.ssl.enabled .Values.global.useCertificate }}
+            - name: SOLR_OPTS
+              value: >-
+                -Dsolr.max.booleanClauses=65536
+                -Djute.maxbuffer=10000000
+                -Dio.netty.handler.ssl.noOpenSsl=true
+                -Dsolr.ssl.wantClientAuth=false
+                -Dsolr.ssl.needClientAuth=false
+                -Dzookeeper.client.secure=true
+                -Dzookeeper.clientCnxnSocket=org.apache.zookeeper.ClientCnxnSocketNetty
+                -Dzookeeper.ssl.trustStore.location={{ .Values.ssl.certificateMountPath | default "/opt/dctm/certificate" }}/{{ .Values.ssl.trustStore | default "common-truststore.p12" }}
+                -Dzookeeper.ssl.trustStore.password=$(SOLR_SSL_TRUST_STORE_PASSWORD)
+                -Dzookeeper.ssl.keyStore.location={{ .Values.ssl.certificateMountPath | default "/opt/dctm/certificate" }}/{{ .Values.ssl.keyStore | default "common-keystore.p12" }}
+                -Dzookeeper.ssl.keyStore.password=$(SOLR_SSL_KEY_STORE_PASSWORD)
+                -Dzookeeper.ssl.trustStore.type=PKCS12
+                -Dzookeeper.ssl.hostnameVerification=false
+                -Dzookeeper.ssl.protocol=TLSv1.3
+                -Djavax.net.ssl.trustStore={{ .Values.ssl.certificateMountPath | default "/opt/dctm/certificate" }}/{{ .Values.ssl.trustStore | default "common-truststore.p12" }}
+                -Djavax.net.ssl.trustStorePassword=$(SOLR_SSL_TRUST_STORE_PASSWORD)
+                -javaagent:/opt/newrelic/newrelic.jar
+               {{- else }}
+            - name: SOLR_OPTS
+              value: >-
+                -Dsolr.max.booleanClauses=65536
+                -Djute.maxbuffer=10000000
+                -Dio.netty.handler.ssl.noOpenSsl=true
+                -javaagent:/opt/newrelic/newrelic.jar
+               {{- end }}
+            {{- else }}
+               {{- if or .Values.ssl.enabled .Values.global.useCertificate }}
+            - name: SOLR_OPTS
+              value: >-
+                -Dsolr.max.booleanClauses=65536
+                -Dsolr.ssl.wantClientAuth=false
+                -Dsolr.ssl.needClientAuth=false
+                -Djute.maxbuffer=10000000
+                -Dio.netty.handler.ssl.noOpenSsl=true
+                -Dzookeeper.client.secure=true
+                -Dzookeeper.clientCnxnSocket=org.apache.zookeeper.ClientCnxnSocketNetty
+                -Dzookeeper.ssl.trustStore.location={{ .Values.ssl.certificateMountPath | default "/opt/dctm/certificate" }}/{{ .Values.ssl.trustStore | default "common-truststore.p12" }}
+                -Dzookeeper.ssl.trustStore.password=$(SOLR_SSL_TRUST_STORE_PASSWORD)
+                -Dzookeeper.ssl.keyStore.location={{ .Values.ssl.certificateMountPath | default "/opt/dctm/certificate" }}/{{ .Values.ssl.keyStore | default "common-keystore.p12" }}
+                -Dzookeeper.ssl.keyStore.password=$(SOLR_SSL_KEY_STORE_PASSWORD)
+                -Dzookeeper.ssl.trustStore.type=PKCS12
+                -Dzookeeper.ssl.hostnameVerification=false
+                -Dzookeeper.ssl.protocol=TLSv1.3
+               {{- else }}
+            - name: SOLR_OPTS
+              value: >-
+                -Dsolr.max.booleanClauses=65536
+                -Djute.maxbuffer=10000000
+                -Dio.netty.handler.ssl.noOpenSsl=true
+               {{- end }}
+            {{- end }}
+
+          livenessProbe:
+            initialDelaySeconds: {{ .Values.livenessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.livenessProbe.periodSeconds }}
+            exec:
+              command:
+              - 'sh'
+              - '-c'
+              - |
+                curl -k -u $SOLR_USER:$SOLR_AUTH_PASSWORD {{- if or .Values.ssl.enabled .Values.global.useCertificate }} https://$SOLR_HOST.svc.cluster.local:$SOLR_PORT/api/node/health {{- else }} http://localhost:$SOLR_PORT/api/node/health {{- end }}
+          readinessProbe:
+            initialDelaySeconds: {{ .Values.readinessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.readinessProbe.periodSeconds }}
+            exec:
+              command:
+                - 'sh'
+                - '-c'
+                - |
+                  curl -k -u $SOLR_USER:$SOLR_AUTH_PASSWORD {{- if or .Values.ssl.enabled .Values.global.useCertificate }} https://$SOLR_HOST.svc.cluster.local:$SOLR_PORT/api/node/health {{- else }} http://localhost:$SOLR_PORT/api/node/health {{- end }}
+          volumeMounts:
+            - name: "solr-data"
+              mountPath: /var/solr/data  #/opt/solr/server/home
+          {{- if not ( eq .Values.initScript  "" ) }}
+            - name: solr-init-script
+              mountPath: /docker-entrypoint-initdb.d
+          {{- end }}
+          {{- if or .Values.ssl.enabled .Values.global.useCertificate }}
+            - name: common-certificate-volume
+              mountPath: '{{ .Values.ssl.certificateMountPath | default "/opt/dctm/certificate" }}'
+              subPath: 'certificate/{{ .Values.global.dbrdataPVCName | default "certdbr-data-pvc" }}'
+          {{- end }}
+            {{- if (empty (.Values.newrelic.enable | quote) | ternary .Values.global.newrelic .Values.newrelic.enable) }}
+            - name: newrelic-config-map
+              mountPath: /opt/newrelic/newrelic.yml
+              subPath: newrelic.yml
+            {{- end }}
+            - name: "shared-logs"
+              mountPath: /var/solr/logs
+            {{- if .Values.backup.enabled }}
+            - name: {{ .Values.service.name }}-backup-pvc
+              mountPath: /var/solr/data/pvcbackupstorage
+            {{- end }}
+
+  volumeClaimTemplates:
+    - metadata:
+        name: solr-data #{{ include "solr.pvc-name" . }}
+        annotations:
+          pv.beta.kubernetes.io/gid: "8983"
+      spec:
+        accessModes:
+{{ toYaml .Values.volumeClaimTemplates.accessModes | indent 10 }}
+{{- if not ( eq .Values.volumeClaimTemplates.storageClassName  "" ) }}
+        storageClassName: "{{ .Values.volumeClaimTemplates.storageClassName | default .Values.global.rwoStorage }}"
+{{- end }}
+        resources:
+          requests:
+            storage: {{ .Values.volumeClaimTemplates.storageSize }}

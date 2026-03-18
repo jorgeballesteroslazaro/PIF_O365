@@ -1,0 +1,743 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.serviceName }}-dfs-config
+  labels:
+    name: {{ .Values.serviceName }}-dfs-config
+data:
+  log4j: |-
+    rootLogger.level = {{ .Values.log4j.rootLogLevel }}
+    rootLogger.appenderRefs = A1, F1
+    rootLogger.appenderRef.A1.ref = STDOUT
+    rootLogger.appenderRef.F1.ref = File
+    rootLogger.appenderRef.stdout.ref  = STDOUT
+    monitorInterval = 5
+    
+    # LOG LEVELS
+    # OFF > FATAL > ERROR > WARN > INFO > DEBUG > TRACE > ALL
+
+    logger.rt_rolling.name = com.emc.documentum.fs.rt
+    logger.rt_rolling.level = {{ .Values.log4j.rtLogLevel }}
+    logger.rt_rolling.additivity = true
+    logger.rt_rolling.appenderRefs = rt_rolling
+    logger.rt_rolling.appenderRef.rt_rolling.ref = File
+
+    logger.datamodel_rolling.name = com.emc.documentum.fs.datamodel
+    logger.datamodel_rolling.level = {{ .Values.log4j.datamodelLogLevel }}
+    logger.datamodel_rolling.additivity = true
+    logger.datamodel_rolling.appenderRefs = datamodel_rolling
+    logger.datamodel_rolling.appenderRef.datamodel_rolling.ref = File
+
+    logger.services_rolling.name = com.emc.documentum.fs.services
+    logger.services_rolling.level = {{ .Values.log4j.servicesLogLevel }}
+    logger.services_rolling.additivity = true
+    logger.services_rolling.appenderRefs = services_rolling
+    logger.services_rolling.appenderRef.services_rolling.ref = File
+    
+    logger.tools_rolling.name = com.emc.documentum.fs.tools
+    logger.tools_rolling.level = {{ .Values.log4j.toolsLogLevel }}
+    logger.tools_rolling.additivity = true
+    logger.tools_rolling.appenderRefs = tools_rolling
+    logger.tools_rolling.appenderRef.tools_rolling.ref = File
+    
+    logger.FILE_TRACE.name = com.emc.documentum.fs.tracing
+    logger.FILE_TRACE.level = {{ .Values.log4j.traceLogLevel }}
+    logger.FILE_TRACE.additivity = true
+    logger.FILE_TRACE.appenderRefs = FILE_TRACE
+    logger.FILE_TRACE.appenderRef.FILE_TRACE.ref = FileTrace
+    #------------------- CONSOLE --------------------------
+    appender.A1.type=Console
+    appender.A1.name=STDOUT
+    appender.A1.layout.type=PatternLayout
+    appender.A1.layout.pattern=%d{ABSOLUTE} %5p [%t] %c - %m%n
+    appender.A1.filter.threshold.type = ThresholdFilter
+    appender.A1.filter.threshold.level = DEBUG
+    #------------------- FILE --------------------------
+    appender.F1.type=RollingFile
+    appender.F1.name=File
+    appender.F1.fileName=/opt/tomcat/logs/dfs-runtime.log
+    appender.F1.filePattern=/opt/tomcat/logs/dfs-runtime-%d{yyyy-MM-dd}-%i.log.gz
+    appender.F1.layout.type=PatternLayout
+    appender.F1.layout.pattern=%d{ABSOLUTE} %5p [%t] %c - %m%n
+    appender.F1.policies.type=Policies
+    appender.F1.policies.time.type=TimeBasedTriggeringPolicy
+    appender.F1.policies.time.interval=1
+    appender.F1.policies.time.modulate=true
+    appender.F1.policies.size.type=SizeBasedTriggeringPolicy
+    appender.F1.policies.size.size=10MB
+    appender.F1.strategy.type=DefaultRolloverStrategy
+    appender.F1.strategy.max=5
+    #------------------- CATEGORY TRACE FILE --------------------------
+    appender.FILE_TRACE.type=RollingFile
+    appender.FILE_TRACE.name=FileTrace
+    appender.FILE_TRACE.fileName=/opt/tomcat/logs/dfs-runtime-trace.log
+    appender.FILE_TRACE.filePattern=/opt/tomcat/logs/dfs-runtime-trace-%d{yyyy-MM-dd}-%i.log.gz
+    appender.FILE_TRACE.layout.type=PatternLayout
+    appender.FILE_TRACE.layout.pattern=%d{ABSOLUTE} %5p [%t] %c - %m%n
+    appender.FILE_TRACE.policies.type=Policies
+    appender.FILE_TRACE.policies.time.type=TimeBasedTriggeringPolicy
+    appender.FILE_TRACE.policies.time.interval=1
+    appender.FILE_TRACE.policies.time.modulate=true
+    appender.FILE_TRACE.policies.size.type=SizeBasedTriggeringPolicy
+    appender.FILE_TRACE.policies.size.size=100MB
+    appender.FILE_TRACE.strategy.type=DefaultRolloverStrategy
+    appender.FILE_TRACE.strategy.max=5
+
+
+  dfc: |-
+    dfc.data.dir={{ .Values.dfc.dataDir }}
+    dfc.security.keystore.file=${dfc.data.dir}/dfc.keystore
+    dfc.docbroker.host[0]={{ .Values.dfc.docbroker | default .Values.global.dbrServiceName }}
+    dfc.docbroker.port[0]={{ .Values.dfc.port | default .Values.global.dbr_port }}
+    dfc.crypto.repository={{ .Values.dfc.cryptoRepository | default .Values.global.docbase }}
+    dfc.globalregistry.repository={{ .Values.dfc.globalRegistryRepository | default .Values.global.docbase}}
+    dfc.globalregistry.username={{ .Values.dfc.globalRegistryUsername | default .Values.global.globalRegistryUsername }}
+    dfc.globalregistry.password={{ .Values.dfc.globalRegistryPassword }}
+    
+    # below two properties are used for SchemaService performance 
+    dfc.cache.type.currency_check_interval=86400
+    dfc.cache.ddinfo.size=10000
+    
+    # below properties are used for end user and event hub functionalities
+    dfc.client.should_use_enduserinfo={{ .Values.dfc.client.should_use_enduserinfo }}
+    dfc.client.should_use_eventhub={{ .Values.dfc.client.should_use_eventhub }}
+    dfc.client.eventhub.log_level={{ .Values.dfc.client.eventhub.log_level }}
+    dfc.client.eventhub.queue_size={{ .Values.dfc.client.eventhub.queue_size }}
+    {{- range .Values.dfc.additionalProperties }}
+    {{ . }}
+    {{- end }}
+
+  server_tls.xml: |-
+    <?xml version="1.0" encoding="UTF-8"?>
+    <!--
+      Licensed to the Apache Software Foundation (ASF) under one or more
+      contributor license agreements.  See the NOTICE file distributed with
+      this work for additional information regarding copyright ownership.
+      The ASF licenses this file to You under the Apache License, Version 2.0
+      (the "License"); you may not use this file except in compliance with
+      the License.  You may obtain a copy of the License at
+
+          http://www.apache.org/licenses/LICENSE-2.0
+
+      Unless required by applicable law or agreed to in writing, software
+      distributed under the License is distributed on an "AS IS" BASIS,
+      WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+      See the License for the specific language governing permissions and
+      limitations under the License.
+    -->
+    <!-- Note:  A "Server" is not itself a "Container", so you may not
+         define subcomponents such as "Valves" at this level.
+         Documentation at /docs/config/server.html
+     -->
+    <Server port="8006" shutdown="SHUTDOWN">
+      <Listener className="org.apache.catalina.startup.VersionLoggerListener" />
+      <!-- Security listener. Documentation at /docs/config/listeners.html
+      <Listener className="org.apache.catalina.security.SecurityListener" />
+      -->
+      <!-- OpenSSL support using Tomcat Native -->
+      <Listener className="org.apache.catalina.core.AprLifecycleListener" />
+      <!-- OpenSSL support using FFM API from Java 22 -->
+      <!-- <Listener className="org.apache.catalina.core.OpenSSLLifecycleListener" /> -->
+      <!-- Prevent memory leaks due to use of particular java/javax APIs-->
+      <Listener className="org.apache.catalina.core.JreMemoryLeakPreventionListener" />
+      <Listener className="org.apache.catalina.mbeans.GlobalResourcesLifecycleListener" />
+      <Listener className="org.apache.catalina.core.ThreadLocalLeakPreventionListener" />
+
+      <!-- Global JNDI resources
+           Documentation at /docs/jndi-resources-howto.html
+      -->
+      <GlobalNamingResources>
+        <!-- Editable user database that can also be used by
+             UserDatabaseRealm to authenticate users
+        -->
+        <Resource name="UserDatabase" auth="Container"
+                  type="org.apache.catalina.UserDatabase"
+                  description="User database that can be updated and saved"
+                  factory="org.apache.catalina.users.MemoryUserDatabaseFactory"
+                  pathname="conf/tomcat-users.xml" />
+      </GlobalNamingResources>
+
+      <!-- A "Service" is a collection of one or more "Connectors" that share
+           a single "Container" Note:  A "Service" is not itself a "Container",
+           so you may not define subcomponents such as "Valves" at this level.
+           Documentation at /docs/config/service.html
+       -->
+      <Service name="Catalina">
+
+        <!--The connectors can use a shared executor, you can define one or more named thread pools-->
+        <!--
+        <Executor name="tomcatThreadPool" namePrefix="catalina-exec-"
+            maxThreads="150" minSpareThreads="4"/>
+        -->
+
+
+        <!-- A "Connector" represents an endpoint by which requests are received
+             and responses are returned. Documentation at :
+             HTTP Connector: /docs/config/http.html
+             AJP  Connector: /docs/config/ajp.html
+             Define a non-SSL/TLS HTTP/1.1 Connector on port 8080
+        -->
+        <!--<Connector port="8080" protocol="HTTP/1.1"
+                   connectionTimeout="20000"
+                   redirectPort="8443"
+                   maxParameterCount="1000"
+                   />-->
+        <!-- A "Connector" using the shared thread pool-->
+        <!--
+        <Connector executor="tomcatThreadPool"
+                   port="8080" protocol="HTTP/1.1"
+                   connectionTimeout="20000"
+                   redirectPort="8443"
+                   maxParameterCount="1000"
+                   />
+        -->
+        <!-- Define an SSL/TLS HTTP/1.1 Connector on port 8443 with HTTP/2
+             This connector uses the NIO implementation. The default
+             SSLImplementation will depend on the presence of the APR/native
+             library and the useOpenSSL attribute of the AprLifecycleListener.
+             Either JSSE or OpenSSL style configuration may be used regardless of
+             the SSLImplementation selected. JSSE style configuration is used below.
+        -->
+    	<Connector port="8443"
+                   protocol="org.apache.coyote.http11.Http11NioProtocol"
+                   maxThreads="{{ default .Values.global.tomcatMaxThreads .Values.tomcat.maxThreads }}"
+                   scheme="https"
+                   SSLEnabled="true"
+                   secure="true">
+            <SSLHostConfig ciphers="TLS_AES_256_GCM_SHA384">
+                <Certificate certificateKeystoreFile="/opt/dctm/certificate/ingress.p12" certificateKeystorePassword="INGRESS_KEYSTOREPASSWORD"/>
+            </SSLHostConfig>
+        </Connector>
+
+        <!-- Define an AJP 1.3 Connector on port 8009 -->
+        <!--
+        <Connector protocol="AJP/1.3"
+                   address="::1"
+                   port="8009"
+                   redirectPort="8443"
+                   maxParameterCount="1000"
+                   />
+        -->
+
+        <!-- An Engine represents the entry point (within Catalina) that processes
+             every request.  The Engine implementation for Tomcat stand alone
+             analyzes the HTTP headers included with the request, and passes them
+             on to the appropriate Host (virtual host).
+             Documentation at /docs/config/engine.html -->
+
+        <!-- You should set jvmRoute to support load-balancing via AJP ie :
+        <Engine name="Catalina" defaultHost="localhost" jvmRoute="jvm1">
+        -->
+        <Engine name="Catalina" defaultHost="localhost">
+
+          <!--For clustering, please take a look at documentation at:
+              /docs/cluster-howto.html  (simple how to)
+              /docs/config/cluster.html (reference documentation) -->
+          <!--
+          <Cluster className="org.apache.catalina.ha.tcp.SimpleTcpCluster"/>
+          -->
+
+          <!-- Use the LockOutRealm to prevent attempts to guess user passwords
+               via a brute-force attack -->
+          <Realm className="org.apache.catalina.realm.LockOutRealm">
+            <!-- This Realm uses the UserDatabase configured in the global JNDI
+                 resources under the key "UserDatabase".  Any edits
+                 that are performed against this UserDatabase are immediately
+                 available for use by the Realm.  -->
+            <Realm className="org.apache.catalina.realm.UserDatabaseRealm"
+                   resourceName="UserDatabase"/>
+          </Realm>
+
+          <Host name="localhost"  appBase="webapps"
+                unpackWARs="true" autoDeploy="true">
+
+            <!-- SingleSignOn valve, share authentication between web applications
+                 Documentation at: /docs/config/valve.html -->
+            <!--
+            <Valve className="org.apache.catalina.authenticator.SingleSignOn" />
+            -->
+
+            <!-- Access log processes all example.
+                 Documentation at: /docs/config/valve.html
+                 Note: The pattern used is equivalent to using pattern="common" -->
+            <Valve className="org.apache.catalina.valves.AccessLogValve" directory="logs"
+                   prefix="localhost_access_log" suffix=".txt"
+                   pattern="%h %l %u %t &quot;%r&quot; %s %b" />
+
+          </Host>
+        </Engine>
+      </Service>
+    </Server>
+
+  server.xml: |-
+    <?xml version='1.0' encoding='utf-8'?>
+    <Server port="8005" shutdown="SHUTDOWN">
+      <Listener className="org.apache.catalina.startup.VersionLoggerListener" />
+      <Listener className="org.apache.catalina.core.AprLifecycleListener" SSLEngine="on" />
+      <Listener className="org.apache.catalina.core.JreMemoryLeakPreventionListener" />
+      <Listener className="org.apache.catalina.mbeans.GlobalResourcesLifecycleListener" />
+      <Listener className="org.apache.catalina.core.ThreadLocalLeakPreventionListener" />
+      <GlobalNamingResources>
+        <Resource name="UserDatabase" auth="Container" type="org.apache.catalina.UserDatabase" description="User database" factory="org.apache.catalina.users.MemoryUserDatabaseFactory" pathname="conf/tomcat-users.xml"/>
+      </GlobalNamingResources>
+      <Service name="Catalina">
+        <Connector port="8080" protocol="HTTP/1.1" connectionTimeout="{{ default .Values.global.tomcatConnectionTimeout .Values.tomcat.connectionTimeout }}" redirectPort="8443" />
+        <!-- #ssl#
+        <Connector port="8443" protocol="org.apache.coyote.http11.Http11NioProtocol" maxThreads="{{ default .Values.global.tomcatMaxThreads .Values.tomcat.maxThreads }}" SSLEnabled="true" scheme="https" secure="true" clientAuth="false" sslProtocol="TLS" #sslKeyStoreFile# #sslKeyStorePwd# #sslKeyAlias# #sslKeyPwd# #sslKeyStoreType# />
+        #ssl# -->
+    	<!--
+        <Connector port="8009" protocol="AJP/1.3" redirectPort="8443" />
+    	-->
+        <Engine name="Catalina" defaultHost="localhost" jvmRoute="#jvmRoute#">
+          <!-- #cluster#
+          <Cluster className="org.apache.catalina.ha.tcp.SimpleTcpCluster" channelSendOptions="6" channelStartOptions="15">
+            <Manager className="org.apache.catalina.ha.session.DeltaManager" expireSessionsOnShutdown="false" notifyListenersOnReplication="true"/>
+            <Channel className="org.apache.catalina.tribes.group.GroupChannel">
+              <Membership className="org.apache.catalina.tribes.membership.McastService" address="#clusterAddress#" port="#clusterPort#" frequency="500" dropTime="3000"/>
+              <Sender className="org.apache.catalina.tribes.transport.ReplicationTransmitter">
+                <Transport className="org.apache.catalina.tribes.transport.nio.PooledParallelSender"/>
+              </Sender>
+              <Receiver className="org.apache.catalina.tribes.transport.nio.NioReceiver" address="auto" port="4000" autoBind="100" selectorTimeout="5000" maxThreads="6"/>
+              <Interceptor className="org.apache.catalina.tribes.group.interceptors.TcpPingInterceptor"/>
+              <Interceptor className="org.apache.catalina.tribes.group.interceptors.TcpFailureDetector"/>
+              <Interceptor className="org.apache.catalina.tribes.group.interceptors.MessageDispatchInterceptor"/>
+              <Interceptor className="org.apache.catalina.tribes.group.interceptors.StaticMembershipInterceptor">
+              </Interceptor>
+            </Channel>
+            <Valve className="org.apache.catalina.ha.tcp.ReplicationValve" filter=""/>
+            <Valve className="org.apache.catalina.ha.session.JvmRouteBinderValve"/>
+            <ClusterListener className="org.apache.catalina.ha.session.ClusterSessionListener"/>
+          </Cluster>
+          #cluster# -->
+    			<Realm className="org.apache.catalina.realm.LockOutRealm">
+    				<Realm className="org.apache.catalina.realm.UserDatabaseRealm" resourceName="UserDatabase"/>
+    			</Realm>
+    			<Host name="localhost"  appBase="webapps" unpackWARs="true" autoDeploy="true">
+    				<!-- #k8sCluster#
+    				<Cluster className="org.apache.catalina.ha.tcp.SimpleTcpCluster">
+    					<Manager className="org.apache.catalina.ha.session.DeltaManager" 
+    						expireSessionsOnShutdown="false"
+    						notifyListenersOnReplication="true"/>
+
+    					<Channel className="org.apache.catalina.tribes.group.GroupChannel">
+    						<Membership className="org.apache.catalina.tribes.membership.cloud.CloudMembershipService"/>
+    					</Channel>
+
+    					<Valve className="org.apache.catalina.ha.tcp.ReplicationValve"
+    						filter=".*\.gif;.*\.js;.*\.jpg;.*\.png;.*\.css;.*\.txt;"/>					
+
+
+    					<Deployer className="org.apache.catalina.ha.deploy.FarmWarDeployer"
+    						tempDir="/opt/tomcat/cluster-temp/"
+    						deployDir="/opt/tomcat/webapps/"
+    						watchDir="/opt/tomcat/watch/"
+    						watchEnabled="true"/> 
+
+    					<ClusterListener className="org.apache.catalina.ha.session.ClusterSessionListener"/>
+    				</Cluster>
+    				#k8sCluster# -->
+    				<Valve className="org.apache.catalina.valves.AccessLogValve" directory="logs" prefix="localhost_access_log" suffix=".txt" pattern="%h %l %u %t &quot;%r&quot; %s %b"/>
+    			</Host>
+    		</Engine>
+    	</Service>
+    </Server>
+    <?xml version="1.0" encoding="UTF-8"?>
+    <web-app version="2.4" xmlns="http://java.sun.com/xml/ns/j2ee" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://java.sun.com/xml/ns/j2ee http://java.sun.com/xml/ns/j2ee/web-app_2_4.xsd">
+        <listener>
+            <listener-class>com.sun.xml.ws.transport.http.servlet.WSServletContextListener</listener-class>
+        </listener>
+        <listener>
+            <listener-class>com.emc.documentum.fs.rt.impl.ThreadsManager</listener-class>
+        </listener>
+        <!--
+        <filter>
+            <filter-name>ProfilingFilter</filter-name>
+            <filter-class>com.emc.documentum.fs.rt.impl.ProfilingFilter</filter-class>
+        </filter>
+        <filter-mapping>
+            <filter-name>ProfilingFilter</filter-name>
+            <url-pattern>/*</url-pattern>
+        </filter-mapping>
+        -->    <servlet>
+            <servlet-name>GAIRConnector</servlet-name>
+            <servlet-class>com.documentum.ucf.server.transport.impl.GAIRConnectorServlet</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>InitGAIRConnector</servlet-name>
+            <servlet-class>com.documentum.ucf.server.transport.impl.InitGAIRConnectorServlet</servlet-class>
+            <init-param>
+                <param-name>ucfName</param-name>
+                <param-value>ucf</param-value>
+            </init-param>
+        </servlet>
+        <servlet>
+            <servlet-name>Notification</servlet-name>
+            <servlet-class>com.documentum.ucf.server.notification.impl.NotificationServlet</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>RemoteUnavailability</servlet-name>
+            <servlet-class>com.documentum.ucf.server.transport.impl.RemoteUnavailabilityServlet</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>AgentService</servlet-name>
+            <servlet-class>com.sun.xml.ws.transport.http.servlet.WSServlet</servlet-class>
+            <load-on-startup>1</load-on-startup>
+        </servlet>
+        <servlet>
+            <servlet-name>AgentService.rest</servlet-name>
+            <servlet-class>com.emc.documentum.fs.rt.services.impl.AgentServiceServlet</servlet-class>
+            <load-on-startup>1</load-on-startup>
+        </servlet>
+        <servlet>
+            <servlet-name>ContextRegistryService</servlet-name>
+            <servlet-class>com.sun.xml.ws.transport.http.servlet.WSServlet</servlet-class>
+            <load-on-startup>1</load-on-startup>
+        </servlet>
+        <servlet>
+            <servlet-name>UserManagementService</servlet-name>
+            <servlet-class>com.sun.xml.ws.transport.http.servlet.WSServlet</servlet-class>
+            <load-on-startup>1</load-on-startup>
+        </servlet>
+        <servlet-mapping>
+            <servlet-name>UserManagementService</servlet-name>
+            <url-pattern>/services/admin/UserManagementService</url-pattern>
+        </servlet-mapping>
+        <servlet>
+            <servlet-name>VirtualDeploymentService</servlet-name>
+            <servlet-class>com.sun.xml.ws.transport.http.servlet.WSServlet</servlet-class>
+            <load-on-startup>1</load-on-startup>
+        </servlet>
+        <servlet-mapping>
+            <servlet-name>VirtualDeploymentService</servlet-name>
+            <url-pattern>/services/admin/VirtualDeploymentService</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>AgentService</servlet-name>
+            <url-pattern>/services/admin/runtime/AgentService</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>AgentService.rest</servlet-name>
+            <url-pattern>/services/admin/runtime/AgentService.rest</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>ContextRegistryService</servlet-name>
+            <url-pattern>/services/admin/runtime/ContextRegistryService</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>GAIRConnector</servlet-name>
+            <url-pattern>/services/admin/servlet/com/documentum/ucf/server/transport/impl/GAIRConnector</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>InitGAIRConnector</servlet-name>
+            <url-pattern>/services/admin/servlet/com/documentum/ucf/server/transport/impl/InitGAIRConnector</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>Notification</servlet-name>
+            <url-pattern>/services/admin/servlet/com/documentum/ucf/server/notification/impl/Notification</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>RemoteUnavailability</servlet-name>
+            <url-pattern>/services/admin/servlet/com/documentum/ucf/server/transport/impl/RemoteUnavailability</url-pattern>
+        </servlet-mapping>
+        <servlet>
+            <servlet-name>WorkflowService</servlet-name>
+            <servlet-class>com.sun.xml.ws.transport.http.servlet.WSServlet</servlet-class>
+            <load-on-startup>1</load-on-startup>
+        </servlet>
+        <servlet-mapping>
+            <servlet-name>WorkflowService</servlet-name>
+            <url-pattern>/services/bpm/WorkflowService</url-pattern>
+        </servlet-mapping>
+        <servlet>
+            <servlet-name>TaskManagementService</servlet-name>
+            <servlet-class>com.sun.xml.ws.transport.http.servlet.WSServlet</servlet-class>
+            <load-on-startup>1</load-on-startup>
+        </servlet>
+        <servlet-mapping>
+            <servlet-name>TaskManagementService</servlet-name>
+            <url-pattern>/services/bpm/TaskManagementService</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>AgentService</servlet-name>
+            <url-pattern>/services/bpm/runtime/AgentService</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>AgentService.rest</servlet-name>
+            <url-pattern>/services/bpm/runtime/AgentService.rest</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>ContextRegistryService</servlet-name>
+            <url-pattern>/services/bpm/runtime/ContextRegistryService</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>GAIRConnector</servlet-name>
+            <url-pattern>/services/bpm/servlet/com/documentum/ucf/server/transport/impl/GAIRConnector</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>InitGAIRConnector</servlet-name>
+            <url-pattern>/services/bpm/servlet/com/documentum/ucf/server/transport/impl/InitGAIRConnector</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>Notification</servlet-name>
+            <url-pattern>/services/bpm/servlet/com/documentum/ucf/server/notification/impl/Notification</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>RemoteUnavailability</servlet-name>
+            <url-pattern>/services/bpm/servlet/com/documentum/ucf/server/transport/impl/RemoteUnavailability</url-pattern>
+        </servlet-mapping>
+        <servlet>
+            <servlet-name>AnalyticsService</servlet-name>
+            <servlet-class>com.sun.xml.ws.transport.http.servlet.WSServlet</servlet-class>
+            <load-on-startup>1</load-on-startup>
+        </servlet>
+        <servlet-mapping>
+            <servlet-name>AnalyticsService</servlet-name>
+            <url-pattern>/services/ci/AnalyticsService</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>AgentService</servlet-name>
+            <url-pattern>/services/ci/runtime/AgentService</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>AgentService.rest</servlet-name>
+            <url-pattern>/services/ci/runtime/AgentService.rest</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>ContextRegistryService</servlet-name>
+            <url-pattern>/services/ci/runtime/ContextRegistryService</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>GAIRConnector</servlet-name>
+            <url-pattern>/services/ci/servlet/com/documentum/ucf/server/transport/impl/GAIRConnector</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>InitGAIRConnector</servlet-name>
+            <url-pattern>/services/ci/servlet/com/documentum/ucf/server/transport/impl/InitGAIRConnector</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>Notification</servlet-name>
+            <url-pattern>/services/ci/servlet/com/documentum/ucf/server/notification/impl/Notification</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>RemoteUnavailability</servlet-name>
+            <url-pattern>/services/ci/servlet/com/documentum/ucf/server/transport/impl/RemoteUnavailability</url-pattern>
+        </servlet-mapping>
+        <servlet>
+            <servlet-name>CommentService</servlet-name>
+            <servlet-class>com.sun.xml.ws.transport.http.servlet.WSServlet</servlet-class>
+            <load-on-startup>1</load-on-startup>
+        </servlet>
+        <servlet-mapping>
+            <servlet-name>CommentService</servlet-name>
+            <url-pattern>/services/collaboration/CommentService</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>AgentService</servlet-name>
+            <url-pattern>/services/collaboration/runtime/AgentService</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>AgentService.rest</servlet-name>
+            <url-pattern>/services/collaboration/runtime/AgentService.rest</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>ContextRegistryService</servlet-name>
+            <url-pattern>/services/collaboration/runtime/ContextRegistryService</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>GAIRConnector</servlet-name>
+            <url-pattern>/services/collaboration/servlet/com/documentum/ucf/server/transport/impl/GAIRConnector</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>InitGAIRConnector</servlet-name>
+            <url-pattern>/services/collaboration/servlet/com/documentum/ucf/server/transport/impl/InitGAIRConnector</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>Notification</servlet-name>
+            <url-pattern>/services/collaboration/servlet/com/documentum/ucf/server/notification/impl/Notification</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>RemoteUnavailability</servlet-name>
+            <url-pattern>/services/collaboration/servlet/com/documentum/ucf/server/transport/impl/RemoteUnavailability</url-pattern>
+        </servlet-mapping>
+        <servlet>
+            <servlet-name>AccessControlService</servlet-name>
+            <servlet-class>com.sun.xml.ws.transport.http.servlet.WSServlet</servlet-class>
+            <load-on-startup>1</load-on-startup>
+        </servlet>
+        <servlet-mapping>
+            <servlet-name>AccessControlService</servlet-name>
+            <url-pattern>/services/core/AccessControlService</url-pattern>
+        </servlet-mapping>
+        <servlet>
+            <servlet-name>DocumentumUtilService</servlet-name>
+            <servlet-class>com.sun.xml.ws.transport.http.servlet.WSServlet</servlet-class>
+            <load-on-startup>1</load-on-startup>
+        </servlet>
+        <servlet-mapping>
+            <servlet-name>DocumentumUtilService</servlet-name>
+            <url-pattern>/services/core/DocumentumUtilService</url-pattern>
+        </servlet-mapping>
+        <servlet>
+            <servlet-name>LicenseService</servlet-name>
+            <servlet-class>com.sun.xml.ws.transport.http.servlet.WSServlet</servlet-class>
+            <load-on-startup>1</load-on-startup>
+        </servlet>
+        <servlet-mapping>
+            <servlet-name>LicenseService</servlet-name>
+            <url-pattern>/services/core/LicenseService</url-pattern>
+        </servlet-mapping>
+        <servlet>
+            <servlet-name>LoginTicketService</servlet-name>
+            <servlet-class>com.sun.xml.ws.transport.http.servlet.WSServlet</servlet-class>
+            <load-on-startup>1</load-on-startup>
+        </servlet>
+        <servlet-mapping>
+            <servlet-name>LoginTicketService</servlet-name>
+            <url-pattern>/services/core/LoginTicketService</url-pattern>
+        </servlet-mapping>
+        <servlet>
+            <servlet-name>ObjectService</servlet-name>
+            <servlet-class>com.sun.xml.ws.transport.http.servlet.WSServlet</servlet-class>
+            <load-on-startup>1</load-on-startup>
+        </servlet>
+        <servlet-mapping>
+            <servlet-name>ObjectService</servlet-name>
+            <url-pattern>/services/core/ObjectService</url-pattern>
+        </servlet-mapping>
+        <servlet>
+            <servlet-name>QueryService</servlet-name>
+            <servlet-class>com.sun.xml.ws.transport.http.servlet.WSServlet</servlet-class>
+            <load-on-startup>1</load-on-startup>
+        </servlet>
+        <servlet-mapping>
+            <servlet-name>QueryService</servlet-name>
+            <url-pattern>/services/core/QueryService</url-pattern>
+        </servlet-mapping>
+        <servlet>
+            <servlet-name>QueryStoreService</servlet-name>
+            <servlet-class>com.sun.xml.ws.transport.http.servlet.WSServlet</servlet-class>
+            <load-on-startup>1</load-on-startup>
+        </servlet>
+        <servlet-mapping>
+            <servlet-name>QueryStoreService</servlet-name>
+            <url-pattern>/services/core/QueryStoreService</url-pattern>
+        </servlet-mapping>
+        <servlet>
+            <servlet-name>RepositoryInquiryService</servlet-name>
+            <servlet-class>com.sun.xml.ws.transport.http.servlet.WSServlet</servlet-class>
+            <load-on-startup>1</load-on-startup>
+        </servlet>
+        <servlet-mapping>
+            <servlet-name>RepositoryInquiryService</servlet-name>
+            <url-pattern>/services/core/RepositoryInquiryService</url-pattern>
+        </servlet-mapping>
+        <servlet>
+            <servlet-name>SchemaService</servlet-name>
+            <servlet-class>com.sun.xml.ws.transport.http.servlet.WSServlet</servlet-class>
+            <load-on-startup>1</load-on-startup>
+        </servlet>
+        <servlet-mapping>
+            <servlet-name>SchemaService</servlet-name>
+            <url-pattern>/services/core/SchemaService</url-pattern>
+        </servlet-mapping>
+        <servlet>
+            <servlet-name>VersionControlService</servlet-name>
+            <servlet-class>com.sun.xml.ws.transport.http.servlet.WSServlet</servlet-class>
+            <load-on-startup>1</load-on-startup>
+        </servlet>
+        <servlet-mapping>
+            <servlet-name>VersionControlService</servlet-name>
+            <url-pattern>/services/core/VersionControlService</url-pattern>
+        </servlet-mapping>
+        <servlet>
+            <servlet-name>LifecycleService</servlet-name>
+            <servlet-class>com.sun.xml.ws.transport.http.servlet.WSServlet</servlet-class>
+            <load-on-startup>1</load-on-startup>
+        </servlet>
+        <servlet-mapping>
+            <servlet-name>LifecycleService</servlet-name>
+            <url-pattern>/services/core/LifecycleService</url-pattern>
+        </servlet-mapping>
+        <servlet>
+            <servlet-name>VirtualDocumentService</servlet-name>
+            <servlet-class>com.sun.xml.ws.transport.http.servlet.WSServlet</servlet-class>
+            <load-on-startup>1</load-on-startup>
+        </servlet>
+        <servlet-mapping>
+            <servlet-name>VirtualDocumentService</servlet-name>
+            <url-pattern>/services/core/VirtualDocumentService</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>AgentService</servlet-name>
+            <url-pattern>/services/core/runtime/AgentService</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>AgentService.rest</servlet-name>
+            <url-pattern>/services/core/runtime/AgentService.rest</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>ContextRegistryService</servlet-name>
+            <url-pattern>/services/core/runtime/ContextRegistryService</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>GAIRConnector</servlet-name>
+            <url-pattern>/services/core/servlet/com/documentum/ucf/server/transport/impl/GAIRConnector</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>InitGAIRConnector</servlet-name>
+            <url-pattern>/services/core/servlet/com/documentum/ucf/server/transport/impl/InitGAIRConnector</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>Notification</servlet-name>
+            <url-pattern>/services/core/servlet/com/documentum/ucf/server/notification/impl/Notification</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>RemoteUnavailability</servlet-name>
+            <url-pattern>/services/core/servlet/com/documentum/ucf/server/transport/impl/RemoteUnavailability</url-pattern>
+        </servlet-mapping>
+        <servlet>
+            <servlet-name>SearchService</servlet-name>
+            <servlet-class>com.sun.xml.ws.transport.http.servlet.WSServlet</servlet-class>
+            <load-on-startup>1</load-on-startup>
+        </servlet>
+        <servlet-mapping>
+            <servlet-name>SearchService</servlet-name>
+            <url-pattern>/services/search/SearchService</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>AgentService</servlet-name>
+            <url-pattern>/services/search/runtime/AgentService</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>AgentService.rest</servlet-name>
+            <url-pattern>/services/search/runtime/AgentService.rest</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>ContextRegistryService</servlet-name>
+            <url-pattern>/services/search/runtime/ContextRegistryService</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>GAIRConnector</servlet-name>
+            <url-pattern>/services/search/servlet/com/documentum/ucf/server/transport/impl/GAIRConnector</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>InitGAIRConnector</servlet-name>
+            <url-pattern>/services/search/servlet/com/documentum/ucf/server/transport/impl/InitGAIRConnector</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>Notification</servlet-name>
+            <url-pattern>/services/search/servlet/com/documentum/ucf/server/notification/impl/Notification</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>RemoteUnavailability</servlet-name>
+            <url-pattern>/services/search/servlet/com/documentum/ucf/server/transport/impl/RemoteUnavailability</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>WorkflowService</servlet-name>
+            <url-pattern>/services/core/WorkflowService</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>SearchService</servlet-name>
+            <url-pattern>/services/core/SearchService</url-pattern>
+        </servlet-mapping>
+    </web-app>

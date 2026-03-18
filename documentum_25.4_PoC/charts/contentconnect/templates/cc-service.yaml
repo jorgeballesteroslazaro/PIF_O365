@@ -1,0 +1,35 @@
+##########################################################
+# Services for OpenText Content Connect
+##########################################################
+
+##########################################################
+# OpenText Content Connect
+# Not exposed outside the kubernetes cluster
+# Uncomment LoadBalancer line below if this is needed
+##########################################################
+
+kind: Service
+apiVersion: v1
+metadata: 
+  name: {{ .Values.service.name }}
+  {{- with .Values.serviceAnnotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  namespace: {{ .Values.namespace | default .Release.Namespace }}
+  labels:
+    app: {{ .Values.service.name }}
+spec:
+    type: ClusterIP
+    ports:
+      - name: "http" 
+        port: {{ .Values.service.ports.port }}
+        {{- if eq (hasKey .Values "useCertificate" | ternary .Values.useCertificate .Values.global.useCertificate) true }}
+        targetPort: {{ .Values.service.ports.targetport }}
+        {{ else }}
+        targetPort: 8080
+        {{ end }} 
+        protocol: {{ .Values.service.ports.protocol }}
+    selector: 
+      app: {{ .Values.deployment.app }}
+     

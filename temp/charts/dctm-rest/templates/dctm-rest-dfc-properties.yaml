@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: dctm-rest-dfc-properties
+data:
+  dfc.properties: |-
+    dfc.data.dir=/opt/dctm
+    dfc.tokenstorage.dir=/opt/dctm/apptoken
+    dfc.tokenstorage.enable=false
+    dfc.docbroker.host[0]={{ .Values.global.dbrServiceName }}
+    dfc.docbroker.port[0]={{ .Values.global.dbr_port }}
+    dfc.crypto.repository={{ .Values.global.docbase }}
+    {{ if (empty (.Values.docbroker.useCertificate | quote) | ternary .Values.global.useCertificate .Values.docbroker.useCertificate) -}}
+    dfc.session.secure_connect_default=try_secure_first
+    dfc.security.ssl.truststore=/home/dmadmin/dbr-cert/dfc.keystore
+    dfc.security.ssl.truststore_password=DFC_SECURITY_SSL_TRUSTSTORE_PASSWORD_AS_ENV_VARIABLE_DFC_SSL_TRUSTSTORE_PASSWORD
+    {{- else -}}
+    dfc.session.secure_connect_default=try_native_first
+    {{- end }}
+    dfc.globalregistry.repository={{ .Values.global.docbase }}
+    dfc.globalregistry.username=dm_bof_registry
+    dfc.globalregistry.password=DFC_GLOBALREGISTRY_PASSWORD_AS_ENV_VARIABLE_BOF_REGISTRY_USER_PASSWORD

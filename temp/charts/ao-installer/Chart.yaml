@@ -1,0 +1,5 @@
+apiVersion: v2
+appVersion: "25.4"
+description: Helm chart for AO Installation
+name: ao-installer
+version: "25.4"

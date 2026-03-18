@@ -1,0 +1,312 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.deployment.name }} 
+  labels:
+    app: {{ .Values.deployment.name }}    
+spec:
+  strategy:
+    type: {{ .Values.deployment.strategyType }} 
+  replicas: {{ .Values.records.replicaCount }}    
+  selector:
+    matchLabels:
+      app: {{ .Values.deployment.name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.deployment.name }}
+    spec:
+      serviceAccountName: {{ .Values.serviceAccount.serviceAccountName | default .Values.global.documentumserviceaccount }}      
+      {{- if or .Values.images.records.pullSecrets .Values.global.pullSecretName }}
+      imagePullSecrets: 
+        - name: {{ .Values.images.records.pullSecrets | default .Values.global.pullSecretName }}
+      {{ end }}
+      initContainers:
+        - name: recordswebapp
+          image: {{ .Values.images.extensionImage.repository | default .Values.global.repository}}/{{ .Values.images.extensionImage.name }}:{{ .Values.images.extensionImage.tag }}
+          imagePullPolicy: {{ .Values.images.extensionImage.pullPolicy | default .Values.global.pullPolicyType }}
+          command: ['/bin/bash', '-c', 'sudo mkdir -p /susr;sudo cp -Rf /usr/* /susr;. $HOME/initstartup.sh']
+          volumeMounts:
+            - name: extensionpvc
+              mountPath: /opt/d2extension
+              subPath: recordswebapp
+            - name: shared-usr
+              mountPath: /susr
+      containers:
+      - name: {{ .Values.containers.records.name }}
+        image: {{ .Values.images.records.repository | default .Values.global.repository}}/{{ .Values.images.records.name | default .Values.global.appserverImageName}}:{{ .Values.images.records.tag | default .Values.global.appserverImageTag}}
+        imagePullPolicy: {{ .Values.images.records.pullPolicy | default .Values.global.pullPolicyType }}
+        command: ['bin/bash', '-c', 'sudo cp -Rf /susr/* /usr;cp -Rf /opt/d2extension/recordswebapp/* $HOME/;sudo chmod -R u+rwx $HOME/;sudo chown -R $(whoami):$(whoami) $HOME/;. $HOME/extensionstartup.sh']
+        env:
+        - name: SINGLEHELM
+          value: {{ quote .Values.containers.records.recordsSingleHelm }}
+        - name: RECORDS_EXT_CONF
+          value: "/opt/tomcat/webapps/records/external-configurations"    
+        {{- if eq .Values.cs.useCSDfcConfigMap true }}
+        - name: DFC_GLOBALREGISTRY_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.cs.csSecretConfigName | default .Values.global.csSecrets}}
+              key: globalRegistryPassword
+        {{ end }}
+        - name: DFC_SSL_TRUSTSTORE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.cs.csSecretConfigName | default .Values.global.csSecrets}}
+              key: csCertTrustPassword
+        {{- if not (empty (.Values.vault.enable | quote) | ternary .Values.global.isVaultEnabled .Values.vault.enable) }}
+        - name: PREFERPASS
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.cs.csSecretConfigName | default .Values.global.csSecrets}}
+              key: preferencePassword
+        - name: PRESETPASS
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.cs.csSecretConfigName | default .Values.global.csSecrets}}
+              key: presetPassword
+        {{ end }}
+        - name: DOCBASE_NAME
+          value: {{ quote .Values.containers.records.docbaseName | default .Values.global.docbase}}
+        - name: DOCBROKERS_COUNT
+          value: {{ .Values.docbroker.replicaCount | quote}}
+        - name: DOCBROKER_SERVICE_NAME
+          value: {{ .Values.userName | default .Values.global.installOwnerUsername }}{{ .Values.docbroker.serviceName | default .Values.global.dbrServiceName }}
+        - name: DOCBROKER_CLUSTER_SPACE
+          value: {{ .Values.env.domain | default (include "documentum.envDomain" .) }}
+        - name: DOCBROKER_PORT
+          value: {{ .Values.docbroker.port | quote | default .Values.global.dbr_port | quote }}   
+        - name: DOCBROKER_HOST
+          value: {{ .Values.docbroker.serviceName | default .Values.global.dbrServiceName }}
+        - name: DARINSTALL_USE_CS_CUSTOM_SCRIPTS_APPROACH
+          value: "true"
+        - name: INSTALL_OWNER
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.cs.csSecretConfigName | default .Values.global.csSecrets}}
+              key: installOwner
+        - name: INSTALL_OWNER_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.cs.csSecretConfigName | default .Values.global.csSecrets}}
+              key: installOwnerPassword
+        {{- if (empty (.Values.vault.enable | quote) | ternary .Values.global.isVaultEnabled .Values.vault.enable) }}
+        - name: DFC_DSIS_ENABLED
+          value: {{ (empty (.Values.vault.enable | quote) | ternary .Values.global.isVaultEnabled .Values.vault.enable) | quote }}
+        - name: DFC_DSIS_DAEMON_URL
+          value: {{ .Values.vault.daemonurl | default "http://localhost:8200/dsis" | quote }}
+        {{ end }}
+        # newrelic env parameters
+        {{- if (empty (.Values.userProvidedServices.newrelic.enable | quote) | ternary .Values.global.newrelic .Values.userProvidedServices.newrelic.enable) }}
+        - name: NEW_RELIC_AGENT_ENABLED
+          value: {{ (empty (.Values.userProvidedServices.newrelic.enable | quote) | ternary .Values.global.newrelic .Values.userProvidedServices.newrelic.enable) | quote}}
+        - name: NEW_RELIC_APP_NAME
+          value: {{ (.Values.userProvidedServices.newrelic.appName | quote) }}
+        - name: NEW_RELIC_LICENSE_KEY
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.cs.csSecretConfigName | default .Values.global.csSecrets}}
+              key: newrelicLicensekey
+        {{- if (empty (.Values.userProvidedServices.newrelic.proxyHost | quote) | ternary .Values.global.newrelicProxyHost .Values.userProvidedServices.newrelic.proxyHost)  }}
+        - name: NEW_RELIC_PROXY_HOST
+          value: {{ (.Values.userProvidedServices.newrelic.proxyHost | quote) | default .Values.global.newrelicProxyHost | quote}}
+        {{ end }}
+        {{- if (empty (.Values.userProvidedServices.newrelic.proxyPort | quote) | ternary .Values.global.newrelicProxyPort .Values.userProvidedServices.newrelic.proxyPort) }}
+        - name: NEW_RELIC_PROXY_PORT
+          value: {{ (.Values.userProvidedServices.newrelic.proxyPort | quote) | default .Values.global.newrelicProxyPort | quote}}
+        {{ end }}
+        {{- if (empty (.Values.userProvidedServices.newrelic.proxyScheme | quote) | ternary .Values.global.newrelicProxyProtocol .Values.userProvidedServices.newrelic.proxyScheme) }}
+        - name: NEW_RELIC_PROXY_SCHEME
+          value: {{ (.Values.userProvidedServices.newrelic.proxyScheme | quote) | default .Values.global.newrelicProxyProtocol | quote}}
+        {{ end }}
+        {{ end }}
+        - name: DFC_TRACING_ENABLED
+          value: {{ quote .Values.dfcTracing.enable }}
+        - name: ALLOW_TRUSTED_LOGIN
+          value: {{ quote .Values.cs.allowTrustedLogin }}
+        {{- if (empty (.Values.certificate.useCertificate | quote) | ternary .Values.global.useCertificate .Values.certificate.useCertificate) }}
+        - name: USE_CERTIFICATE
+          value: {{ (empty (.Values.certificate.useCertificate | quote) | ternary .Values.global.useCertificate .Values.certificate.useCertificate) | quote}}
+        - name: TRUST_STORE_PASSWORD        
+          valueFrom: 
+            secretKeyRef:
+              name: {{ .Values.cs.csSecretConfigName | default .Values.global.csSecrets}}
+              key: dbrCertpassword
+        {{ end }}
+        - name: INTERNAL_TLS_ENABLED
+          value: {{ .Values.internalTlsEnable | default .Values.global.internalTlsEnable | default false | quote }}
+        - name: INGRESS_KEYSTORE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.cs.secretName | default .Values.global.csSecrets }}
+              key: ingress.keystorepassword
+        - name: LABELPRINT
+          value: {{ quote .Values.LabelPrint.enable }}
+        - name: SERVLETIP
+          value: {{ quote .Values.LabelPrint.servletIp }}
+        - name: SERVLETPORT
+          value: {{ quote .Values.LabelPrint.servletPort }}
+        #Added for Fedramp
+        #Specify the inactivity threshold (in minutes) after which a session timeout warning
+        # message will be displayed to the user, before the actual session expiration.
+        - name: CLIENT_INACTIVITY_LOGOUT
+          value: {{ quote .Values.session.timeout | default .Values.global.inactivityLogout | quote}}
+        volumeMounts:
+        - name: nfs-data
+          mountPath: /opt/tomcat/webapps/records/external-configurations
+          subPath: {{ .Values.deployment.name }}
+        - name: dfc-properties-configmap
+          mountPath: /opt/tomcat/webapps/records/external-configurations/dfc.properties
+          subPath: dfc.properties
+        - name: records-logging-configmap
+          mountPath: /opt/tomcat/webapps/records/external-configurations/log4j2
+        - name: records-appproperties-configmap
+          mountPath: /opt/tomcat/webapps/records/external-configurations/app.properties
+          subPath: app.properties
+        {{- if (eq .Values.global.internalTlsEnable true) }}
+        - name: records-server-xml-configmap
+          mountPath: /opt/tomcat/webapps/records/external-configurations/server_tls.xml
+          subPath: server_tls.xml
+        {{ else }}
+        - name: records-server-xml-configmap
+          mountPath: /opt/tomcat/webapps/records/external-configurations/server.xml
+          subPath: server.xml
+        {{ end }}
+        {{- if (empty (.Values.otds.enable | quote) | ternary .Values.global.otdsEnabled .Values.otds.enable) }}
+        - name: records-otdsproperties-configmap
+          mountPath: /opt/tomcat/webapps/records/external-configurations/otdsoauth.properties
+          subPath: otdsoauth.properties
+        {{ end }}
+        - mountPath: /opt/custompvc
+          name: custom-script-pvc
+          subPath: {{ .Values.custom.PVCSubPath }}
+        {{- if (empty (.Values.images.fluentd.enabled | quote) | ternary .Values.global.fluentd .Values.images.fluentd.enabled) }}
+        - name: shared-logs
+          mountPath: /opt/tomcat/logs
+        - name: shared-logs  
+          mountPath: {{ .Values.images.fluentd.userhomedir }}/documentum/logs
+        {{ end }} 
+        {{- if (empty (.Values.certificate.useCertificate | quote) | ternary .Values.global.useCertificate .Values.certificate.useCertificate)}}
+        - name: {{ .Values.certificate.dbrDataPVCName  | default .Values.global.dbrDataPVCName }}
+          mountPath: /opt/dctm/certificate
+          subPath: certificate/{{ .Values.certificate.dbrDataPVCName | default .Values.global.dbrDataPVCName }}
+        {{ end }}
+        - mountPath: /opt/d2extension
+          name: extensionpvc
+          subPath: recordswebapp
+        - name: shared-usr
+          mountPath: /susr
+        {{- if (empty (.Values.vault.enable | quote) | ternary .Values.global.isVaultEnabled .Values.vault.enable) }}
+        - mountPath: /opt/dctm_docker/vault_config
+          name: vault-volume
+        {{ end }}
+        {{- if (empty (.Values.vault.enable | quote) | ternary .Values.global.isVaultEnabled .Values.vault.enable) }}
+        - mountPath: /opt/dctm_docker/dsis_binary_volume
+          name: dsis-binary-volume
+        {{ end }}
+        ports:
+        - containerPort: {{ (eq .Values.global.internalTlsEnable true) | ternary 8443 8080 }}
+        resources:
+{{ toYaml .Values.resources | indent 12 }}
+        readinessProbe:
+          httpGet:
+            scheme: {{ (eq (.Values.global.internalTlsEnable | default false) true) | ternary "HTTPS" "HTTP" }}
+            path: /records/health
+            port: {{ (eq (.Values.global.internalTlsEnable | default false) true) | ternary (.Values.containers.records.probing.healthPortHttps | default 8443) (.Values.containers.records.probing.healthPort | default 8080) }}
+          initialDelaySeconds: {{ .Values.containers.records.probing.readinessProbe.initialDelaySeconds }}
+          periodSeconds: {{ .Values.containers.records.probing.readinessProbe.periodSeconds }}
+          failureThreshold: {{ .Values.containers.records.probing.failureThreshold }}
+          successThreshold: {{ .Values.containers.records.probing.successThreshold }}
+          timeoutSeconds: {{ .Values.containers.records.probing.timeoutSeconds }}
+        livenessProbe:
+          httpGet:
+            scheme: {{ (eq (.Values.global.internalTlsEnable | default false) true) | ternary "HTTPS" "HTTP" }}
+            path: /records/health
+            port: {{ (eq (.Values.global.internalTlsEnable | default false) true) | ternary (.Values.containers.records.probing.healthPortHttps | default 8443) (.Values.containers.records.probing.healthPort | default 8080) }}
+          periodSeconds: {{ .Values.containers.records.probing.livenessProbe.periodSeconds }}
+          initialDelaySeconds: {{ .Values.containers.records.probing.livenessProbe.initialDelaySeconds }}
+          failureThreshold: {{ .Values.containers.records.probing.failureThreshold }}
+          successThreshold: {{ .Values.containers.records.probing.successThreshold }}
+          timeoutSeconds: {{ .Values.containers.records.probing.timeoutSeconds }}
+        startupProbe:
+          httpGet:
+            scheme: {{ (eq (.Values.global.internalTlsEnable | default false) true) | ternary "HTTPS" "HTTP" }}
+            path: /records/health
+            port: {{ (eq (.Values.global.internalTlsEnable | default false) true) | ternary (.Values.containers.records.probing.healthPortHttps | default 8443) (.Values.containers.records.probing.healthPort | default 8080) }}
+          initialDelaySeconds: {{ .Values.containers.records.probing.startupProbe.initialDelaySeconds }}
+          periodSeconds: {{ .Values.containers.records.probing.startupProbe.periodSeconds }}
+          failureThreshold: {{ .Values.containers.records.probing.failureThreshold }}
+          successThreshold: {{ .Values.containers.records.probing.successThreshold }}
+          timeoutSeconds: {{ .Values.containers.records.probing.timeoutSeconds }}
+      volumes:
+      {{- if (empty (.Values.images.fluentd.enabled | quote) | ternary .Values.global.fluentd .Values.images.fluentd.enabled) }}
+      - name: shared-logs
+        emptyDir: {}
+      - name: {{ .Values.images.fluentd.servicedataPVCName }}-logs
+        emptyDir: {}
+      {{ end }}
+      - name: shared-usr
+        emptyDir: {}
+      - name: dfc-properties-configmap
+      {{- if eq .Values.cs.useCSDfcConfigMap true }}
+        configMap:
+          name: {{ .Values.cs.configMapName | default .Values.global.dbrConfigmapName}}
+      {{ else }}
+        configMap:
+          name: {{ .Values.deployment.name}}-dfcproperties-configmap
+      {{ end }}
+      - name: records-logging-configmap
+        configMap:
+          name: {{ .Values.deployment.name }}-logging-configmap
+      {{- if (eq .Values.global.internalTlsEnable true) }}
+      - name: records-server-xml-configmap
+        projected:
+          sources:
+          - configMap:
+              name: {{ .Values.deployment.name }}-server-xml-configmap
+      {{ else }}
+      - name: records-server-xml-configmap
+        configMap:
+          name: {{ .Values.deployment.name }}-server-xml-configmap
+      {{ end }}            
+      - name: records-appproperties-configmap
+        configMap:
+          name: {{ .Values.deployment.name }}-appproperties-configmap
+      {{- if (empty (.Values.otds.enable | quote) | ternary .Values.global.otdsEnabled  .Values.otds.enable) }}
+      - name: records-otdsproperties-configmap
+        configMap:
+          name: {{ .Values.deployment.name }}-otdsproperties-configmap
+      {{ end }}
+      {{- if (empty (.Values.vault.enable | quote) | ternary .Values.global.isVaultEnabled .Values.vault.enable) }}
+      - name: vault-volume
+        configMap:
+          name: {{ .Values.vault.vault_configmap }}
+      {{ end }}
+      - name: nfs-data
+        persistentVolumeClaim:
+          claimName: {{ .Values.persistentVolumeClaimEC.pvcName }}-ext-conf-pvc
+      {{- if (empty (.Values.certificate.useCertificate | quote) | ternary .Values.global.useCertificate .Values.certificate.useCertificate)}}
+      - name: {{ .Values.certificate.dbrDataPVCName | default .Values.global.dbrDataPVCName }}
+        persistentVolumeClaim:
+          claimName: {{ .Values.certificate.dbrServiceName | default .Values.global.dbrServiceName}}-pvc
+      {{ end }}
+      {{- if (or (empty (.Values.persistentVolumeClaim.useCommonPVC | quote)) (eq .Values.persistentVolumeClaim.useCommonPVC false)) }}
+        {{- if (eq .Values.global.tomcatbase_usecommonpvc false) }}
+      - name: extensionpvc
+        persistentVolumeClaim:
+          claimName: {{ .Values.persistentVolumeClaim.pvcName | default .Values.global.tomcatbase_commonpvcname}}-rm 
+        {{ else }}      
+      - name: extensionpvc 
+        persistentVolumeClaim: 
+          claimName: {{ .Values.persistentVolumeClaim.pvcName | default .Values.global.tomcatbase_commonpvcname}}
+        {{ end }}
+      {{ end }}  
+      - name: custom-script-pvc
+        persistentVolumeClaim:
+          claimName: {{ .Values.custom.scriptPVCname }}
+      {{- if (empty (.Values.vault.enable | quote) | ternary .Values.global.isVaultEnabled .Values.vault.enable) }}
+      - name: dsis-binary-volume
+        persistentVolumeClaim:
+          claimName: dsis-binary-pvc
+      {{ end }}
+      restartPolicy: Always

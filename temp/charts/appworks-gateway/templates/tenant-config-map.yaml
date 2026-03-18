@@ -1,0 +1,157 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: tenant-config-map
+data:
+  #TZ: {{ default .Values.global.timezone .Values.timezone }}
+  {{- range .Values.tenants}}
+    AWG_{{upper .name }}_DB_USER: {{ .database.appworksdb.user }}
+    AWG_{{upper .name }}_DB_VENDOR: {{ .database.vendor}}
+    AWG_{{upper .name }}_DB_USESSL: {{ .database.useSSL | quote }}
+    AWG_{{upper .name }}_DB_TRUST_DB_CERTS: {{ .database.trustDbCerts | quote }}
+    AWG_{{upper .name }}_DB_SSL_MODE: {{ .database.sslMode | quote }}
+    {{- if eq .database.vendor "PostgreSql" }}
+    AWG_{{upper .name }}_DB_URL: "jdbc:postgresql://{{ .database.server.host }}:{{ .database.server.port }}/{{ .database.appworksdb.database }}"
+    AWG_{{upper .name }}_DB_DRIVER: "org.postgresql.Driver"
+    {{- else if  eq .database.vendor "MsSqlServer"}}
+    AWG_{{upper .name }}_DB_URL: "jdbc:sqlserver://{{ .database.server.host }}:{{ .database.server.port }};databaseName={{ .database.appworksdb.database }}"
+    AWG_{{upper .name }}_DB_DRIVER: "com.microsoft.sqlserver.jdbc.SQLServerDriver"
+    {{- else if  eq .database.vendor "Oracle"}}
+    AWG_{{upper .name }}_DB_URL: "jdbc:oracle:thin:@{{ .database.server.host }}:{{ .database.server.port }}:{{ .database.appworksdb.service }}"
+    AWG_{{upper .name }}_DB_DRIVER: "oracle.jdbc.OracleDriver"
+    {{- end }}
+    AWG_{{upper .name }}_OTAG_URL: {{ .awg.externalurl }}
+    AWG_{{upper .name }}_SIMPLE_LOGGER_LEVEL: {{ .awg.logging.level }}
+    {{- if hasKey .awg.settings "wantSecureCookies" }}
+    AWG_{{upper .name }}_OTAG_SECURE_COOKIES: {{ .awg.settings.wantSecureCookies | quote }}
+    {{- end }}
+    {{- if hasKey .awg.settings "doNotProxyOTDS" }}
+    AWG_{{upper .name }}_OTAG_OTDS_BYPASS_PROXY: {{ .awg.settings.doNotProxyOTDS | quote }}
+    {{- end }}
+    {{- if hasKey .awg.settings "cookieDomainForGeneratedOTDSCookies" }}
+    AWG_{{upper .name }}_OTAG_OTDS_COOKIE_DOMAIN: {{ .awg.settings.cookieDomainForGeneratedOTDSCookies }}
+    {{- end }}
+    {{- if hasKey .awg.settings "anonymousAccessEnabled" }}
+    AWG_{{upper .name }}_OTAG_CLIENT_ANONYMOUS_ACCESS: {{ .awg.settings.anonymousAccessEnabled | quote }}
+    {{- end }}
+    {{- if hasKey .awg.settings "forcePasswordBasedNonOauthAuthentication" }}
+    AWG_{{upper .name }}_OTDS_AUTH_PASSWORD: {{ .awg.settings.forcePasswordBasedNonOauthAuthentication | quote }}
+    {{- end }}
+    {{- if hasKey .awg.settings "disableOTDSAuth" }}
+    AWG_{{upper .name }}_OTAG_OTDS_DISABLE_OAUTH: {{ .awg.settings.disableOTDSAuth | quote }}
+    {{- end }}
+    {{- if hasKey .awg.settings "otdsSSODisableByIP" }}
+    AWG_{{upper .name }}_OTDS_AUTH_DISABLE_SSO_ADDRESSES: {{ .awg.settings.otdsSSODisableByIP }}
+    {{- end }}
+    {{- if hasKey .awg.settings "listOfTenants" }}
+    AWG_{{upper .name }}_OTAG_TENANT_LIST: {{ .awg.settings.listOfTenants | quote }}
+    {{- end }}
+    {{- if hasKey .awg.settings "awgDeveloperMode" }}
+    AWG_{{upper .name }}_OTAG_DEVELOPER_MODE: {{ .awg.settings.awgDeveloperMode | quote }}
+    {{- end }}
+    {{- if hasKey .awg.settings.mdm "clientTrackingEnabled" }}
+    AWG_{{upper .name }}_OTAG_CLIENT_TRACKING_ENABLED: {{ .awg.settings.mdm.clientTrackingEnabled | quote }}
+    {{- end }}
+    {{- if hasKey .awg.settings.mdm "remoteWipeTimeoutSeconds" }}
+    AWG_{{upper .name }}_OTAG_REMOTE_WIPE_TIMEOUT: {{ .awg.settings.mdm.remoteWipeTimeoutSeconds | quote}}
+    {{- end }}
+    {{- if hasKey .awg.settings.mdm "remoteWipeFailureEmailRecipients" }}
+    AWG_{{upper .name }}_OTAG_REMOTE_WIPE_ALERT_CONTACTS: {{ .awg.settings.mdm.remoteWipeFailureEmailRecipients }}
+    {{- end }}
+    {{- if hasKey .awg.settings.mdm "permitStorageOfPasswordsOnDevice" }}
+    AWG_{{upper .name }}_OTAG_PASSWORD_ON_DEVICE_PERMITTED: {{ .awg.settings.mdm.permitStorageOfPasswordsOnDevice | quote }}
+    {{- end }}
+    {{- if hasKey .awg.settings.mdm "passwordOnDeviceExpirySeconds" }}
+    AWG_{{upper .name }}_OTAG_PASSWORD_ON_DEVICE_MAXAGE: {{ .awg.settings.mdm.passwordOnDeviceExpirySeconds | quote }}
+    {{- end }}
+    {{- if hasKey .awg.settings.mdm "permitOfflineAccessOnDevice" }}
+    AWG_{{upper .name }}_OTAG_MOBILE_OFFLINE_ACCESS_PERMITTED: {{ .awg.settings.mdm.permitOfflineAccessOnDevice | quote }}
+    {{- end }}
+    {{- if hasKey .awg.settings.mdm "notifyDevicesOfOfflinePolicyChange" }}
+    AWG_{{upper .name }}_OTAG_MOBILE_OFFLINE_ACCESS_NOTIFY: {{ .awg.settings.mdm.notifyDevicesOfOfflinePolicyChange | quote }}
+    {{- end }}
+    {{- if hasKey .awg.settings.mdm "disableSharingAndDownloadingFiles" }}
+    AWG_{{upper .name }}_OTAG_FILE_EDITSHARE_FLAG: {{ .awg.settings.mdm.disableSharingAndDownloadingFiles | quote }}
+    {{- end }}
+    {{- if hasKey .awg.settings.mdm "overrideConsumerProvidedConfig" }}
+    AWG_{{upper .name }}_OTAG_OVERRIDE_CONSUMER_PROVIDED_CONFIG: {{ .Values.awg.settings.mdm.overrideConsumerProvidedConfig | quote }}
+    {{- end }}
+    {{- if hasKey .awg.settings.mdm "enableBiometricFlag" }}
+    AWG_{{upper .name }}_OTAG_ENABLE_BIOMETRIC_FLAG: {{ .Values.awg.settings.mdm.enableBiometricFlag | quote }}
+    {{- end }}
+    {{- if hasKey .awg.settings.mdm "enableOfflinePinRetryFlag" }}
+    AWG_{{upper .name }}_OTAG_ENABLE_OFFLINE_PIN_RETRY_FLAG: {{ .Values.awg.settings.mdm.enableOfflinePinRetryFlag | quote }}
+    {{- end }}
+    {{- if hasKey .awg.settings.mdm "offlinePinRetryAttempts" }}
+    AWG_{{upper .name }}_OTAG_OFFLINE_PIN_RETRY_ATTEMPTS: {{ .Values.awg.settings.mdm.offlinePinRetryAttempts | quote }}
+    {{- end }}
+    {{- if hasKey .awg.settings.mail "mailAuthenticationType" }}
+    AWG_{{upper .name }}_OTAG_MAIL_AUTHENTICATION: {{ .awg.settings.mail.mailAuthenticationType | quote }}
+    {{- end }}
+    {{- if hasKey .awg.settings.mail "smtpReturnAddress" }}
+    AWG_{{upper .name }}_OTAG_SMTP_FROM: {{ .awg.settings.mail.smtpReturnAddress }}
+    {{- end }}
+    {{- if hasKey .awg.settings.mail "smtpHost" }}
+    AWG_{{upper .name }}_OTAG_SMTP_HOST: {{ .awg.settings.mail.smtpHost }}
+    {{- end }}
+    {{- if hasKey .awg.settings.mail "smtpPort" | quote }}
+    AWG_{{upper .name }}_OTAG_SMTP_PORT: {{ .awg.settings.mail.smtpPort | quote }}
+    {{- end }}
+    {{- if hasKey .awg.settings.mail "smtpUsername" }}
+    AWG_{{upper .name }}_OTAG_SMTP_USERNAME: {{ .awg.settings.mail.smtpUsername }}
+    {{- end }}
+    {{- if hasKey .awg.settings.mail "smtpUseSSL" }}
+    AWG_{{upper .name }}_OTAG_SMTP_SSL: {{ .awg.settings.mail.smtpUseSSL | quote }}
+    {{- end }}
+    {{- if hasKey .awg.settings.mail "oauthScope" }}
+    AWG_{{upper .name }}_OTAG_OAUTH_SCOPE: {{ .awg.settings.mail.oauthScope }}
+    {{- end }}
+    {{- if hasKey .awg.settings.mail "oauthClientId" }}
+    AWG_{{upper .name }}_OTAG_OAUTH_CLIENT_ID: {{ .awg.settings.mail.oauthClientId }}
+    {{- end }}
+    {{- if hasKey .awg.settings "enableAutoLogout" }}
+    AWG_{{upper .name }}_OTAG_SESSION_AUTOLOGOUTTIME_FLAG: {{ .awg.settings.enableAutoLogout | quote }}
+    {{- end }}
+    {{- if hasKey .awg.settings "autoLogoutTimeIntervalSeconds" }}
+    AWG_{{upper .name }}_OTAG_SESSION_AUTOLOGOUTTIME_INTERVAL: {{ .awg.settings.autoLogoutTimeIntervalSeconds | quote }}
+    {{- end }}
+    {{- if hasKey .awg.settings "enableConcurrentSessionLimit" }}
+    AWG_{{upper .name }}_OTAG_CONCURRENT_SESSION_LIMIT_FLAG: {{ .awg.settings.enableConcurrentSessionLimit | quote }}
+    {{- end }}
+    {{- if hasKey .awg.settings "concurrentSessionLimitAdmin" }}
+    AWG_{{upper .name }}_OTAG_CONCURRENT_SESSION_LIMIT_ADMIN: {{ .awg.settings.concurrentSessionLimitAdmin | quote }}
+    {{- end }}
+    {{- if hasKey .awg.settings "concurrentSessionLimitUser" }}
+    AWG_{{upper .name }}_OTAG_CONCURRENT_SESSION_LIMIT_NORMAL: {{ .awg.settings.concurrentSessionLimitUser | quote }}
+    {{- end }}
+    AWG_{{upper .name }}_PUSH_TO_CONSOLE: {{ .awg.settings.pushToConsole | quote }}
+    AWG_{{upper .name }}_PROXY_AUTOMATE: {{ .proxy.automate | quote }}
+
+    {{- if .vault }}
+    #configuration properties for vault
+    AWG_{{upper .name }}_VAULT_ENABLED: {{ .vault.enabled | quote }}
+    AWG_{{upper .name }}_VAULT_TYPE: {{ .vault.type | quote }}
+    AWG_{{upper .name }}_VAULT_HOST: {{ .vault.host | quote }}
+    AWG_{{upper .name }}_VAULT_PORT: {{ .vault.port  | quote }}
+    AWG_{{upper .name }}_VAULT_NAMESPACE: {{ .vault.namespace | quote }}
+    AWG_{{upper .name }}_VAULT_SECRETS: {{ .vault.secrets | quote }}
+    AWG_{{upper .name }}_VAULT_AUTH_CONFIG_PATH: {{ .vault.authConfigPath | quote }}
+    AWG_{{upper .name }}_VAULT_AUTH_PATH: {{ .vault.authPath | quote }}
+    AWG_{{upper .name }}_VAULT_ROLE: {{ .vault.role | quote }}
+    AWG_{{upper .name }}_VAULT_AUTH_TYPE: {{ .vault.authType | quote }}
+    {{- end }}
+  {{- end}}
+  
+  {{- if .Values.newrelic.enabled }}
+  NEW_RELIC_LICENSE_KEY: {{ .Values.newrelic.licenseKey | quote }}
+  NEW_RELIC_APP_NAME: {{ .Values.newrelic.appName | quote }}
+  NEW_RELIC_LOG_FILE_PATH: "/usr/local/tomcat/logs"
+  NEW_RELIC_LOG_FILE_NAME: {{ .Values.newrelic.logFileName | quote }}
+  NEW_RELIC_LOG_LEVEL: {{ .Values.newrelic.logLevel | quote }}
+  {{- if and (.Values.newrelic.proxyHost) (.Values.newrelic.proxyPort) (.Values.newrelic.proxyScheme) }}
+  NEW_RELIC_PROXY_HOST: {{ .Values.newrelic.proxyHost | quote }}
+  NEW_RELIC_PROXY_PORT: {{ .Values.newrelic.proxyPort | quote }}
+  NEW_RELIC_PROXY_SCHEME: {{ .Values.newrelic.proxyScheme | quote }}
+  {{- end }}
+  JAVA_OPTS: "-javaagent:/usr/local/tomcat/newrelic/newrelic.jar"
+  {{- end }}

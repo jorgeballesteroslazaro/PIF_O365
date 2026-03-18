@@ -1,0 +1,271 @@
+{{- if eq .Values.services.osclient "true" }}
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-{{ .Values.global.namespace }}-{{ .Values.components.osclient }}
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    app: {{ .Release.Name }}-{{ .Values.global.namespace }}-{{ .Values.components.osclient }}
+spec:
+   selector:
+     app: {{ .Release.Name }}-{{ .Values.global.namespace }}-{{ .Values.components.osclient }}
+   ports:
+   - port: 20000
+     name: s0
+     targetPort: 20000
+
+{{- end }}
+
+{{- if eq .Values.services.osprimary "true" }}
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-{{ .Values.global.namespace }}-{{ .Values.components.oshaproxy }}
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    app: {{ .Release.Name }}-{{ .Values.global.namespace }}-{{ .Values.components.oshaproxy }}
+spec:   
+   selector:
+     app: {{ .Release.Name }}-{{ .Values.global.namespace }}-{{ .Values.components.oshaproxy }}
+   ports:
+   - port: {{ .Values.ingress.oshttpport }}
+     name: http
+     targetPort: {{ .Values.ingress.oshttpport }}
+   - port: {{ .Values.ingress.ostcpport }}
+     name: tcp
+     targetPort: {{ .Values.ingress.ostcpport }}
+
+{{- end }}
+
+{{- if eq .Values.services.osprimary "true" }}
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-{{ .Values.global.namespace }}-{{ .Values.components.osprimary }}
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    app: {{ .Release.Name }}-{{ .Values.global.namespace }}-{{ .Values.components.osprimary }}
+spec:
+   selector:
+     app: {{ .Release.Name }}-{{ .Values.global.namespace }}-{{ .Values.components.osprimary }}       
+   ports:
+   - port: 9001
+     name: ws
+     targetPort: 9001
+   - port: 9002
+     name: ws2
+     targetPort: 9002
+   - port: 9003
+     name: ws3
+     targetPort: 9003
+   - port: 9004
+     name: ws4
+     targetPort: 9004
+   - port: 9005
+     name: ws5
+     targetPort: 9005
+   - port: 9006
+     name: ws6
+     targetPort: 9006
+   - port: 9007
+     name: ws7
+     targetPort: 9007
+   - port: 9008
+     name: ws8
+     targetPort: 9008
+   - port: 9009
+     name: ws9
+     targetPort: 9009
+   - port: 9010
+     name: ws10
+     targetPort: 9010
+   - port: 9011
+     name: ws11
+     targetPort: 9011
+   - port: 9012
+     name: ws12
+     targetPort: 9012
+   - port: 9013
+     name: ws13
+     targetPort: 9013
+   - port: 9014
+     name: ws14
+     targetPort: 9014
+   - port: 9015
+     name: ws15
+     targetPort: 9015
+   - port: 9016
+     name: ws16
+     targetPort: 9016
+   - port: 9017
+     name: ws17
+     targetPort: 9017
+   - port: 9018
+     name: ws18
+     targetPort: 9018
+   - port: 4003
+     name: solr
+     targetPort: 4003
+   - port: 8161
+     name: activemq1
+     targetPort: 8161
+   - port: 8162
+     name: activemq-ssl
+     targetPort: 8162
+   - port: 61616
+     name: activemq-tcp
+     targetPort: 61616     
+   - port: 4009
+     name: nm
+     targetPort: 4009
+   - port: 20000
+     name: s0
+     targetPort: 20000
+   - port: 20001
+     name: s1
+     targetPort: 20001
+   - port: 20002
+     name: s2
+     targetPort: 20002
+   - port: 20003
+     name: s3
+     targetPort: 20003
+   - port: 20004
+     name: s4
+     targetPort: 20004
+   - port: 20005
+     name: s5
+     targetPort: 20005
+   - port: 20006
+     name: s6
+     targetPort: 20006
+   - port: 20007
+     name: s7
+     targetPort: 20007
+   - port: 20008
+     name: s8
+     targetPort: 20008
+   - port: 20009
+     name: s9
+     targetPort: 20009
+   - port: 20010
+     name: s10
+     targetPort: 20010
+   - port: 20011
+     name: s11
+     targetPort: 20011
+   - port: 20012
+     name: s12
+     targetPort: 20012
+   - port: 20013
+     name: s13
+     targetPort: 20013
+   - port: 20014
+     name: s14
+     targetPort: 20014
+   - port: 20015
+     name: s15
+     targetPort: 20015
+   - port: 20016
+     name: s16
+     targetPort: 20016
+   - port: 20017
+     name: s17
+     targetPort: 20017
+   - port: 20018
+     name: s18
+     targetPort: 20018
+   - port: 20019
+     name: s19
+     targetPort: 20019
+   - port: 20020
+     name: s20
+     targetPort: 20020
+
+{{- end }}
+
+{{- if eq .Values.services.osscale "true" }}
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-{{ .Values.global.namespace }}-{{ .Values.components.osscale }}
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    app: {{ .Release.Name }}-{{ .Values.global.namespace }}-{{ .Values.components.osscale }}
+spec:
+   selector:
+     app: {{ .Release.Name }}-{{ .Values.global.namespace }}-{{ .Values.components.osscale }}       
+   ports:
+   - port: 20000
+     name: s0
+     targetPort: 20000
+   - port: 20001
+     name: s1
+     targetPort: 20001
+   - port: 20002
+     name: s2
+     targetPort: 20002
+   - port: 20003
+     name: s3
+     targetPort: 20003
+   - port: 20004
+     name: s4
+     targetPort: 20004
+   - port: 20005
+     name: s5
+     targetPort: 20005
+   - port: 20006
+     name: s6
+     targetPort: 20006
+   - port: 20007
+     name: s7
+     targetPort: 20007
+   - port: 20008
+     name: s8
+     targetPort: 20008
+   - port: 20009
+     name: s9
+     targetPort: 20009
+   - port: 20010
+     name: s10
+     targetPort: 20010
+   - port: 20011
+     name: s11
+     targetPort: 20011
+   - port: 20012
+     name: s12
+     targetPort: 20012
+   - port: 20013
+     name: s13
+     targetPort: 20013
+   - port: 20014
+     name: s14
+     targetPort: 20014
+   - port: 20015
+     name: s15
+     targetPort: 20015
+   - port: 20016
+     name: s16
+     targetPort: 20016
+   - port: 20017
+     name: s17
+     targetPort: 20017
+   - port: 20018
+     name: s18
+     targetPort: 20018
+   - port: 20019
+     name: s19
+     targetPort: 20019
+   - port: 20020
+     name: s20
+     targetPort: 20020
+
+{{- end }}

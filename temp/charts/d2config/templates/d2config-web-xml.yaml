@@ -1,0 +1,2858 @@
+{{- if .Values.global.dctmclientinstaller.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: d2config-web-xml
+  {{- template "configMap.labels" . }}
+data:
+  web.xml: |-
+    <?xml version="1.0" encoding="UTF-8"?>
+
+    <!DOCTYPE web-app
+        PUBLIC "-//Sun Microsystems, Inc.//DTD Web Application 2.3//EN"
+        "http://java.sun.com/dtd/web-app_2_3.dtd">
+
+    <web-app>
+
+        <display-name>D2-Config</display-name>
+        <description>D2-Config</description>
+
+        <!-- ############################## FILTERS ############################## -->
+
+        <!--filter>
+            <filter-name>CompressingFilter</filter-name>
+            <filter-class>com.planetj.servlet.filter.compression.CompressingFilter</filter-class>
+            <init-param>
+                <param-name>debug</param-name>
+                <param-value>true</param-value>
+            </init-param>
+            <init-param>
+                <param-name>compressionThreshold</param-name>
+                <param-value>1024</param-value>
+            </init-param>
+            <init-param>
+                <param-name>includeContentTypes</param-name>
+                <param-value>text/html,text/xml,text/xsl,text/css,application/x-javascript</param-value>
+            </init-param>
+        </filter>
+        <filter-mapping>
+            <filter-name>CompressingFilter</filter-name>
+            <url-pattern>/*</url-pattern>
+        </filter-mapping-->
+
+        <context-param>
+            <param-name>client_warning_session_timeout</param-name>
+            <param-value>2</param-value>
+        </context-param>
+
+    <filter>
+        <filter-name>D2ConfigSessionFilter</filter-name>
+        <filter-class>com.emc.d2.web.filters.D2ConfigSessionFilter</filter-class>
+      </filter>
+      <filter-mapping>
+        <filter-name>D2ConfigSessionFilter</filter-name>
+        <url-pattern>/*</url-pattern>
+      </filter-mapping>
+
+        <filter>
+            <filter-name>IniShiroFilter</filter-name>
+            <filter-class>org.apache.shiro.web.servlet.IniShiroFilter</filter-class>
+        </filter>
+
+        <filter-mapping>
+            <filter-name>IniShiroFilter</filter-name>
+            <url-pattern>/*</url-pattern>
+        </filter-mapping>
+
+        <filter>
+        <filter-name>LegacyCheckFilter</filter-name>
+        <filter-class>com.emc.d2.web.filters.LegacyCheckFilter</filter-class>
+      </filter>
+      <filter-mapping>
+        <filter-name>LegacyCheckFilter</filter-name>
+        <url-pattern>/*</url-pattern>
+      </filter-mapping>
+
+        <listener>
+            <listener-class>net.sf.ehcache.constructs.web.ShutdownListener</listener-class>
+        </listener>
+        <listener>
+            <listener-class>com.emc.d2.web.session.D2ConfigHttpSessionListener</listener-class>
+        </listener>
+        <listener>
+            <listener-class>com.emc.d2.web.servlets.listener.D2ConfigWebAppListener</listener-class>
+        </listener>
+        <listener>
+            <listener-class>com.documentum.fc.client.web.ShutdownListener</listener-class>
+        </listener>
+        <listener>
+            <listener-class>com.emc.common.dctm.contents.D2FileCleanerThreadDestroy</listener-class>
+        </listener>
+        <!-- ############################## Servlet Class & Name ############################## -->
+
+        <!-- Start Init Pack -->
+        <servlet>
+            <servlet-name>LoadOnStartup</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.init.LoadOnStartup</servlet-class>
+            <load-on-startup>1</load-on-startup>
+        </servlet>
+        <servlet>
+            <servlet-name>ReloadOptions</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.init.ReloadOptions</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>Readiness</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.init.Readiness</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>Liveness</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.init.Liveness</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>Health</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.init.HealthCheckServlet</servlet-class>
+        </servlet>
+        <!-- End Init Pack -->
+
+        <!-- Start Download Pack -->
+        <servlet>
+            <servlet-name>Download</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.download.Download</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>Preview</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.download.Preview</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>GetAcsURL</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.download.GetAcsURL</servlet-class>
+        </servlet>
+        <!-- End Download Pack -->
+
+        <!-- Start Monitoring Pack -->
+        <servlet>
+            <servlet-name>MonitorStats</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.monitor.MonitorStats</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>ControlStatus</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.monitor.ControlStatus</servlet-class>
+        </servlet>
+        <!-- End Monitoring Pack -->
+
+        <!-- Start Interfaces Pack -->
+        <servlet>
+            <servlet-name>Interface</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.interfaces.Interface</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>RefreshCache</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.caches.RefreshCache</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>GetSkin</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.interfaces.GetSkin</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>Dialog</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.interfaces.Dialog</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>Menu</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.interfaces.Menu</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>Frame</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.interfaces.Frame</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>GetLabels</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.interfaces.GetLabels</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>GetDate</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.interfaces.GetDate</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>GetOptions</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.interfaces.GetOptions</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>GetTaxonomy</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.interfaces.GetTaxonomy</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>GetDefaultLanguage</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.language.GetDefaultLanguage</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>GetSessionAttribute</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.utils.GetSessionAttribute</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>ExtendSession</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.utils.ExtendSession</servlet-class>
+        </servlet>
+        <!-- End Interfaces Pack -->
+
+        <!-- Start Data Pack -->
+        <servlet>
+            <servlet-name>GetData</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.data.GetData</servlet-class>
+        </servlet>
+        <!-- End Data Pack -->
+
+        <!-- Start Preferences Pack -->
+        <servlet>
+            <servlet-name>GetPreferences</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.preferences.GetPreferences</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>SavePreferences</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.preferences.SavePreferences</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>SetWidth</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.preferences.SetWidth</servlet-class>
+        </servlet>
+        <!-- End Preferences Pack -->
+
+        <!-- Start Help Pack -->
+        <servlet>
+            <servlet-name>DownloadHelp</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.download.DownloadHelp</servlet-class>
+        </servlet>
+        <!-- End Help Pack -->
+
+        <!-- Start Plugin -->
+        <servlet>
+            <servlet-name>PluginAction</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.plugins.PluginAction</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>GetResource</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.plugins.GetResource</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>CheckCache</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.plugins.CheckCache</servlet-class>
+        </servlet>
+        <!-- End Plugin -->
+
+        <!-- Start Config Pack -->
+        <servlet>
+            <servlet-name>ConfigDialog</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.config.ConfigDialog</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>SaveConfig</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.config.SaveConfig</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>ImportFullConfig</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.config.ImportFullConfig</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>ExportConfig</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.config.ExportConfig</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>ExportXml</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.config.ExportXml</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>XmlConfigMerge</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.config.XmlConfigMerge</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>XmlMergeConfigDialog</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.config.XmlMergeConfigDialog</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>XmlSpecification</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.config.XmlSpecification</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>XmlSpecificationDialog</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.config.XmlSpecificationDialog</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>ImportConfigDialog</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.config.ImportConfigDialog</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>ImportXmlConfigDialog</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.config.ImportXmlConfigDialog</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>ImportFullXmlConfig</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.config.ImportFullXmlConfig</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>ExportConfigDialog</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.config.ExportConfigDialog</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>ExportXmlDialog</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.config.ExportXmlDialog</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>ImportCustomConfig</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.config.ImportCustomConfig</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>ResetConfig</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.config.ResetConfig</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>SaveConfigInBase</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.config.SaveConfigInBase</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>HasConfigSaved</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.config.HasConfigSaved</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>LoadVersionLabel</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.config.LoadVersionLabel</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>VersionsConfig</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.config.VersionsConfig</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>GetObjNamesWithAttr</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.config.GetObjNamesWithAttr</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>CheckUrlValidityConfig</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.config.CheckUrlValidityConfig</servlet-class>
+        </servlet>
+        <!-- End Config Pack -->
+
+        <!-- Start Connect Pack -->
+        <servlet>
+            <servlet-name>ConnectDialog</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.connect.ConnectDialog</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>Connect</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.connect.Connect</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>DumpConnectPool</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.connect.DumpConnectPool</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>FlushConnectPool</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.connect.FlushConnectPool</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>Disconnect</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.connect.Disconnect</servlet-class>
+        </servlet>
+        <!-- End Connect Pack -->
+
+        <!-- Start Destroy Pack -->
+        <servlet>
+            <servlet-name>DestroyObjectByName</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.destroy.DestroyObjectByName</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>DestroyObjectById</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.destroy.DestroyObjectById</servlet-class>
+        </servlet>
+        <!-- End Destroy Pack -->
+
+        <!-- Start Dictionary Pack -->
+        <servlet>
+            <servlet-name>DictionaryDialog</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.dictionary.DictionaryDialog</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>LoadDictionary</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.dictionary.LoadDictionary</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>SaveDictionary</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.dictionary.SaveDictionary</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>ImportDictionary</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.dictionary.ImportDictionary</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>ExportDictionary</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.dictionary.ExportDictionary</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>RequestDocbaseUpdate</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.dictionary.RequestDocbaseUpdate</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>SaveVersionDictionaryDialog</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.dictionary.SaveVersionDictionaryDialog</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>SaveVersionDictionary</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.dictionary.SaveVersionDictionary</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>LoadVersionDictionaryDialog</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.dictionary.LoadVersionDictionaryDialog</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>ImportDictionaryVersion</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.dictionary.ImportDictionaryVersion</servlet-class>
+        </servlet>
+        <!-- End Dictionary Pack -->
+
+        <!-- Start Taxonomy Pack -->
+        <servlet>
+            <servlet-name>TaxonomyDialog</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.taxonomy.TaxonomyDialog</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>LoadTaxonomy</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.taxonomy.LoadTaxonomy</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>SaveTaxonomy</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.taxonomy.SaveTaxonomy</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>ImportTaxonomy</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.taxonomy.ImportTaxonomy</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>ExportTaxonomy</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.taxonomy.ExportTaxonomy</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>GetDictionaryValue</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.taxonomy.GetDictionaryValue</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>SaveVersionTaxonomyDialog</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.taxonomy.SaveVersionTaxonomyDialog</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>SaveVersionTaxonomy</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.taxonomy.SaveVersionTaxonomy</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>LoadVersionTaxonomyDialog</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.taxonomy.LoadVersionTaxonomyDialog</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>ImportTaxonomyVersion</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.taxonomy.ImportTaxonomyVersion</servlet-class>
+        </servlet>
+        <!-- End Taxonomy Pack -->
+
+        <!-- Start ACL Module Pack -->
+        <servlet>
+            <servlet-name>AclDialog</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.acl.AclDialog</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>LoadAcl</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.acl.LoadAcl</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>SaveAcl</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.acl.SaveAcl</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>ValidateAcl</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.acl.ValidateAclConfig</servlet-class>
+        </servlet>
+        <!-- End ACL Module Pack -->
+
+        <!-- Start Audit Module Pack -->
+        <servlet>
+            <servlet-name>AuditDialog</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.audit.AuditDialog</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>LoadAudit</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.audit.LoadAudit</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>SaveAudit</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.audit.SaveAudit</servlet-class>
+        </servlet>
+        <!-- End Audit Module Pack -->
+
+        <!-- Start Link Module Pack -->
+        <servlet>
+            <servlet-name>LinkDialog</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.link.LinkDialog</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>LoadLink</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.link.LoadLink</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>SaveLink</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.link.SaveLink</servlet-class>
+        </servlet>
+        <!-- End Link Module Pack -->
+
+        <!-- Start PDF Render Module Pack -->
+        <servlet>
+            <servlet-name>PdfrenderDialog</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.pdfrender.PdfrenderDialog</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>LoadPdfrender</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.pdfrender.LoadPdfrender</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>SavePdfrender</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.pdfrender.SavePdfrender</servlet-class>
+        </servlet>
+        <!-- End PDF Render Module Pack -->
+
+        <!-- Start Checkin Module Pack -->
+        <servlet>
+            <servlet-name>CheckinDialog</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.checkin.CheckinDialog</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>SaveCheckin</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.checkin.SaveCheckin</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>LoadCheckin</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.checkin.LoadCheckin</servlet-class>
+        </servlet>
+        <!-- End Checkin Module Pack -->
+
+        <!-- Start Checkout Module Pack -->
+        <servlet>
+            <servlet-name>CheckoutDialog</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.checkout.CheckoutDialog</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>SaveCheckout</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.checkout.SaveCheckout</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>LoadCheckout</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.checkout.LoadCheckout</servlet-class>
+        </servlet>
+        <!-- End Checkin Module Pack -->
+
+        <!-- Start Property Module Pack -->
+        <servlet>
+            <servlet-name>PropertyDialog</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.property.PropertyDialog</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>LoadProperty</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.property.LoadProperty</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>PreviewProperty</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.property.PreviewProperty</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>SaveProperty</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.property.SaveProperty</servlet-class>
+        </servlet>
+        <!-- End Property Module Pack -->
+
+        <!-- Start Lifecycle Module Pack -->
+        <servlet>
+            <servlet-name>LifecycleDialog</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.lifecycle.LifecycleDialog</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>LoadLifecycle</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.lifecycle.LoadLifecycle</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>SaveLifecycle</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.lifecycle.SaveLifecycle</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>GetLifecycleStates</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.lifecycle.GetLifecycleStates</servlet-class>
+        </servlet>
+        <!-- End Lifecycle Module Pack -->
+
+        <!-- Start LifecycleBatch Module Pack -->
+        <servlet>
+            <servlet-name>LifecycleBatchDialog</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.lifecyclebatch.LifecycleBatchDialog</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>LoadLifecycleBatch</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.lifecyclebatch.LoadLifecycleBatch</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>SaveLifecycleBatch</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.lifecyclebatch.SaveLifecycleBatch</servlet-class>
+        </servlet>
+        <!-- End Lifecycle Module Pack -->
+
+        <!-- Start Template Pack -->
+        <servlet>
+            <servlet-name>TemplateDialog</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.template.TemplateDialog</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>LoadTemplate</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.template.LoadTemplate</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>SaveTemplate</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.template.SaveTemplate</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>ImportTemplate</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.template.ImportTemplate</servlet-class>
+        </servlet>
+        <!-- End Template Pack -->
+
+        <!-- Start search module Pack -->
+        <servlet>
+            <servlet-name>SearchDialog</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.search.SearchDialog</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>LoadSearch</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.search.LoadSearch</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>SaveSearch</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.search.SaveSearch</servlet-class>
+        </servlet>
+        <!-- End search module Pack -->
+
+        <!-- Start query form module Pack -->
+        <servlet>
+            <servlet-name>QueryformDialog</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.queryform.QueryformDialog</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>LoadQueryform</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.queryform.LoadQueryform</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>SaveQueryform</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.queryform.SaveQueryform</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>Contents</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.queryform.Contents</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>ViewProperty</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.queryform.ViewProperty</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>ModifySearchCategory</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.queryform.ModifySearchCategory</servlet-class>
+        </servlet>
+
+        <!-- End query form module Pack -->
+
+        <!-- Start naming module Pack -->
+        <servlet>
+            <servlet-name>NamingDialog</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.naming.NamingDialog</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>LoadNaming</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.naming.LoadNaming</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>SaveNaming</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.naming.SaveNaming</servlet-class>
+        </servlet>
+        <!-- End naming module Pack -->
+
+        <!-- Start Document Set Pack -->
+        <servlet>
+            <servlet-name>GetParentNames</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.documentset.GetParentNames</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>DocumentSetDialog</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.documentset.DocumentSetDialog</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>SaveDocumentSet</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.documentset.SaveDocumentSet</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>LoadDocumentSet</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.documentset.LoadDocumentSet</servlet-class>
+        </servlet>
+        <!-- End Document Set Pack -->
+
+        <!-- Start Create Config Pack -->
+        <servlet>
+            <servlet-name>CreateConfigDialog</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.create.CreateConfigDialog</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>LoadCreateConfig</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.create.LoadCreateConfig</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>SaveCreateConfig</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.create.SaveCreateConfig</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>XmlParser</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.config.XmlParser</servlet-class>
+        </servlet>
+        <!-- End Create Config Pack -->
+
+        <!-- Start Preset Config Pack -->
+        <servlet>
+            <servlet-name>PresetDialog</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.preset.PresetConfigDialog</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>LoadPresetConfig</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.preset.LoadPresetConfig</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>SavePresetConfig</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.preset.SavePresetConfig</servlet-class>
+        </servlet>
+        <!-- End Preset Config Pack -->
+
+        <!-- Start defaultvalue Module Pack -->
+        <servlet>
+            <servlet-name>DefaultValueConfigDialog</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.defaultvalue.DefaultValueConfigDialog</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>SaveDefaultValueConfig</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.defaultvalue.SaveDefaultValueConfig</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>LoadDefaultValueConfig</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.defaultvalue.LoadDefaultValueConfig</servlet-class>
+        </servlet>
+        <!-- End defaultvalue Module Pack -->
+
+        <!-- Start register Module Pack -->
+        <servlet>
+            <servlet-name>RegisterDialog</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.register.RegisterDialog</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>SaveRegister</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.register.SaveRegister</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>LoadRegister</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.register.LoadRegister</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>ExportRegister</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.register.ExportRegister</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>ImportRegister</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.register.ImportRegister</servlet-class>
+        </servlet>
+        <!-- End register Module Pack -->
+
+        <!-- Start Font Config Pack -->
+        <servlet>
+            <servlet-name>FontConfigDialog</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.font.FontConfigDialog</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>ImportFontConfig</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.font.ImportFontConfig</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>ExportFontConfig</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.font.ExportFontConfig</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>LoadFontConfig</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.font.LoadFontConfig</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>SaveFontConfig</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.font.SaveFontConfig</servlet-class>
+        </servlet>
+        <!-- End Font ConfigPack -->
+
+        <!-- Start Import File  Pack -->
+        <servlet>
+            <servlet-name>ImportFile</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.create.ImportFile</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>CancelImportFile</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.create.CancelImportFile</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>GetListFromFile</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.download.GetListFromFile</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>GetFileFromList</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.download.GetFileFromList</servlet-class>
+        </servlet>
+        <!-- End Import File  Pack -->
+
+        <!-- Start Linked Document Pack -->
+        <servlet>
+            <servlet-name>LinkedDocumentDialog</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.linkeddocument.LinkedDocumentDialog</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>LoadLinkedDocument</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.linkeddocument.LoadLinkedDocument</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>SaveLinkedDocument</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.linkeddocument.SaveLinkedDocument</servlet-class>
+        </servlet>
+        <!-- End Linked Document Pack -->
+
+        <!-- Start Inheritance Pack -->
+        <servlet>
+            <servlet-name>InheritanceDialog</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.inheritance.InheritanceDialog</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>LoadInheritance</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.inheritance.LoadInheritance</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>SaveInheritance</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.inheritance.SaveInheritance</servlet-class>
+        </servlet>
+        <!-- End Inheritance Pack -->
+
+        <!-- Start Uniqueness Pack -->
+        <servlet>
+            <servlet-name>UniquenessDialog</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.uniqueness.UniquenessDialog</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>LoadUniqueness</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.uniqueness.LoadUniqueness</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>SaveUniqueness</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.uniqueness.SaveUniqueness</servlet-class>
+        </servlet>
+        <!-- End Uniqueness Pack -->
+
+        <!-- Start Mass Update Pack -->
+        <servlet>
+            <servlet-name>MassUpdateDialog</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.massupdate.MassUpdateDialog</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>LoadMassUpdate</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.massupdate.LoadMassUpdate</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>SaveMassUpdate</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.massupdate.SaveMassUpdate</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>ViewMassUpdateProperty</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.massupdate.ViewMassUpdateProperty</servlet-class>
+        </servlet>
+        <!-- End Inheritance Pack -->
+
+        <!-- Start VD Template Pack -->
+        <servlet>
+            <servlet-name>VdtemplateDialog</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.vdtemplate.VdtemplateDialog</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>LoadVdtemplate</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.vdtemplate.LoadVdtemplate</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>SaveVdtemplate</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.vdtemplate.SaveVdtemplate</servlet-class>
+        </servlet>
+        <!-- End VD Template Pack -->
+
+        <!-- Start Menus Module Pack -->
+        <servlet>
+            <servlet-name>MenusDialog</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.menus.MenusDialog</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>LoadMenus</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.menus.LoadMenus</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>SaveMenus</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.menus.SaveMenus</servlet-class>
+        </servlet>
+        <!-- End Menus Module Pack -->
+
+        <!-- Start Portal Menus Module Pack -->
+        <servlet>
+            <servlet-name>PortalmenusDialog</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.portalmenus.PortalmenusDialog</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>LoadPortalmenus</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.portalmenus.LoadPortalmenus</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>SavePortalmenus</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.portalmenus.SavePortalmenus</servlet-class>
+        </servlet>
+        <!-- End Portal Menus Module Pack -->
+
+        <!-- Start Unity Menus Module Pack -->
+        <servlet>
+            <servlet-name>U4MenusDialog</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.unitymenus.U4MenusDialog</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>U4LoadMenus</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.unitymenus.U4LoadMenus</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>U4SaveMenus</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.unitymenus.U4SaveMenus</servlet-class>
+        </servlet>
+        <!-- End Unity Menus Module Pack -->
+
+        <!-- Start Toolbars Module Pack -->
+        <servlet>
+            <servlet-name>ToolbarsDialog</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.toolbars.ToolbarsDialog</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>LoadToolbars</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.toolbars.LoadToolbars</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>SaveToolbars</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.toolbars.SaveToolbars</servlet-class>
+        </servlet>
+        <!-- End Toolbars Module Pack -->
+
+        <!-- Start Skin Module Pack -->
+        <servlet>
+            <servlet-name>SkinDialog</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.skin.SkinDialog</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>LoadSkin</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.skin.LoadSkin</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>SaveSkin</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.skin.SaveSkin</servlet-class>
+        </servlet>
+        <!-- End Skin Module Pack -->
+
+        <!-- Start D2 Image Module Pack -->
+        <servlet>
+            <servlet-name>ImportD2Image</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.image.ImportD2Image</servlet-class>
+        </servlet>
+        <!-- End D2 Image Module Pack -->
+
+        <!-- Start Treeview Module Pack -->
+        <servlet>
+            <servlet-name>TreeviewDialog</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.treeview.TreeViewDialog</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>LoadTreeview</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.treeview.LoadTreeView</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>SaveTreeview</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.treeview.SaveTreeView</servlet-class>
+        </servlet>
+        <!-- End Toolbars Module Pack -->
+
+        <!-- Start Relation Pack -->
+        <servlet>
+            <servlet-name>RelationConfigDialog</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.relation.RelationConfigDialog</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>SaveRelationConfig</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.relation.SaveRelationConfig</servlet-class>
+        </servlet>
+        <!-- End Relation Pack -->
+
+        <!-- Start SearchConfig Pack -->
+        <servlet>
+            <servlet-name>SearchConfigDialog</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.search.SearchConfigDialog</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>SaveSearchConfig</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.search.SaveSearchConfig</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>ResolvedOpenSearchURL</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.search.ResolvedOpenSearchURL</servlet-class>
+        </servlet>
+        <!-- End SearchConfig Pack -->
+
+        <!-- Start Options Pack -->
+        <servlet>
+            <servlet-name>OptionsDialog</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.options.OptionsDialog</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>LoadOptions</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.options.LoadOptions</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>SaveOptions</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.options.SaveOptions</servlet-class>
+        </servlet>
+        <!-- End Options Pack -->
+
+        <!-- Start MailConfig Pack -->
+        <servlet>
+            <servlet-name>MailConfigDialog</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.mail.MailConfigDialog</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>SaveMailConfig</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.mail.SaveMailConfig</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>TestMailConfig</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.mail.TestMailConfig</servlet-class>
+        </servlet>
+        <!-- End MailConfig Pack -->
+
+
+        <!-- Start Brava intelligent Viewer Pack -->
+        <servlet>
+            <servlet-name>BravaIViewerConfigDialog</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.intelligentviewingservice.bravaiviewer.BravaIViewerConfigDialog</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>SaveBravaIViewerConfigDialog</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.intelligentviewingservice.bravaiviewer.SaveBravaIViewerConfigDialog</servlet-class>
+        </servlet>
+        <!-- End Brava intelligent Viewer Pack -->
+
+        <!-- Start Menu Pack -->
+        <servlet>
+            <servlet-name>MenuConfigDialog</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.menu.MenuConfigDialog</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>LoadMenu</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.menu.LoadMenu</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>SaveMenuConfig</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.menu.SaveMenuConfig</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>GetConditionEditor</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.menu.GetConditionEditor</servlet-class>
+        </servlet>
+        <!-- End Menu Pack -->
+
+        <!-- Start Portal Menu Pack -->
+        <servlet>
+            <servlet-name>PortalmenuConfigDialog</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.portalmenu.PortalmenuConfigDialog</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>LoadPortalmenu</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.portalmenu.LoadPortalmenu</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>SavePortalmenuConfig</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.portalmenu.SavePortalmenuConfig</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>GetDynamicActionEditor</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.portalmenu.GetDynamicActionEditor</servlet-class>
+        </servlet>
+        <!-- End Portal Menu Pack -->
+
+        <!-- Start Unity Menu Pack -->
+        <servlet>
+            <servlet-name>UnitymenuConfigDialog</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.unitymenu.UnitymenuConfigDialog</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>LoadUnitymenu</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.unitymenu.LoadUnitymenu</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>SaveUnitymenuConfig</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.unitymenu.SaveUnitymenuConfig</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>GetUnityDynamicActionEditor</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.unitymenu.GetUnityDynamicActionEditor</servlet-class>
+        </servlet>
+        <!-- End Unity Menu Pack -->
+
+        <!-- Start Toolbar Pack -->
+        <servlet>
+            <servlet-name>ToolbarConfigDialog</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.toolbar.ToolbarConfigDialog</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>SaveToolbarConfig</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.toolbar.SaveToolbarConfig</servlet-class>
+        </servlet>
+        <!-- End Toolbar Pack -->
+
+        <!-- Start Dctmaudit Pack -->
+        <servlet>
+            <servlet-name>DctmauditConfigDialog</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.dctmaudit.DctmauditConfigDialog</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>SaveDctmauditConfig</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.dctmaudit.SaveDctmauditConfig</servlet-class>
+        </servlet>
+        <!-- End Dctmaudit Pack -->
+
+        <!-- Start Specifications Pack -->
+        <servlet>
+            <servlet-name>SpecificationsDialog</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.specifications.SpecificationsDialog</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>SaveSpecifications</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.specifications.SaveSpecifications</servlet-class>
+        </servlet>
+        <!-- End Specifications Pack -->
+
+        <!-- Start Workflow Pack -->
+        <servlet>
+            <servlet-name>WorkflowDialog</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.workflow.WorkflowDialog</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>PreviewWorkflow</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.workflow.PreviewWorkflow</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>LoadWorkflow</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.workflow.LoadWorkflow</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>SaveWorkflow</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.workflow.SaveWorkflow</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>LoadWorkflowVML</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.workflow.LoadWorkflowVML</servlet-class>
+        </servlet>
+        <!-- End Workflow Pack -->
+
+        <!-- Start Mailing Pack -->
+        <servlet>
+            <servlet-name>MailingDialog</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.mailing.MailingDialog</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>LoadMailing</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.mailing.LoadMailing</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>SaveMailing</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.mailing.SaveMailing</servlet-class>
+        </servlet>
+        <!-- End Mailing Pack -->
+
+        <!-- Start Subscription Pack -->
+        <servlet>
+            <servlet-name>SubscriptionDialog</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.subscription.SubscriptionDialog</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>LoadSubscription</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.subscription.LoadSubscription</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>SaveSubscription</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.subscription.SaveSubscription</servlet-class>
+        </servlet>
+        <!-- End Subscription Pack -->
+
+        <!-- Start SendMail Pack -->
+        <servlet>
+            <servlet-name>SendmailDialog</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.sendmail.SendmailDialog</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>LoadSendmail</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.sendmail.LoadSendmail</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>SaveSendmail</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.sendmail.SaveSendmail</servlet-class>
+        </servlet>
+        <!-- End Subscription Pack -->
+
+        <!-- Start Filter Pack -->
+        <servlet>
+            <servlet-name>FilterDialog</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.filter.FilterDialog</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>LoadFilter</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.filter.LoadFilter</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>SaveFilter</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.filter.SaveFilter</servlet-class>
+        </servlet>
+        <!-- End Filter Pack -->
+
+        <!-- Start AttributeMapping Pack -->
+        <servlet>
+            <servlet-name>AttributeMappingConfigDialog</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.attributemapping.AttributeMappingConfigDialog</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>SaveAttributeMappingConfig</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.attributemapping.SaveAttributeMappingConfig</servlet-class>
+        </servlet>
+        <!-- End AttributeMapping Pack -->
+
+        <!-- Start MailAttachment  Pack -->
+        <servlet>
+            <servlet-name>MailAttachmentConfigDialog</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.mailattachment.MailAttachmentConfigDialog</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>SaveMailAttachmentConfig</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.mailattachment.SaveMailAttachmentConfig</servlet-class>
+        </servlet>
+        <!-- End AttributeMapping Pack -->
+
+        <!-- Start UserConfig Pack -->
+        <servlet>
+            <servlet-name>UserConfigDialog</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.userconfig.UserConfigDialog</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>LoadUserConfig</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.userconfig.LoadUserConfig</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>SaveUserConfig</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.userconfig.SaveUserConfig</servlet-class>
+        </servlet>
+        <!-- End UserConfig Pack -->
+
+
+        <!-- Start UserPreferences Pack -->
+        <servlet>
+            <servlet-name>UserPreferencesDialog</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.userpreferences.UserPreferencesDialog</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>LoadUserPreferences</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.userpreferences.LoadUserPreferences</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>SaveUserPreferences</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.userpreferences.SaveUserPreferences</servlet-class>
+        </servlet>
+        <!-- End UserPreferences Pack -->
+
+        <!-- Start Application Pack -->
+        <servlet>
+            <servlet-name>ApplicationDialog</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.application.ApplicationDialog</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>LoadApplication</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.application.LoadApplication</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>SaveApplication</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.application.SaveApplication</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>GetApplicationNames</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.application.GetApplicationNames</servlet-class>
+        </servlet>
+        <!-- End Application Pack -->
+
+        <!-- Start Plugin Pack -->
+        <servlet>
+            <servlet-name>PluginDialog</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.plugin.PluginDialog</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>LoadPlugin</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.plugin.LoadPlugin</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>SavePlugin</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.plugin.SavePlugin</servlet-class>
+        </servlet>
+        <!-- End Plugin Pack -->
+
+        <!-- Start BOCS Pack -->
+        <servlet>
+            <servlet-name>BocsPrecacheDialog</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.bocsprecache.BocsPrecacheDialog</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>LoadBocsPrecache</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.bocsprecache.LoadBocsPrecache</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>SaveBocsPrecache</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.bocsprecache.SaveBocsPrecache</servlet-class>
+        </servlet>
+        <!-- End BOCS Pack -->
+
+        <!-- Start Structure Pack -->
+        <servlet>
+            <servlet-name>StructureDialog</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.structure.StructureDialog</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>LoadStructure</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.structure.LoadStructure</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>SaveStructure</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.structure.SaveStructure</servlet-class>
+        </servlet>
+        <!-- End Structure Pack -->
+
+        <!-- Start Convert Pack -->
+        <servlet>
+            <servlet-name>ConvertDialog</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.convert.ConvertDialog</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>LoadConvert</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.convert.LoadConvert</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>SaveConvert</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.convert.SaveConvert</servlet-class>
+        </servlet>
+        <!-- End Convert Pack -->
+
+        <!-- Start Distribution Pack -->
+        <servlet>
+            <servlet-name>DistributionDialog</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.distribution.DistributionDialog</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>LoadDistribution</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.distribution.LoadDistribution</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>SaveDistribution</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.distribution.SaveDistribution</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>ViewDistributionProperty</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.distribution.ViewDistributionProperty</servlet-class>
+        </servlet>
+        <!-- End Distribution Pack -->
+
+        <!-- Start Extended Create Module Pack -->
+        <servlet>
+            <servlet-name>ExtendedCreateDialog</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.extendedcreate.ExtendedCreateDialog</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>LoadExtendedCreate</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.extendedcreate.LoadExtendedCreate</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>SaveExtendedCreate</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.extendedcreate.SaveExtendedCreate</servlet-class>
+        </servlet>
+        <!-- End Extended Create Module Pack -->
+
+        <!-- Start QRCode Data Extractor module Pack -->
+        <servlet>
+            <servlet-name>QrcodeDataDialog</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.qrcode.QrcodeDataDialog</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>SaveQrcodeData</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.qrcode.SaveQrcodeData</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>LoadQrcodeData</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.qrcode.LoadQrcodeData</servlet-class>
+        </servlet>
+        <!-- End QRCode Data Extractor module Pack -->
+
+        <!-- Start Preset Config Pack -->
+        <servlet>
+            <servlet-name>ContentImportExportDialog</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.contentimportexport.ContentImportExportDialog</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>LoadContentImportExportDialog</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.contentimportexport.LoadContentImportExportDialog</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>SaveContentImportExportDialog</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.contentimportexport.SaveContentImportExportDialog</servlet-class>
+        </servlet>
+        <!-- End Preset Config Pack -->
+
+        <!-- Start BA actions Config Pack -->
+        <servlet>
+            <servlet-name>BaActionsDialog</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.ba.actions.BaActionsDialog</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>LoadBaActionsDialog</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.ba.actions.LoadBaActionsDialog</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>SaveBaActionsDialog</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.modules.ba.actions.SaveBaActionsDialog</servlet-class>
+        </servlet>
+        <!-- End BA actions Config Pack -->
+
+        <!-- Start AviatorConfiguration Pack -->
+        <servlet>
+            <servlet-name>AviatorConfigDialog</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.aviator.AviatorConfigDialog</servlet-class>
+        </servlet>
+        <servlet>
+            <servlet-name>SaveAviatorConfig</servlet-name>
+            <servlet-class>com.emc.d2.web.servlets.aviator.SaveAviatorConfig</servlet-class>
+        </servlet>
+        <!-- Start AviatorConfiguration Pack -->
+
+
+        <!-- ############################## Servlet Mapping ############################## -->
+
+        <!-- Start Init Pack -->
+        <servlet-mapping>
+            <servlet-name>LoadOnStartup</servlet-name>
+            <url-pattern>/servlet/LoadOnStartup</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>ReloadOptions</servlet-name>
+            <url-pattern>/servlet/ReloadOptions</url-pattern>
+        </servlet-mapping>
+        <!-- End Init Pack -->
+
+        <!-- Start status pack -->
+        <servlet-mapping>
+            <servlet-name>Readiness</servlet-name>
+            <url-pattern>/ready</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>Liveness</servlet-name>
+            <url-pattern>/live</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>Health</servlet-name>
+            <url-pattern>/health</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>Health</servlet-name>
+            <url-pattern>/healthcheck</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>Health</servlet-name>
+            <url-pattern>/ping</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>Health</servlet-name>
+            <url-pattern>/status</url-pattern>
+        </servlet-mapping>
+        <!-- Start status pack -->
+
+        <!-- Start Monitoring Pack -->
+        <servlet-mapping>
+            <servlet-name>MonitorStats</servlet-name>
+            <url-pattern>/servlet/MonitorStats</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>ControlStatus</servlet-name>
+            <url-pattern>/servlet/ControlStatus</url-pattern>
+        </servlet-mapping>
+        <!-- End Monitoring Pack -->
+
+        <!-- Start Download Pack -->
+        <servlet-mapping>
+            <servlet-name>Download</servlet-name>
+            <url-pattern>/servlet/Download</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>Preview</servlet-name>
+            <url-pattern>/servlet/Preview</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>GetAcsURL</servlet-name>
+            <url-pattern>/servlet/GetAcsURL</url-pattern>
+        </servlet-mapping>
+        <!-- End Download Pack -->
+
+        <!-- Start Interfaces Pack -->
+        <servlet-mapping>
+            <servlet-name>Interface</servlet-name>
+            <url-pattern>/servlet/Interface</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>RefreshCache</servlet-name>
+            <url-pattern>/servlet/RefreshCache</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>GetSkin</servlet-name>
+            <url-pattern>/servlet/GetSkin</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>Dialog</servlet-name>
+            <url-pattern>/servlet/Dialog</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>Menu</servlet-name>
+            <url-pattern>/servlet/Menu</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>Frame</servlet-name>
+            <url-pattern>/servlet/Frame</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>GetLabels</servlet-name>
+            <url-pattern>/servlet/GetLabels</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>GetDate</servlet-name>
+            <url-pattern>/servlet/GetDate</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>GetOptions</servlet-name>
+            <url-pattern>/servlet/GetOptions</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>GetTaxonomy</servlet-name>
+            <url-pattern>/servlet/GetTaxonomy</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>GetDefaultLanguage</servlet-name>
+            <url-pattern>/servlet/GetDefaultLanguage</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>GetSessionAttribute</servlet-name>
+            <url-pattern>/servlet/GetSessionAttribute</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>ExtendSession</servlet-name>
+            <url-pattern>/servlet/ExtendSession</url-pattern>
+        </servlet-mapping>
+
+        <!-- End Interfaces Pack -->
+
+        <!-- Start Data Pack -->
+        <servlet-mapping>
+            <servlet-name>GetData</servlet-name>
+            <url-pattern>/servlet/GetData</url-pattern>
+        </servlet-mapping>
+        <!-- End Data Pack -->
+
+        <!-- Start Preferences Pack -->
+        <servlet-mapping>
+            <servlet-name>GetPreferences</servlet-name>
+            <url-pattern>/servlet/GetPreferences</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>SavePreferences</servlet-name>
+            <url-pattern>/servlet/SavePreferences</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>SetWidth</servlet-name>
+            <url-pattern>/servlet/SetWidth</url-pattern>
+        </servlet-mapping>
+        <!-- End Preferences Pack -->
+
+        <!-- Start Help Pack -->
+        <servlet-mapping>
+            <servlet-name>DownloadHelp</servlet-name>
+            <url-pattern>/servlet/DownloadHelp</url-pattern>
+        </servlet-mapping>
+        <!-- End Help Pack -->
+
+        <!-- Start Plugin -->
+        <servlet-mapping>
+            <servlet-name>PluginAction</servlet-name>
+            <url-pattern>/servlet/PluginAction</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>GetResource</servlet-name>
+            <url-pattern>/servlet/GetResource/*</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>CheckCache</servlet-name>
+            <url-pattern>/servlet/CheckCache</url-pattern>
+        </servlet-mapping>
+        <!-- End Plugin -->
+
+        <!-- Start Config Pack -->
+        <servlet-mapping>
+            <servlet-name>ConfigDialog</servlet-name>
+            <url-pattern>/servlet/ConfigDialog</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>SaveConfig</servlet-name>
+            <url-pattern>/servlet/SaveConfig</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>ImportFullConfig</servlet-name>
+            <url-pattern>/servlet/ImportFullConfig</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>ExportConfig</servlet-name>
+            <url-pattern>/servlet/ExportConfig</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>ExportXml</servlet-name>
+            <url-pattern>/servlet/ExportXml</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>XmlSpecification</servlet-name>
+            <url-pattern>/servlet/XmlSpecification</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>XmlSpecificationDialog</servlet-name>
+            <url-pattern>/servlet/XmlSpecificationDialog</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>XmlConfigMerge</servlet-name>
+            <url-pattern>/servlet/XmlConfigMerge</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>XmlMergeConfigDialog</servlet-name>
+            <url-pattern>/servlet/XmlMergeConfigDialog</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>ResetConfig</servlet-name>
+            <url-pattern>/servlet/ResetConfig</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>SaveConfigInBase</servlet-name>
+            <url-pattern>/servlet/SaveConfigInBase</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>HasConfigSaved</servlet-name>
+            <url-pattern>/servlet/HasConfigSaved</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>ImportConfigDialog</servlet-name>
+            <url-pattern>/servlet/ImportConfigDialog</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>ImportXmlConfigDialog</servlet-name>
+            <url-pattern>/servlet/ImportXmlConfigDialog</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>ImportFullXmlConfig</servlet-name>
+            <url-pattern>/servlet/ImportFullXmlConfig</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>ExportConfigDialog</servlet-name>
+            <url-pattern>/servlet/ExportConfigDialog</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>ExportXmlDialog</servlet-name>
+            <url-pattern>/servlet/ExportXmlDialog</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>ImportCustomConfig</servlet-name>
+            <url-pattern>/servlet/ImportCustomConfig</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>LoadVersionLabel</servlet-name>
+            <url-pattern>/servlet/LoadVersionLabel</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>VersionsConfig</servlet-name>
+            <url-pattern>/servlet/VersionsConfig</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>GetObjNamesWithAttr</servlet-name>
+            <url-pattern>/servlet/GetObjNamesWithAttr</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>CheckUrlValidityConfig</servlet-name>
+            <url-pattern>/servlet/CheckUrlValidityConfig</url-pattern>
+        </servlet-mapping>
+        <!-- End Config Pack -->
+
+        <!-- Start Connect Pack -->
+        <servlet-mapping>
+            <servlet-name>ConnectDialog</servlet-name>
+            <url-pattern>/servlet/ConnectDialog</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>Connect</servlet-name>
+            <url-pattern>/servlet/Connect</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>DumpConnectPool</servlet-name>
+            <url-pattern>/servlet/DumpConnectPool</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>FlushConnectPool</servlet-name>
+            <url-pattern>/servlet/FlushConnectPool</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>Disconnect</servlet-name>
+            <url-pattern>/servlet/Disconnect</url-pattern>
+        </servlet-mapping>
+        <!-- End Connect Pack -->
+
+        <!-- Start Destroy Pack -->
+        <servlet-mapping>
+            <servlet-name>DestroyObjectByName</servlet-name>
+            <url-pattern>/servlet/DestroyObjectByName</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>DestroyObjectById</servlet-name>
+            <url-pattern>/servlet/DestroyObjectById</url-pattern>
+        </servlet-mapping>
+        <!-- End Destroy Pack -->
+
+        <!-- Start Dictionary Pack -->
+        <servlet-mapping>
+            <servlet-name>DictionaryDialog</servlet-name>
+            <url-pattern>/servlet/DictionaryDialog</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>LoadDictionary</servlet-name>
+            <url-pattern>/servlet/LoadDictionary</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>SaveDictionary</servlet-name>
+            <url-pattern>/servlet/SaveDictionary</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>ImportDictionary</servlet-name>
+            <url-pattern>/servlet/ImportDictionary</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>ExportDictionary</servlet-name>
+            <url-pattern>/servlet/ExportDictionary</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>RequestDocbaseUpdate</servlet-name>
+            <url-pattern>/servlet/RequestDocbaseUpdate</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>SaveVersionDictionaryDialog</servlet-name>
+            <url-pattern>/servlet/SaveVersionDictionaryDialog</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>SaveVersionDictionary</servlet-name>
+            <url-pattern>/servlet/SaveVersionDictionary</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>LoadVersionDictionaryDialog</servlet-name>
+            <url-pattern>/servlet/LoadVersionDictionaryDialog</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>ImportDictionaryVersion</servlet-name>
+            <url-pattern>/servlet/ImportDictionaryVersion</url-pattern>
+        </servlet-mapping>
+        <!-- End Dictionary Pack -->
+
+        <!-- Start Taxonomy Pack -->
+        <servlet-mapping>
+            <servlet-name>TaxonomyDialog</servlet-name>
+            <url-pattern>/servlet/TaxonomyDialog</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>LoadTaxonomy</servlet-name>
+            <url-pattern>/servlet/LoadTaxonomy</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>SaveTaxonomy</servlet-name>
+            <url-pattern>/servlet/SaveTaxonomy</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>ImportTaxonomy</servlet-name>
+            <url-pattern>/servlet/ImportTaxonomy</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>ExportTaxonomy</servlet-name>
+            <url-pattern>/servlet/ExportTaxonomy</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>GetDictionaryValue</servlet-name>
+            <url-pattern>/servlet/GetDictionaryValue</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>SaveVersionTaxonomyDialog</servlet-name>
+            <url-pattern>/servlet/SaveVersionTaxonomyDialog</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>SaveVersionTaxonomy</servlet-name>
+            <url-pattern>/servlet/SaveVersionTaxonomy</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>LoadVersionTaxonomyDialog</servlet-name>
+            <url-pattern>/servlet/LoadVersionTaxonomyDialog</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>ImportTaxonomyVersion</servlet-name>
+            <url-pattern>/servlet/ImportTaxonomyVersion</url-pattern>
+        </servlet-mapping>
+        <!-- End Taxonomy Pack -->
+
+        <!-- Start ACL Module Pack -->
+        <servlet-mapping>
+            <servlet-name>AclDialog</servlet-name>
+            <url-pattern>/servlet/AclDialog</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>LoadAcl</servlet-name>
+            <url-pattern>/servlet/LoadAcl</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>SaveAcl</servlet-name>
+            <url-pattern>/servlet/SaveAcl</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>ValidateAcl</servlet-name>
+            <url-pattern>/servlet/ValidateAcl</url-pattern>
+        </servlet-mapping>
+        <!-- End ACL Module Pack -->
+
+        <!-- Start Audit Module Pack -->
+        <servlet-mapping>
+            <servlet-name>AuditDialog</servlet-name>
+            <url-pattern>/servlet/AuditDialog</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>LoadAudit</servlet-name>
+            <url-pattern>/servlet/LoadAudit</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>SaveAudit</servlet-name>
+            <url-pattern>/servlet/SaveAudit</url-pattern>
+        </servlet-mapping>
+        <!-- End Audit Module Pack -->
+
+        <!-- Start Link Module Pack -->
+        <servlet-mapping>
+            <servlet-name>LinkDialog</servlet-name>
+            <url-pattern>/servlet/LinkDialog</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>LoadLink</servlet-name>
+            <url-pattern>/servlet/LoadLink</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>SaveLink</servlet-name>
+            <url-pattern>/servlet/SaveLink</url-pattern>
+        </servlet-mapping>
+        <!-- End Link Module Pack -->
+
+        <!-- Start PDF Render Module Pack -->
+        <servlet-mapping>
+            <servlet-name>PdfrenderDialog</servlet-name>
+            <url-pattern>/servlet/PdfrenderDialog</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>LoadPdfrender</servlet-name>
+            <url-pattern>/servlet/LoadPdfrender</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>SavePdfrender</servlet-name>
+            <url-pattern>/servlet/SavePdfrender</url-pattern>
+        </servlet-mapping>
+        <!-- End PDF Render Module Pack -->
+
+        <!-- Start Checkin Module Pack -->
+        <servlet-mapping>
+            <servlet-name>CheckinDialog</servlet-name>
+            <url-pattern>/servlet/CheckinDialog</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>SaveCheckin</servlet-name>
+            <url-pattern>/servlet/SaveCheckin</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>LoadCheckin</servlet-name>
+            <url-pattern>/servlet/LoadCheckin</url-pattern>
+        </servlet-mapping>
+        <!-- End Checkin Module Pack -->
+
+        <!-- Start Checkout Module Pack -->
+        <servlet-mapping>
+            <servlet-name>CheckoutDialog</servlet-name>
+            <url-pattern>/servlet/CheckoutDialog</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>SaveCheckout</servlet-name>
+            <url-pattern>/servlet/SaveCheckout</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>LoadCheckout</servlet-name>
+            <url-pattern>/servlet/LoadCheckout</url-pattern>
+        </servlet-mapping>
+        <!-- End Checkout Module Pack -->
+
+        <!-- Start Property Module Pack -->
+        <servlet-mapping>
+            <servlet-name>PropertyDialog</servlet-name>
+            <url-pattern>/servlet/PropertyDialog</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>LoadProperty</servlet-name>
+            <url-pattern>/servlet/LoadProperty</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>PreviewProperty</servlet-name>
+            <url-pattern>/servlet/PreviewProperty</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>SaveProperty</servlet-name>
+            <url-pattern>/servlet/SaveProperty</url-pattern>
+        </servlet-mapping>
+        <!-- End Property Module Pack -->
+
+        <!-- Start Lifecycle Module Pack -->
+        <servlet-mapping>
+            <servlet-name>LifecycleDialog</servlet-name>
+            <url-pattern>/servlet/LifecycleDialog</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>LoadLifecycle</servlet-name>
+            <url-pattern>/servlet/LoadLifecycle</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>SaveLifecycle</servlet-name>
+            <url-pattern>/servlet/SaveLifecycle</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>GetLifecycleStates</servlet-name>
+            <url-pattern>/servlet/GetLifecycleStates</url-pattern>
+        </servlet-mapping>
+        <!-- End Lifecycle Module Pack -->
+
+        <!-- Start LifecycleBatch Module Pack -->
+        <servlet-mapping>
+            <servlet-name>LifecycleBatchDialog</servlet-name>
+            <url-pattern>/servlet/LifecycleBatchDialog</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>LoadLifecycleBatch</servlet-name>
+            <url-pattern>/servlet/LoadLifecycleBatch</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>SaveLifecycleBatch</servlet-name>
+            <url-pattern>/servlet/SaveLifecycleBatch</url-pattern>
+        </servlet-mapping>
+        <!-- End LifecycleBatch Module Pack -->
+
+        <!-- Start Template Pack -->
+        <servlet-mapping>
+            <servlet-name>TemplateDialog</servlet-name>
+            <url-pattern>/servlet/TemplateDialog</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>LoadTemplate</servlet-name>
+            <url-pattern>/servlet/LoadTemplate</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>SaveTemplate</servlet-name>
+            <url-pattern>/servlet/SaveTemplate</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>ImportTemplate</servlet-name>
+            <url-pattern>/servlet/ImportTemplate</url-pattern>
+        </servlet-mapping>
+        <!-- End Template Pack -->
+
+        <!-- Start VD Template Pack -->
+        <servlet-mapping>
+            <servlet-name>VdtemplateDialog</servlet-name>
+            <url-pattern>/servlet/VdtemplateDialog</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>LoadVdtemplate</servlet-name>
+            <url-pattern>/servlet/LoadVdtemplate</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>SaveVdtemplate</servlet-name>
+            <url-pattern>/servlet/SaveVdtemplate</url-pattern>
+        </servlet-mapping>
+        <!-- End VD Template Pack -->
+
+        <!-- Start Menus Module Pack -->
+        <servlet-mapping>
+            <servlet-name>MenusDialog</servlet-name>
+            <url-pattern>/servlet/MenusDialog</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>LoadMenus</servlet-name>
+            <url-pattern>/servlet/LoadMenus</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>SaveMenus</servlet-name>
+            <url-pattern>/servlet/SaveMenus</url-pattern>
+        </servlet-mapping>
+        <!-- End Menus Module Pack -->
+
+        <!-- Start Portal Menus Module Pack -->
+        <servlet-mapping>
+            <servlet-name>PortalmenusDialog</servlet-name>
+            <url-pattern>/servlet/PortalmenusDialog</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>LoadPortalmenus</servlet-name>
+            <url-pattern>/servlet/LoadPortalmenus</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>SavePortalmenus</servlet-name>
+            <url-pattern>/servlet/SavePortalmenus</url-pattern>
+        </servlet-mapping>
+        <!-- End Portal Menus Module Pack -->
+
+        <!-- Start Unity Menus Module Pack -->
+        <servlet-mapping>
+            <servlet-name>U4MenusDialog</servlet-name>
+            <url-pattern>/servlet/U4MenusDialog</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>U4LoadMenus</servlet-name>
+            <url-pattern>/servlet/U4LoadMenus</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>U4SaveMenus</servlet-name>
+            <url-pattern>/servlet/U4SaveMenus</url-pattern>
+        </servlet-mapping>
+        <!-- End Unity Menus Module Pack -->
+
+        <!-- Start Toolbars Module Pack -->
+        <servlet-mapping>
+            <servlet-name>ToolbarsDialog</servlet-name>
+            <url-pattern>/servlet/ToolbarsDialog</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>LoadToolbars</servlet-name>
+            <url-pattern>/servlet/LoadToolbars</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>SaveToolbars</servlet-name>
+            <url-pattern>/servlet/SaveToolbars</url-pattern>
+        </servlet-mapping>
+        <!-- End Toolbars Module Pack -->
+
+        <!-- Start Skin Module Pack -->
+        <servlet-mapping>
+            <servlet-name>SkinDialog</servlet-name>
+            <url-pattern>/servlet/SkinDialog</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>LoadSkin</servlet-name>
+            <url-pattern>/servlet/LoadSkin</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>SaveSkin</servlet-name>
+            <url-pattern>/servlet/SaveSkin</url-pattern>
+        </servlet-mapping>
+        <!-- End Skin Module Pack -->
+
+        <!-- Start D2 Image Pack -->
+        <servlet-mapping>
+            <servlet-name>ImportD2Image</servlet-name>
+            <url-pattern>/servlet/ImportD2Image</url-pattern>
+        </servlet-mapping>
+        <!-- End D2 Image Pack -->
+
+        <!-- Start Treeview Module Pack -->
+        <servlet-mapping>
+            <servlet-name>TreeviewDialog</servlet-name>
+            <url-pattern>/servlet/TreeviewDialog</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>LoadTreeview</servlet-name>
+            <url-pattern>/servlet/LoadTreeview</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>SaveTreeview</servlet-name>
+            <url-pattern>/servlet/SaveTreeview</url-pattern>
+        </servlet-mapping>
+        <!-- End Toolbars Module Pack -->
+
+        <!-- Start search module Pack -->
+        <servlet-mapping>
+            <servlet-name>SearchDialog</servlet-name>
+            <url-pattern>/servlet/SearchDialog</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>LoadSearch</servlet-name>
+            <url-pattern>/servlet/LoadSearch</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>SaveSearch</servlet-name>
+            <url-pattern>/servlet/SaveSearch</url-pattern>
+        </servlet-mapping>
+        <!-- End search module Pack -->
+
+        <!-- Start QueryForm module Pack -->
+        <servlet-mapping>
+            <servlet-name>QueryformDialog</servlet-name>
+            <url-pattern>/servlet/QueryformDialog</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>LoadQueryform</servlet-name>
+            <url-pattern>/servlet/LoadQueryform</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>SaveQueryform</servlet-name>
+            <url-pattern>/servlet/SaveQueryform</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>Contents</servlet-name>
+            <url-pattern>/servlet/Contents</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>ViewProperty</servlet-name>
+            <url-pattern>/servlet/ViewProperty</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>ModifySearchCategory</servlet-name>
+            <url-pattern>/servlet/ModifySearchCategory</url-pattern>
+        </servlet-mapping>
+        <!-- End QueryForm module Pack -->
+
+        <!-- Start naming module Pack -->
+        <servlet-mapping>
+            <servlet-name>NamingDialog</servlet-name>
+            <url-pattern>/servlet/NamingDialog</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>LoadNaming</servlet-name>
+            <url-pattern>/servlet/LoadNaming</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>SaveNaming</servlet-name>
+            <url-pattern>/servlet/SaveNaming</url-pattern>
+        </servlet-mapping>
+        <!-- End naming module Pack -->
+
+        <!-- Start Import File  Pack -->
+        <servlet-mapping>
+            <servlet-name>ImportFile</servlet-name>
+            <url-pattern>/servlet/ImportFile</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>CancelImportFile</servlet-name>
+            <url-pattern>/servlet/CancelImportFile</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>GetListFromFile</servlet-name>
+            <url-pattern>/servlet/GetListFromFile</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>GetFileFromList</servlet-name>
+            <url-pattern>/servlet/GetFileFromList</url-pattern>
+        </servlet-mapping>
+        <!-- End Import File  Pack -->
+
+        <!-- Start Linked Document Module Pack -->
+        <servlet-mapping>
+            <servlet-name>LinkedDocumentDialog</servlet-name>
+            <url-pattern>/servlet/LinkedDocumentDialog</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>LoadLinkedDocument</servlet-name>
+            <url-pattern>/servlet/LoadLinkedDocument</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>SaveLinkedDocument</servlet-name>
+            <url-pattern>/servlet/SaveLinkedDocument</url-pattern>
+        </servlet-mapping>
+        <!-- End Link Module Pack -->
+
+        <!-- Start Document Set Pack -->
+        <servlet-mapping>
+            <servlet-name>GetParentNames</servlet-name>
+            <url-pattern>/servlet/GetParentNames</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>DocumentSetDialog</servlet-name>
+            <url-pattern>/servlet/DocumentSetDialog</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>SaveDocumentSet</servlet-name>
+            <url-pattern>/servlet/SaveDocumentSet</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>LoadDocumentSet</servlet-name>
+            <url-pattern>/servlet/LoadDocumentSet</url-pattern>
+        </servlet-mapping>
+        <!-- End Document Set Pack -->
+
+        <!-- Start Create Config Pack -->
+        <servlet-mapping>
+            <servlet-name>CreateConfigDialog</servlet-name>
+            <url-pattern>/servlet/CreateConfigDialog</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>LoadCreateConfig</servlet-name>
+            <url-pattern>/servlet/LoadCreateConfig</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>SaveCreateConfig</servlet-name>
+            <url-pattern>/servlet/SaveCreateConfig</url-pattern>
+        </servlet-mapping>
+        <!-- End Create Config Pack -->
+
+        <!-- Start Preset Config Pack -->
+        <servlet-mapping>
+            <servlet-name>PresetDialog</servlet-name>
+            <url-pattern>/servlet/PresetDialog</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>LoadPresetConfig</servlet-name>
+            <url-pattern>/servlet/LoadPresetConfig</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>XmlParser</servlet-name>
+            <url-pattern>/servlet/XmlParser</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>SavePresetConfig</servlet-name>
+            <url-pattern>/servlet/SavePresetConfig</url-pattern>
+        </servlet-mapping>
+        <!-- End Preset Config Pack -->
+
+        <!-- Start Inheritance Set Pack -->
+        <servlet-mapping>
+            <servlet-name>InheritanceDialog</servlet-name>
+            <url-pattern>/servlet/InheritanceDialog</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>LoadInheritance</servlet-name>
+            <url-pattern>/servlet/LoadInheritance</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>SaveInheritance</servlet-name>
+            <url-pattern>/servlet/SaveInheritance</url-pattern>
+        </servlet-mapping>
+        <!-- End Inheritance Set Pack -->
+
+        <!-- Start Uniqueness Set Pack -->
+        <servlet-mapping>
+            <servlet-name>UniquenessDialog</servlet-name>
+            <url-pattern>/servlet/UniquenessDialog</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>LoadUniqueness</servlet-name>
+            <url-pattern>/servlet/LoadUniqueness</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>SaveUniqueness</servlet-name>
+            <url-pattern>/servlet/SaveUniqueness</url-pattern>
+        </servlet-mapping>
+        <!-- End Uniqueness Set Pack -->
+
+        <!-- Start Mass update Set Pack -->
+        <servlet-mapping>
+            <servlet-name>MassUpdateDialog</servlet-name>
+            <url-pattern>/servlet/MassUpdateDialog</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>LoadMassUpdate</servlet-name>
+            <url-pattern>/servlet/LoadMassUpdate</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>SaveMassUpdate</servlet-name>
+            <url-pattern>/servlet/SaveMassUpdate</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>ViewMassUpdateProperty</servlet-name>
+            <url-pattern>/servlet/ViewMassUpdateProperty</url-pattern>
+        </servlet-mapping>
+        <!-- End Inheritance Set Pack -->
+
+        <!-- Start ValueConfigDialog Set Pack -->
+        <servlet-mapping>
+            <servlet-name>DefaultValueConfigDialog</servlet-name>
+            <url-pattern>/servlet/DefaultValueConfigDialog</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>LoadDefaultValueConfig</servlet-name>
+            <url-pattern>/servlet/LoadDefaultValueConfig</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>SaveDefaultValueConfig</servlet-name>
+            <url-pattern>/servlet/SaveDefaultValueConfig</url-pattern>
+        </servlet-mapping>
+        <!-- End ValueConfigDialog Set Pack -->
+
+        <!-- Start register Set Pack -->
+        <servlet-mapping>
+            <servlet-name>RegisterDialog</servlet-name>
+            <url-pattern>/servlet/RegisterDialog</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>LoadRegister</servlet-name>
+            <url-pattern>/servlet/LoadRegister</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>SaveRegister</servlet-name>
+            <url-pattern>/servlet/SaveRegister</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>ExportRegister</servlet-name>
+            <url-pattern>/servlet/ExportRegister</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>ImportRegister</servlet-name>
+            <url-pattern>/servlet/ImportRegister</url-pattern>
+        </servlet-mapping>
+        <!-- End ValueConfigDialog Set Pack -->
+
+        <!-- Start FontConfigDialog Set Pack -->
+        <servlet-mapping>
+            <servlet-name>FontConfigDialog</servlet-name>
+            <url-pattern>/servlet/FontConfigDialog</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>ImportFontConfig</servlet-name>
+            <url-pattern>/servlet/ImportFontConfig</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>ExportFontConfig</servlet-name>
+            <url-pattern>/servlet/ExportFontConfig</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>LoadFontConfig</servlet-name>
+            <url-pattern>/servlet/LoadFontConfig</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>SaveFontConfig</servlet-name>
+            <url-pattern>/servlet/SaveFontConfig</url-pattern>
+        </servlet-mapping>
+        <!-- End FontConfigDialog Set Pack -->
+
+
+        <!-- Start Workflow Set Pack -->
+        <servlet-mapping>
+            <servlet-name>WorkflowDialog</servlet-name>
+            <url-pattern>/servlet/WorkflowDialog</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>PreviewWorkflow</servlet-name>
+            <url-pattern>/servlet/PreviewWorkflow</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>LoadWorkflow</servlet-name>
+            <url-pattern>/servlet/LoadWorkflow</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>SaveWorkflow</servlet-name>
+            <url-pattern>/servlet/SaveWorkflow</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>LoadWorkflowVML</servlet-name>
+            <url-pattern>/servlet/LoadWorkflowVML</url-pattern>
+        </servlet-mapping>
+        <!-- End Workflow Set Pack -->
+
+        <!-- Start Mailing Module Pack -->
+        <servlet-mapping>
+            <servlet-name>MailingDialog</servlet-name>
+            <url-pattern>/servlet/MailingDialog</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>LoadMailing</servlet-name>
+            <url-pattern>/servlet/LoadMailing</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>SaveMailing</servlet-name>
+            <url-pattern>/servlet/SaveMailing</url-pattern>
+        </servlet-mapping>
+        <!-- End Mailing Module Pack -->
+
+        <!-- Start Subscription Module Pack -->
+        <servlet-mapping>
+            <servlet-name>SubscriptionDialog</servlet-name>
+            <url-pattern>/servlet/SubscriptionDialog</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>LoadSubscription</servlet-name>
+            <url-pattern>/servlet/LoadSubscription</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>SaveSubscription</servlet-name>
+            <url-pattern>/servlet/SaveSubscription</url-pattern>
+        </servlet-mapping>
+        <!-- End Subscription Module Pack -->
+
+        <!-- Start SendMail Module Pack -->
+        <servlet-mapping>
+            <servlet-name>SendmailDialog</servlet-name>
+            <url-pattern>/servlet/SendmailDialog</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>LoadSendmail</servlet-name>
+            <url-pattern>/servlet/LoadSendmail</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>SaveSendmail</servlet-name>
+            <url-pattern>/servlet/SaveSendmail</url-pattern>
+        </servlet-mapping>
+        <!-- End Mailing Module Pack -->
+
+        <!-- Start Filter Module Pack -->
+        <servlet-mapping>
+            <servlet-name>FilterDialog</servlet-name>
+            <url-pattern>/servlet/FilterDialog</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>LoadFilter</servlet-name>
+            <url-pattern>/servlet/LoadFilter</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>SaveFilter</servlet-name>
+            <url-pattern>/servlet/SaveFilter</url-pattern>
+        </servlet-mapping>
+        <!-- End Filter Module Pack -->
+
+        <!-- Start Relation Set Pack -->
+        <servlet-mapping>
+            <servlet-name>RelationConfigDialog</servlet-name>
+            <url-pattern>/servlet/RelationConfigDialog</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>SaveRelationConfig</servlet-name>
+            <url-pattern>/servlet/SaveRelationConfig</url-pattern>
+        </servlet-mapping>
+        <!-- End Relation Set Pack -->
+
+        <!-- Start Search Set Pack -->
+        <servlet-mapping>
+            <servlet-name>SearchConfigDialog</servlet-name>
+            <url-pattern>/servlet/SearchConfigDialog</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>SaveSearchConfig</servlet-name>
+            <url-pattern>/servlet/SaveSearchConfig</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>ResolvedOpenSearchURL</servlet-name>
+            <url-pattern>/servlet/ResolvedOpenSearchURL</url-pattern>
+        </servlet-mapping>
+        <!-- End Search Set Pack -->
+
+        <!-- Start Mail Set Pack -->
+        <servlet-mapping>
+            <servlet-name>MailConfigDialog</servlet-name>
+            <url-pattern>/servlet/MailConfigDialog</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>SaveMailConfig</servlet-name>
+            <url-pattern>/servlet/SaveMailConfig</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>TestMailConfig</servlet-name>
+            <url-pattern>/servlet/TestMailConfig</url-pattern>
+        </servlet-mapping>
+        <!-- End Mail Set Pack -->
+
+        <!-- Start Brava intelligent Viewer Pack -->
+        <servlet-mapping>
+            <servlet-name>BravaIViewerConfigDialog</servlet-name>
+            <url-pattern>/servlet/BravaIViewerConfigDialog</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>SaveBravaIViewerConfigDialog</servlet-name>
+            <url-pattern>/servlet/SaveBravaIViewerConfigDialog</url-pattern>
+        </servlet-mapping>
+        <!-- End Brava intelligent Viewer Pack -->
+
+        <!-- Start Options Pack -->
+        <servlet-mapping>
+            <servlet-name>OptionsDialog</servlet-name>
+            <url-pattern>/servlet/OptionsDialog</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>LoadOptions</servlet-name>
+            <url-pattern>/servlet/LoadOptions</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>SaveOptions</servlet-name>
+            <url-pattern>/servlet/SaveOptions</url-pattern>
+        </servlet-mapping>
+        <!-- End Options Pack -->
+
+        <!-- Start Menu Pack -->
+        <servlet-mapping>
+            <servlet-name>MenuConfigDialog</servlet-name>
+            <url-pattern>/servlet/MenuConfigDialog</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>SaveMenuConfig</servlet-name>
+            <url-pattern>/servlet/SaveMenuConfig</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>LoadMenu</servlet-name>
+            <url-pattern>/servlet/LoadMenu</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>GetConditionEditor</servlet-name>
+            <url-pattern>/servlet/GetConditionEditor</url-pattern>
+        </servlet-mapping>
+        <!-- End Menu Pack -->
+
+        <!-- Start Portal Menu Pack -->
+        <servlet-mapping>
+            <servlet-name>PortalmenuConfigDialog</servlet-name>
+            <url-pattern>/servlet/PortalmenuConfigDialog</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>SavePortalmenuConfig</servlet-name>
+            <url-pattern>/servlet/SavePortalmenuConfig</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>LoadPortalmenu</servlet-name>
+            <url-pattern>/servlet/LoadPortalmenu</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>GetDynamicActionEditor</servlet-name>
+            <url-pattern>/servlet/GetDynamicActionEditor</url-pattern>
+        </servlet-mapping>
+        <!-- End Portal Menu Pack -->
+
+        <!-- Start Unity Menu Pack -->
+        <servlet-mapping>
+            <servlet-name>UnitymenuConfigDialog</servlet-name>
+            <url-pattern>/servlet/UnitymenuConfigDialog</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>SaveUnitymenuConfig</servlet-name>
+            <url-pattern>/servlet/SaveUnitymenuConfig</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>LoadUnitymenu</servlet-name>
+            <url-pattern>/servlet/LoadUnitymenu</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>GetUnityDynamicActionEditor</servlet-name>
+            <url-pattern>/servlet/GetUnityDynamicActionEditor</url-pattern>
+        </servlet-mapping>
+        <!-- End Unity Menu Pack -->
+
+        <!-- Start Toolbar Pack -->
+        <servlet-mapping>
+            <servlet-name>ToolbarConfigDialog</servlet-name>
+            <url-pattern>/servlet/ToolbarConfigDialog</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>SaveToolbarConfig</servlet-name>
+            <url-pattern>/servlet/SaveToolbarConfig</url-pattern>
+        </servlet-mapping>
+        <!-- Start Toolbar Pack -->
+
+        <!-- Start Dctmaudit Pack -->
+        <servlet-mapping>
+            <servlet-name>DctmauditConfigDialog</servlet-name>
+            <url-pattern>/servlet/DctmauditConfigDialog</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>SaveDctmauditConfig</servlet-name>
+            <url-pattern>/servlet/SaveDctmauditConfig</url-pattern>
+        </servlet-mapping>
+        <!-- End Dctmaudit Pack -->
+
+        <!-- Start AttributeMapping Pack -->
+        <servlet-mapping>
+            <servlet-name>AttributeMappingConfigDialog</servlet-name>
+            <url-pattern>/servlet/AttributeMappingConfigDialog</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>SaveAttributeMappingConfig</servlet-name>
+            <url-pattern>/servlet/SaveAttributeMappingConfig</url-pattern>
+        </servlet-mapping>
+        <!-- End AttributeMapping Pack -->
+
+        <!-- Start MailAttachment Pack -->
+        <servlet-mapping>
+            <servlet-name>MailAttachmentConfigDialog</servlet-name>
+            <url-pattern>/servlet/MailAttachmentConfigDialog</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>SaveMailAttachmentConfig</servlet-name>
+            <url-pattern>/servlet/SaveMailAttachmentConfig</url-pattern>
+        </servlet-mapping>
+        <!-- End AttributeMapping Pack -->
+
+        <!-- Start Specifications Pack -->
+        <servlet-mapping>
+            <servlet-name>SpecificationsDialog</servlet-name>
+            <url-pattern>/servlet/SpecificationsDialog</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>SaveSpecifications</servlet-name>
+            <url-pattern>/servlet/SaveSpecifications</url-pattern>
+        </servlet-mapping>
+        <!-- End Specifications Pack -->
+
+        <!-- Start UserConfig Pack -->
+        <servlet-mapping>
+            <servlet-name>UserConfigDialog</servlet-name>
+            <url-pattern>/servlet/UserConfigDialog</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>LoadUserConfig</servlet-name>
+            <url-pattern>/servlet/LoadUserConfig</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>SaveUserConfig</servlet-name>
+            <url-pattern>/servlet/SaveUserConfig</url-pattern>
+        </servlet-mapping>
+        <!-- End UserConfig Pack -->
+
+        <!-- Start UserPreferences Pack -->
+        <servlet-mapping>
+            <servlet-name>UserPreferencesDialog</servlet-name>
+            <url-pattern>/servlet/UserPreferencesDialog</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>LoadUserPreferences</servlet-name>
+            <url-pattern>/servlet/LoadUserPreferences</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>SaveUserPreferences</servlet-name>
+            <url-pattern>/servlet/SaveUserPreferences</url-pattern>
+        </servlet-mapping>
+        <!-- End UserPreferences Pack -->
+
+
+        <!-- Start Application Pack -->
+        <servlet-mapping>
+            <servlet-name>ApplicationDialog</servlet-name>
+            <url-pattern>/servlet/ApplicationDialog</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>LoadApplication</servlet-name>
+            <url-pattern>/servlet/LoadApplication</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>SaveApplication</servlet-name>
+            <url-pattern>/servlet/SaveApplication</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>GetApplicationNames</servlet-name>
+            <url-pattern>/servlet/GetApplicationNames</url-pattern>
+        </servlet-mapping>
+        <!-- End Application Pack -->
+
+        <!-- Start Plugin Pack -->
+        <servlet-mapping>
+            <servlet-name>PluginDialog</servlet-name>
+            <url-pattern>/servlet/PluginDialog</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>LoadPlugin</servlet-name>
+            <url-pattern>/servlet/LoadPlugin</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>SavePlugin</servlet-name>
+            <url-pattern>/servlet/SavePlugin</url-pattern>
+        </servlet-mapping>
+        <!-- End Plugin Pack -->
+
+        <!-- Start BOCS Pack -->
+        <servlet-mapping>
+            <servlet-name>BocsPrecacheDialog</servlet-name>
+            <url-pattern>/servlet/BocsPrecacheDialog</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>LoadBocsPrecache</servlet-name>
+            <url-pattern>/servlet/LoadBocsPrecache</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>SaveBocsPrecache</servlet-name>
+            <url-pattern>/servlet/SaveBocsPrecache</url-pattern>
+        </servlet-mapping>
+        <!-- End BOCS Pack -->
+
+        <!-- Start Structure Pack -->
+        <servlet-mapping>
+            <servlet-name>StructureDialog</servlet-name>
+            <url-pattern>/servlet/StructureDialog</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>LoadStructure</servlet-name>
+            <url-pattern>/servlet/LoadStructure</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>SaveStructure</servlet-name>
+            <url-pattern>/servlet/SaveStructure</url-pattern>
+        </servlet-mapping>
+        <!-- End Structure Pack -->
+
+        <!-- Start Convert Pack -->
+        <servlet-mapping>
+            <servlet-name>ConvertDialog</servlet-name>
+            <url-pattern>/servlet/ConvertDialog</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>LoadConvert</servlet-name>
+            <url-pattern>/servlet/LoadConvert</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>SaveConvert</servlet-name>
+            <url-pattern>/servlet/SaveConvert</url-pattern>
+        </servlet-mapping>
+        <!-- End Convert Pack -->
+
+        <!-- Start Distribution Module Pack -->
+        <servlet-mapping>
+            <servlet-name>DistributionDialog</servlet-name>
+            <url-pattern>/servlet/DistributionDialog</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>LoadDistribution</servlet-name>
+            <url-pattern>/servlet/LoadDistribution</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>SaveDistribution</servlet-name>
+            <url-pattern>/servlet/SaveDistribution</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>ViewDistributionProperty</servlet-name>
+            <url-pattern>/servlet/ViewDistributionProperty</url-pattern>
+        </servlet-mapping>
+        <!-- End Distribution Module Pack -->
+
+        <!-- Start Extended Create Module Pack -->
+        <servlet-mapping>
+            <servlet-name>ExtendedCreateDialog</servlet-name>
+            <url-pattern>/servlet/ExtendedCreateDialog</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>LoadExtendedCreate</servlet-name>
+            <url-pattern>/servlet/LoadExtendedCreate</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>SaveExtendedCreate</servlet-name>
+            <url-pattern>/servlet/SaveExtendedCreate</url-pattern>
+        </servlet-mapping>
+        <!-- End Extended Create Module Pack -->
+
+        <!-- Start QrcodeDataDialog module Pack -->
+        <servlet-mapping>
+            <servlet-name>QrcodeDataDialog</servlet-name>
+            <url-pattern>/servlet/QrcodeDataDialog</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>SaveQrcodeData</servlet-name>
+            <url-pattern>/servlet/SaveQrcodeData</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>LoadQrcodeData</servlet-name>
+            <url-pattern>/servlet/LoadQrcodeData</url-pattern>
+        </servlet-mapping>
+        <!-- End QrcodeDataDialog module Pack -->
+
+        <!-- Start Smartview Content Import/Export Config Pack -->
+        <servlet-mapping>
+            <servlet-name>ContentImportExportDialog</servlet-name>
+            <url-pattern>/servlet/ContentImportExportDialog</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>LoadContentImportExportDialog</servlet-name>
+            <url-pattern>/servlet/LoadContentImportExportDialog</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>SaveContentImportExportDialog</servlet-name>
+            <url-pattern>/servlet/SaveContentImportExportDialog</url-pattern>
+        </servlet-mapping>
+        <!-- End Smartview Content Import/Export Config Pack -->
+
+        <!-- Start Smartview BA actions Config Pack -->
+        <servlet-mapping>
+            <servlet-name>BaActionsDialog</servlet-name>
+            <url-pattern>/servlet/BaActionsDialog</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>LoadBaActionsDialog</servlet-name>
+            <url-pattern>/servlet/LoadBaActionsDialog</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>SaveBaActionsDialog</servlet-name>
+            <url-pattern>/servlet/SaveBaActionsDialog</url-pattern>
+        </servlet-mapping>
+        <!-- End Smartview BA actions Config Pack -->
+
+        <!-- Start AviatorConfiguration pack -->
+        <servlet-mapping>
+            <servlet-name>AviatorConfigDialog</servlet-name>
+            <url-pattern>/servlet/AviatorConfigDialog</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+            <servlet-name>SaveAviatorConfig</servlet-name>
+            <url-pattern>/servlet/SaveAviatorConfig</url-pattern>
+        </servlet-mapping>
+        <!-- End AviatorConfiguration pack -->
+
+        <session-config>
+            <session-timeout>30</session-timeout>
+            <cookie-config>
+                <!-- Make JSESSIONID cookie inaccessible to web page and javascript -->
+                <http-only>true</http-only>
+                <!-- Make JSESSIONID cookie be sent by browser only on HTTPS requests -->
+                <!-- Set this to true only if using HTTPS -->
+                <!-- <secure>true</secure> -->
+            </cookie-config>
+            <cookie-config>
+                <http-only>true</http-only>
+                <secure>true</secure>
+            </cookie-config>
+        </session-config>
+
+        <welcome-file-list>
+            <welcome-file>index.jsp</welcome-file>
+        </welcome-file-list>
+
+        <env-entry>
+            <description>JNDI logging context for this app</description>
+            <env-entry-name>logback/context-name</env-entry-name>
+            <env-entry-value>D2-Config</env-entry-value>
+            <env-entry-type>java.lang.String</env-entry-type>
+        </env-entry>
+
+        <env-entry>
+            <description>URL for configuring logback context</description>
+            <env-entry-name>logback/configuration-resource</env-entry-name>
+            <env-entry-value>logback-d2-config.xml</env-entry-value>
+            <env-entry-type>java.lang.String</env-entry-type>
+        </env-entry>
+    {{- if $configFileAppendsValues := .Values.web_xml }}
+    {{ $configFileAppendsValues | nindent 4 }}
+    {{- end }}
+    </web-app>
+    {{- end }}

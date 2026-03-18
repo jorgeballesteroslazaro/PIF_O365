@@ -1,0 +1,1144 @@
+## Consul Deployment ##
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+   labels:
+    app: {{ .Values.prefix | default .Values.global.dccPrefix }}-{{ .Values.consul.prefix }}
+   name: {{ .Values.prefix | default .Values.global.dccPrefix }}-{{ .Values.consul.prefix }}
+   namespace: {{ .Values.namespace | default .Release.Namespace }}
+spec:
+  serviceName: {{ .Values.prefix | default .Values.global.dccPrefix }}-{{ .Values.consul.prefix }}-service
+  replicas: {{ .Values.consul.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Values.prefix | default .Values.global.dccPrefix }}-{{ .Values.consul.prefix }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.prefix | default .Values.global.dccPrefix }}-{{ .Values.consul.prefix }}
+    spec:
+      serviceAccountName: {{ .Values.serviceAccount.serviceAccountName | default .Values.global.documentumserviceaccount }}
+      {{- if .Values.images.pullSecrets | default .Values.global.pullSecretName }}
+      imagePullSecrets:
+        - name: {{ .Values.images.pullSecrets | default .Values.global.pullSecretName }}
+      {{- end }}
+      containers:
+        - name: {{ .Values.prefix | default .Values.global.dccPrefix }}-{{ .Values.consul.prefix }}
+          image: {{ .Values.consul.image.repository | default .Values.global.repository }}/{{ .Values.consul.image.name }}:{{ .Values.consul.image.tag }}
+          imagePullPolicy: {{ .Values.consul.image.pullPolicy | default .Values.global.pullPolicyType }}
+          ports:
+            - containerPort: {{ .Values.consul.containerPort }}
+          command: ["/bin/sh","-c"]
+          {{- if and .Values.global.internalTlsEnable .Values.global.useCertificate .Values.global.createCommonTruststore }}
+          args: ["while [ ! -f /opt/dctm/certificate/common.crt ]; do echo 'Waiting for /opt/dctm/certificate/common.crt ...'; sleep 2; done; cp /opt/dctm/certificate/common.crt /opt/dctm/certificate/common1.pem; exec consul agent -enable-script-checks -config-file=/usr/src/config -log-file=/usr/src/logs/"]
+          {{- else }}
+          args: [ "consul agent -enable-script-checks -config-file=/usr/src/config -log-file=/usr/src/logs/" ]
+          {{- end }}
+          volumeMounts:
+            - mountPath: /usr/src/config
+              name: {{ .Values.consul.prefix }}-volume
+            - name: {{ .Values.consul.prefix }}-pv
+              mountPath: /usr/src/data
+            {{- if (empty (.Values.certificate.use_certificate | quote) | ternary .Values.global.useCertificate .Values.certificate.use_certificate) }}
+            - mountPath: /opt/dctm/certificate
+              name: {{ .Values.dbrpersistentVolume.dbrdataPVCName | default .Values.global.dbrdataPVCName }}
+              subPath: certificate/{{ .Values.dbrpersistentVolume.dbrdataPVCName | default .Values.global.dbrdataPVCName }}
+            {{- end }}
+          resources:
+            requests:
+              memory: {{ .Values.consul.resources.requests.memory | quote  }}
+              cpu: {{ .Values.consul.resources.requests.cpu | quote  }}
+            limits:
+              memory: {{ .Values.consul.resources.limits.memory | quote  }}
+              cpu: {{ .Values.consul.resources.limits.cpu | quote  }}
+      volumes:
+        - name: {{ .Values.consul.prefix }}-volume
+          configMap:
+            name: {{ .Values.consul.prefix }}-configmap
+        - name: {{ .Values.consul.prefix }}-pv
+        {{- if .Values.pvc.enablePV }}
+          persistentVolumeClaim:
+            claimName: {{ .Values.prefix | default .Values.global.dccPrefix }}-{{ .Values.consul.prefix }}-pvc
+        {{- else }}
+          emptyDir : {}
+        {{- end }}
+        {{- if (empty (.Values.certificate.use_certificate | quote) | ternary .Values.global.useCertificate .Values.certificate.use_certificate) }}
+        - name: {{ .Values.dbrpersistentVolume.dbrdataPVCName | default .Values.global.dbrdataPVCName }}
+          persistentVolumeClaim:
+            claimName: {{ .Values.certificate.dbrserviceName | default .Values.global.dbrServiceName }}-pvc
+        {{- end }}
+      restartPolicy: Always
+---
+{{ if eq .Values.metadata.enabled true }}
+## Metadata Service Deployment ##
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  labels:
+    app: {{ .Values.prefix | default .Values.global.dccPrefix }}-{{ .Values.metadata.prefix }}
+  name: {{ .Values.prefix | default .Values.global.dccPrefix }}-{{ .Values.metadata.prefix }}
+  namespace: {{ .Values.namespace | default .Release.Namespace }}
+spec:
+  serviceName: {{ .Values.prefix | default .Values.global.dccPrefix }}-{{ .Values.metadata.prefix }}-service
+  replicas: {{ .Values.metadata.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Values.prefix | default .Values.global.dccPrefix }}-{{ .Values.metadata.prefix }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.prefix | default .Values.global.dccPrefix }}-{{ .Values.metadata.prefix }}
+    spec:
+      serviceAccountName: {{ .Values.serviceAccount.serviceAccountName | default .Values.global.documentumserviceaccount }}
+      {{- if .Values.images.pullSecrets | default .Values.global.pullSecretName }}
+      imagePullSecrets:
+        - name: {{ .Values.images.pullSecrets | default .Values.global.pullSecretName }}
+      {{ end }}
+      containers:
+        - name: {{ .Values.prefix | default .Values.global.dccPrefix }}-{{ .Values.metadata.prefix }}
+          image: {{ .Values.metadata.image.repository | default .Values.global.repository }}/{{ .Values.metadata.image.name }}:{{ .Values.metadata.image.tag }}
+          imagePullPolicy: {{ .Values.metadata.image.pullPolicy | default .Values.global.pullPolicyType }}
+          env:
+            - name: DB_HOST
+              value: {{ .Values.database.db_host | default .Values.global.db_hostname | quote }}
+            - name: DB_PORT
+              value: {{ .Values.database.db_port | default .Values.global.dbport | quote }}
+            - name: db_ssl
+              value: {{ quote (.Values.database.ssl | default .Values.global.db_ssl) }}
+            - name: db_name
+              value: {{ .Values.database.dbSchemaName  | default .Values.global.dbSchema_Name | quote }}
+            - name: db_p12_wallet_file
+              value: {{ quote .Values.database.db_p12_wallet_file }}
+            - name: db_sso_wallet_file
+              value: {{ quote .Values.database.db_sso_wallet_file }}
+            - name: vaultEnabled
+              value: {{ quote (.Values.vault.enabled | default .Values.global.isVaultEnabled) }}
+            - name: httpsEnabled
+              value: {{ quote ( .Values.metadata.httpsmode.enabled | default .Values.global.internalTlsEnable) }}
+          command: ["/bin/sh","-c"]
+          readinessProbe:
+            grpc:
+              port: {{ .Values.metadata.configMap.serviceRegistry.serverPort }}
+            initialDelaySeconds: 300
+            periodSeconds: 150
+          livenessProbe:
+            grpc:
+              port: {{ .Values.metadata.configMap.serviceRegistry.serverPort }}
+            initialDelaySeconds: 300
+            periodSeconds: 150
+          {{- if and ((empty (.Values.database.ssl | quote) | ternary .Values.global.db_ssl .Values.database.ssl)) (eq ( .Values.database.dbSchemaName | default .Values.global.dbSchema_Name) "postgres") (eq .Values.database.sslcertRequired true)}}
+          {{- if (empty (.Values.metadata.newrelic.enabled | quote) | ternary .Values.global.newrelic .Values.coreNotification.newrelic.enabled) }}
+          args: ["openssl rsa -inform PEM -outform DER -in /usr/src/dcc/dbkey.key -out /usr/src/dcc/dbkey.der && sh /usr/src/dcc/pingDBHost.sh && java -javaagent:/opt/newrelic/newrelic.jar -Dhttps.nonProxyHosts=\"{{ .Values.metadata.proxy.noProxyHosts | default (include "formatNoProxy" . ) }}|{{ .Values.prefix | default .Values.global.dccPrefix }}-{{ .Values.consul.prefix }}-service\" -Dhttp.nonProxyHosts=\"{{ .Values.metadata.proxy.noProxyHosts | default (include "formatNoProxy" . ) }}|{{ .Values.prefix | default .Values.global.dccPrefix }}-{{ .Values.consul.prefix }}-service\" -Djava.io.tmpdir=/var/tmp -Dlog4j.configurationFile=file:/usr/src/dcc/MetadataService/config/log4j2.xml -jar /usr/src/dcc/MetadataService/metadata-1.0.0-SNAPSHOT.jar"]
+          {{ else }}
+          args: ["openssl rsa -inform PEM -outform DER -in /usr/src/dcc/dbkey.key -out /usr/src/dcc/dbkey.der && sh /usr/src/dcc/pingDBHost.sh && java -Dhttps.nonProxyHosts=\"{{ .Values.metadata.proxy.noProxyHosts | default (include "formatNoProxy" . ) }}|{{ .Values.prefix | default .Values.global.dccPrefix }}-{{ .Values.consul.prefix }}-service\" -Dhttp.nonProxyHosts=\"{{ .Values.metadata.proxy.noProxyHosts | default (include "formatNoProxy" . ) }}|{{ .Values.prefix | default .Values.global.dccPrefix }}-{{ .Values.consul.prefix }}-service\" -Dlog4j.configurationFile=file:/usr/src/dcc/MetadataService/config/log4j2.xml -jar /usr/src/dcc/MetadataService/metadata-1.0.0-SNAPSHOT.jar"]
+          {{ end }}
+          {{ else }}
+          {{- if (empty (.Values.metadata.newrelic.enabled | quote) | ternary .Values.global.newrelic .Values.coreNotification.newrelic.enabled) }}
+          args: ["sh /usr/src/dcc/pingDBHost.sh && java -javaagent:/opt/newrelic/newrelic.jar -Djava.io.tmpdir=/var/tmp -Dhttps.nonProxyHosts=\"{{ .Values.metadata.proxy.noProxyHosts | default (include "formatNoProxy" . ) }}|{{ .Values.prefix | default .Values.global.dccPrefix }}-{{ .Values.consul.prefix }}-service\" -Dhttp.nonProxyHosts=\"{{ .Values.metadata.proxy.noProxyHosts | default (include "formatNoProxy" . ) }}|{{ .Values.prefix | default .Values.global.dccPrefix }}-{{ .Values.consul.prefix }}-service\" -Dlog4j.configurationFile=file:/usr/src/dcc/MetadataService/config/log4j2.xml -jar /usr/src/dcc/MetadataService/metadata-1.0.0-SNAPSHOT.jar"]
+          {{ else }}
+          args: ["sh /usr/src/dcc/pingDBHost.sh && java -Dhttps.nonProxyHosts=\"{{ .Values.metadata.proxy.noProxyHosts | default (include "formatNoProxy" . ) }}|{{ .Values.prefix | default .Values.global.dccPrefix }}-{{ .Values.consul.prefix }}-service\" -Dhttp.nonProxyHosts=\"{{ .Values.metadata.proxy.noProxyHosts | default (include "formatNoProxy" . ) }}|{{ .Values.prefix | default .Values.global.dccPrefix }}-{{ .Values.consul.prefix }}-service\" -Dlog4j.configurationFile=file:/usr/src/dcc/MetadataService/config/log4j2.xml -jar /usr/src/dcc/MetadataService/metadata-1.0.0-SNAPSHOT.jar"]
+          {{ end }}
+          {{ end }}
+          volumeMounts:
+            - mountPath: /usr/src/dcc/MetadataService/config
+              name: {{ .Values.metadata.prefix }}-config-volume
+            - mountPath: /usr/src/DCC/logs
+              name: {{ .Values.metadata.prefix }}-pv
+          {{- if (empty (.Values.metadata.newrelic.enabled | quote) | ternary .Values.global.newrelic .Values.coreNotification.newrelic.enabled) }}
+            - mountPath: /opt/newrelic/newrelic.yml
+              subPath: newrelic.yml
+              name: {{ .Values.metadata.prefix }}-secret-volume
+          {{- end}}
+          {{- if and ((empty (.Values.database.ssl | quote) | ternary .Values.global.db_ssl .Values.database.ssl)) (eq (.Values.database.dbSchemaName | default .Values.global.dbSchema_Name) "postgres") }}
+            - mountPath: /usr/src/dcc/dbrootca.crt
+              subPath: dbrootca.crt
+              name: {{ .Values.metadata.prefix }}-db-secret-volume
+            - mountPath: /usr/src/dcc/dbserver.crt
+              subPath: dbserver.crt
+              name: {{ .Values.metadata.prefix }}-db-secret-volume
+            - mountPath: /usr/src/dcc/dbkey.key
+              subPath: dbkey.key
+              name: {{ .Values.metadata.prefix }}-db-secret-volume
+          {{- end}}
+          {{- if (empty (.Values.vault.enabled | quote) | ternary .Values.global.isVaultEnabled .Values.vault.enabled) }}
+            - mountPath: /opt/dctm_docker/vault_config
+              name: vault-volume
+            - mountPath: /opt/dctm_docker/dsis_binary_volume
+              name: dsis-binary-volume
+          {{- end }}
+          {{- if and ((empty (.Values.database.ssl | quote) | ternary .Values.global.db_ssl .Values.database.ssl)) (eq (.Values.database.dbSchemaName | default .Values.global.dbSchema_Name) "oracle") }}
+            - mountPath: /opt/dctm/data/oracle_wallet
+              subPath: data/dcs-pg/oracle_wallet
+              name: dcs-pg-pvc
+          {{- end}}
+          {{- if (empty (.Values.certificate.use_certificate | quote) | ternary .Values.global.useCertificate .Values.certificate.use_certificate) }}
+            - mountPath: /opt/dctm/certificate
+              name: {{ .Values.dbrpersistentVolume.dbrdataPVCName | default .Values.global.dbrdataPVCName }}
+              subPath: certificate/{{ .Values.dbrpersistentVolume.dbrdataPVCName | default .Values.global.dbrdataPVCName }}            
+          {{- end }}
+          resources:
+            requests:
+              memory: {{ .Values.metadata.resources.requests.memory | quote  }}
+              cpu: {{ .Values.metadata.resources.requests.cpu | quote  }}
+            limits:
+              memory: {{ .Values.metadata.resources.limits.memory | quote  }}
+              cpu: {{ .Values.metadata.resources.limits.cpu | quote  }}
+      volumes:
+        - name: {{ .Values.metadata.prefix }}-config-volume
+          configMap:
+            name: {{ .Values.metadata.prefix }}-configmap
+            items:
+              - key: database.properties
+                path: database.properties
+              - key: service-registry-location.properties
+                path: service-registry-location.properties
+              - key: log4j2.xml
+                path: log4j2.xml
+        - name: {{ .Values.metadata.prefix }}-pv
+        {{ if .Values.pvc.enablePV }}
+          persistentVolumeClaim:
+            claimName: {{ .Values.prefix | default .Values.global.dccPrefix }}-{{ .Values.metadata.prefix }}-pvc
+        {{ else }}
+          emptyDir : {}
+        {{ end }}
+        {{- if (empty (.Values.metadata.newrelic.enabled | quote) | ternary .Values.global.newrelic .Values.coreNotification.newrelic.enabled) }}
+        - name: {{ .Values.metadata.prefix }}-secret-volume
+          secret:
+            secretName: {{ .Values.prefix | default .Values.global.dccPrefix }}-{{ .Values.metadata.prefix }}-secret
+            optional: false
+        {{- end}}
+        {{- if and ((empty (.Values.database.ssl | quote) | ternary .Values.global.db_ssl .Values.database.ssl)) (eq (.Values.database.dbSchemaName | default .Values.global.dbSchema_Name) "postgres") }}
+        - name: {{ .Values.metadata.prefix }}-db-secret-volume
+          secret:
+            secretName: db-secret
+            optional: false
+        {{- end}}
+        {{- if (empty (.Values.vault.enabled | quote) | ternary .Values.global.isVaultEnabled .Values.vault.enabled) }}
+        - name: dsis-binary-volume
+          persistentVolumeClaim:
+            claimName: dsis-binary-pvc
+        - name: vault-volume
+          configMap:
+            name: dctm-vault-configmap
+        {{- end }}
+        {{- if and ((empty (.Values.database.ssl | quote) | ternary .Values.global.db_ssl .Values.database.ssl)) (eq (.Values.database.dbSchemaName | default .Values.global.dbSchema_Name) "oracle") }}
+        - name: dcs-pg-pvc
+          persistentVolumeClaim:
+            claimName: dcs-pg-pvc
+        {{- end }}
+        {{- if (empty (.Values.certificate.use_certificate | quote) | ternary .Values.global.useCertificate .Values.certificate.use_certificate) }}
+        - name: {{ .Values.dbrpersistentVolume.dbrdataPVCName | default .Values.global.dbrdataPVCName }}
+          persistentVolumeClaim:
+            claimName: {{ .Values.certificate.dbrserviceName | default .Values.global.dbrServiceName }}-pvc
+        {{- end }}
+  {{ end }}
+---
+{{ if eq .Values.syncagent.enabled true }}
+## Syncagent deployment ##
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  labels:
+    app: {{ .Values.prefix | default .Values.global.dccPrefix }}-{{ .Values.syncagent.prefix }}
+  name: {{ .Values.prefix | default .Values.global.dccPrefix }}-{{ .Values.syncagent.prefix }}
+  namespace: {{ .Values.namespace | default .Release.Namespace }}
+spec:
+  serviceName: {{ .Values.prefix | default .Values.global.dccPrefix }}-{{ .Values.syncagent.prefix }}-service
+  replicas: {{ .Values.syncagent.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Values.prefix | default .Values.global.dccPrefix }}-{{ .Values.syncagent.prefix }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.prefix | default .Values.global.dccPrefix }}-{{ .Values.syncagent.prefix }}
+    spec:
+      serviceAccountName: {{ .Values.serviceAccount.serviceAccountName | default .Values.global.documentumserviceaccount }}
+      {{- if .Values.images.pullSecrets | default .Values.global.pullSecretName }}
+      imagePullSecrets:
+        - name: {{ .Values.images.pullSecrets | default .Values.global.pullSecretName }}
+      {{ end }}
+      containers:
+        - name: {{ .Values.prefix | default .Values.global.dccPrefix }}-{{ .Values.syncagent.prefix }}
+          image: {{ .Values.syncagent.image.repository| default .Values.global.repository }}/{{ .Values.syncagent.image.name }}:{{ .Values.syncagent.image.tag }}
+          imagePullPolicy: {{ .Values.syncagent.image.pullPolicy | default .Values.global.pullPolicyType }}
+        {{- if and ((empty (.Values.database.ssl | quote) | ternary .Values.global.db_ssl .Values.database.ssl)) (eq (.Values.database.dbSchemaName | default .Values.global.dbSchema_Name) "postgres") (eq .Values.database.sslcertRequired true) }}
+          command: ["/bin/sh","-c","openssl rsa -inform PEM -outform DER -in /usr/src/DCC/dbkey.key -out /usr/src/DCC/dbkey.der && sh /opt/DCCScript/pingDBHost.sh"]
+        {{ else }}
+          command: ["/bin/sh","-c","sh /opt/DCCScript/pingDBHost.sh"]
+        {{ end }}
+          env:
+            - name: DB_HOST
+              value: {{ .Values.database.db_host | default .Values.global.db_hostname | quote }}
+            - name: DB_PORT
+              value: {{ .Values.database.db_port | default .Values.global.dbport | quote }}
+            - name: db_ssl
+              value: {{ quote (.Values.database.ssl | default .Values.global.db_ssl) }}
+            - name: db_p12_wallet_file
+              value: {{ quote .Values.database.db_p12_wallet_file }}
+            - name: db_sso_wallet_file
+              value: {{ quote .Values.database.db_sso_wallet_file }}
+            - name: db_name
+              value: {{ .Values.database.dbSchemaName  | default .Values.global.dbSchema_Name | quote }}
+            - name: vaultEnabled
+              value: {{ quote (.Values.vault.enabled | default .Values.global.isVaultEnabled) }}
+            - name: httpsEnabled
+              value: {{ quote ( .Values.syncagent.httpsmode.enabled | default .Values.global.internalTlsEnable) }}
+        {{- if eq (default .Values.global.proxy.enabled .Values.syncagent.configMap.proxy.enabled) true  }}
+          env:
+            - name: DB_HOST
+              value: {{ .Values.database.db_host | default .Values.global.db_hostname | quote }}
+            - name: DB_PORT
+              value: {{ .Values.database.db_port | default .Values.global.dbport | quote }}
+            - name: vaultEnabled
+              value: {{ quote (.Values.vault.enabled | default .Values.global.isVaultEnabled) }}
+            - name: db_ssl
+              value: {{ quote (.Values.database.ssl | default .Values.global.db_ssl) }}
+            - name: db_p12_wallet_file
+              value: {{ quote .Values.database.db_p12_wallet_file }}
+            - name: db_sso_wallet_file
+              value: {{ quote .Values.database.db_sso_wallet_file }}
+            - name: db_name
+              value: {{ .Values.database.dbSchemaName  | default .Values.global.dbSchema_Name | quote }}
+            - name: httpsEnabled
+              value: {{ quote ( .Values.syncagent.httpsmode.enabled | default .Values.global.internalTlsEnable) }}
+            - name: CATALINA_OPTS
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ .Values.syncagent.prefix }}-configmap
+                  key: catalina_opts
+            - name: HTTPS_PROXY
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ .Values.syncagent.prefix }}-configmap
+                  key: httpsProxy
+            - name: https_proxy
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ .Values.syncagent.prefix }}-configmap
+                  key: httpsProxy
+            - name: HTTP_PROXY
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ .Values.syncagent.prefix }}-configmap
+                  key: httpProxy
+            - name: http_proxy
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ .Values.syncagent.prefix }}-configmap
+                  key: httpProxy
+            - name: NO_PROXY
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ .Values.syncagent.prefix }}-configmap
+                  key: noProxy
+            - name: no_proxy
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ .Values.syncagent.prefix }}-configmap
+                  key: noProxy
+            {{- if eq .Values.global.internalTlsEnable true }}
+            - name: tls_enabled
+              value: {{ .Values.global.internalTlsEnable | quote }}
+            {{- end }}
+            - name: COMMON_KEYSTORE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secret.csConfigName | default .Values.global.csSecrets }}
+                  key: ingress.keystorepassword
+            - name: httpsEnabled
+              value: {{ quote ( .Values.syncagent.httpsmode.enabled | default .Values.global.internalTlsEnable) }}
+        {{ else }}
+          {{- if (empty (.Values.syncagent.newrelic.enabled | quote) | ternary .Values.global.newrelic .Values.syncagent.newrelic.enabled) }}
+          env:
+            - name: CATALINA_OPTS
+              value: "-javaagent:/opt/newrelic/newrelic.jar"
+            - name: DB_HOST
+              value: {{ .Values.database.db_host | default .Values.global.db_hostname | quote }}
+            - name: vaultEnabled
+              value: {{ quote (.Values.vault.enabled | default .Values.global.isVaultEnabled) }}
+            - name: DB_PORT
+              value: {{ .Values.database.db_port | default .Values.global.dbport | quote }}
+            - name: db_ssl
+              value: {{ quote (.Values.database.ssl | default .Values.global.db_ssl) }}
+            - name: db_p12_wallet_file
+              value: {{ quote .Values.database.db_p12_wallet_file }}
+            - name: db_sso_wallet_file
+              value: {{ quote .Values.database.db_sso_wallet_file }}
+            - name: db_name
+              value: {{ .Values.database.dbSchemaName  | default .Values.global.dbSchema_Name | quote }}
+            {{- if eq .Values.global.internalTlsEnable true }}
+            - name: tls_enabled
+              value: {{ .Values.global.internalTlsEnable | quote }}
+            {{- end }}
+            - name: COMMON_KEYSTORE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secret.csConfigName | default .Values.global.csSecrets }}
+                  key: ingress.keystorepassword
+            - name: httpsEnabled
+              value: {{ quote ( .Values.syncagent.httpsmode.enabled | default .Values.global.internalTlsEnable) }}
+          {{ end }}
+        {{ end }}
+          ports:
+            - containerPort: {{ .Values.syncagent.containerPort }}
+          livenessProbe:
+            httpGet:
+              path: /syncagent/health
+              port: {{ include "dctm-dcc.syncagentservicePortNumber" . }}
+              {{ if (empty (.Values.certificate.use_certificate | quote) | ternary .Values.global.useCertificate .Values.certificate.use_certificate) }}
+              scheme: HTTPS
+              {{ end }}
+            initialDelaySeconds: 300
+            periodSeconds: 300
+          readinessProbe:
+            httpGet:
+              path: /syncagent/health
+              port: {{ include "dctm-dcc.syncagentservicePortNumber" . }}
+              {{ if (empty (.Values.certificate.use_certificate | quote) | ternary .Values.global.useCertificate .Values.certificate.use_certificate) }}
+              scheme: HTTPS
+              {{ end }}
+            initialDelaySeconds: 300
+            periodSeconds: 300
+          startupProbe:
+            httpGet:
+              path: /syncagent/health
+              port: {{ include "dctm-dcc.syncagentservicePortNumber" . }}
+              {{ if (empty (.Values.certificate.use_certificate | quote) | ternary .Values.global.useCertificate .Values.certificate.use_certificate) }}
+              scheme: HTTPS
+              {{ end }}
+            initialDelaySeconds: 150
+            periodSeconds: 60
+          volumeMounts:
+            - mountPath: /opt/tomcat/webapps/syncagent/WEB-INF/classes/config/database.properties
+              subPath: database.properties
+              name: {{ .Values.syncagent.prefix }}-config-volume
+            - mountPath: /opt/tomcat/webapps/syncagent/WEB-INF/classes/config/mail-details.properties
+              subPath: mail-details.properties
+              name: {{ .Values.syncagent.prefix }}-config-volume
+            - mountPath: /opt/tomcat/webapps/syncagent/WEB-INF/classes/config/service-registry-location.properties
+              subPath: service-registry-location.properties
+              name: {{ .Values.syncagent.prefix }}-config-volume
+            - mountPath: /opt/tomcat/webapps/syncagent/WEB-INF/classes/log4j
+              name: {{ .Values.syncagent.prefix }}-log4j-config-volume
+            - mountPath: /usr/src/DCC/logs
+              name: {{ .Values.syncagent.prefix }}-pv
+            - mountPath: /opt/tomcat/conf/server_configmap.xml
+              subPath: server.xml
+              name: {{ .Values.syncagent.prefix }}-config-volume
+            {{- if (empty (.Values.syncagent.newrelic.enabled | quote) | ternary .Values.global.newrelic .Values.syncagent.newrelic.enabled) }}
+            - mountPath: /opt/newrelic/newrelic.yml
+              subPath: newrelic.yml
+              name: {{ .Values.syncagent.prefix }}-secret-volume
+            {{- end}}
+            {{- if (empty (.Values.vault.enabled | quote) | ternary .Values.global.isVaultEnabled .Values.vault.enabled) }}
+            - mountPath: /opt/dctm_docker/vault_config
+              name: vault-volume
+            - mountPath: /opt/dctm_docker/dsis_binary_volume
+              name: dsis-binary-volume
+            {{- end }}
+            {{- if and ((empty (.Values.database.ssl | quote) | ternary .Values.global.db_ssl .Values.database.ssl)) (eq (.Values.database.dbSchemaName | default .Values.global.dbSchema_Name) "postgres") }}
+            - mountPath: /usr/src/DCC/dbrootca.crt
+              subPath: dbrootca.crt
+              name: {{ .Values.syncagent.prefix }}-db-secret-volume
+            - mountPath: /usr/src/DCC/dbserver.crt
+              subPath: dbserver.crt
+              name: {{ .Values.syncagent.prefix }}-db-secret-volume
+            - mountPath: /usr/src/DCC/dbkey.key
+              subPath: dbkey.key
+              name: {{ .Values.syncagent.prefix }}-db-secret-volume
+          {{- end}}
+          {{- if and ((empty (.Values.database.ssl | quote) | ternary .Values.global.db_ssl .Values.database.ssl)) (eq (.Values.database.dbSchemaName | default .Values.global.dbSchema_Name) "oracle") }}
+            - mountPath: /opt/dctm/data/oracle_wallet
+              subPath: data/dcs-pg/oracle_wallet
+              name: dcs-pg-pvc
+          {{- end }}
+          {{ if (empty (.Values.certificate.use_certificate | quote) | ternary .Values.global.useCertificate .Values.certificate.use_certificate) }}
+            - mountPath: /opt/dctm/certificate
+              name: {{ .Values.dbrpersistentVolume.dbrdataPVCName | default .Values.global.dbrdataPVCName }}
+              subPath: certificate/{{ .Values.dbrpersistentVolume.dbrdataPVCName | default .Values.global.dbrdataPVCName }}
+          {{ end }}
+          resources:
+                requests:
+                  memory: {{ .Values.syncagent.resources.requests.memory | quote  }}
+                  cpu: {{ .Values.syncagent.resources.requests.cpu | quote  }}
+                limits:
+                  memory: {{ .Values.syncagent.resources.limits.memory | quote  }}
+                  cpu: {{ .Values.syncagent.resources.limits.cpu | quote  }}
+      volumes:
+        - name: {{ .Values.syncagent.prefix }}-config-volume
+          configMap:
+            name: {{ .Values.syncagent.prefix }}-configmap
+            items:
+              - key: database.properties
+                path: database.properties
+              - key: mail-details.properties
+                path: mail-details.properties
+              - key: service-registry-location.properties
+                path: service-registry-location.properties
+              - key: server.xml
+                path: server.xml
+        - name: {{ .Values.syncagent.prefix }}-pv
+        {{ if .Values.pvc.enablePV }}
+          persistentVolumeClaim:
+            claimName: {{ .Values.prefix | default .Values.global.dccPrefix }}-{{ .Values.syncagent.prefix }}-pvc
+        {{ else }}
+          emptyDir : {}
+        {{ end }}
+        {{- if (empty (.Values.syncagent.newrelic.enabled | quote) | ternary .Values.global.newrelic .Values.syncagent.newrelic.enabled) }}
+        - name: {{ .Values.syncagent.prefix }}-secret-volume
+          secret:
+            secretName: {{ .Values.prefix | default .Values.global.dccPrefix }}-{{ .Values.syncagent.prefix }}-secret
+            optional: false
+        {{- end}}
+        {{- if and ((empty (.Values.database.ssl | quote) | ternary .Values.global.db_ssl .Values.database.ssl)) (eq (.Values.database.dbSchemaName | default .Values.global.dbSchema_Name) "postgres") }}
+        - name: {{ .Values.syncagent.prefix }}-db-secret-volume
+          secret:
+            secretName: db-secret
+            optional: false
+        {{- end}}
+        {{- if (empty (.Values.vault.enabled | quote) | ternary .Values.global.isVaultEnabled .Values.vault.enabled) }}
+        - name: dsis-binary-volume
+          persistentVolumeClaim:
+            claimName: dsis-binary-pvc
+        - name: vault-volume
+          configMap:
+            name: dctm-vault-configmap
+        {{- end }}
+        {{- if and ((empty (.Values.database.ssl | quote) | ternary .Values.global.db_ssl .Values.database.ssl)) (eq (.Values.database.dbSchemaName | default .Values.global.dbSchema_Name) "oracle") }}
+        - name: dcs-pg-pvc
+          persistentVolumeClaim:
+            claimName: dcs-pg-pvc
+        {{- end }}
+        {{- if (empty (.Values.certificate.use_certificate | quote) | ternary .Values.global.useCertificate .Values.certificate.use_certificate) }}
+        - name: {{ .Values.dbrpersistentVolume.dbrdataPVCName | default .Values.global.dbrdataPVCName }}
+          persistentVolumeClaim:
+            claimName: {{ .Values.certificate.dbrserviceName | default .Values.global.dbrServiceName }}-pvc
+        {{- end }}
+        - name: {{ .Values.syncagent.prefix }}-log4j-config-volume
+          configMap:
+            name: {{ .Values.syncagent.prefix }}-configmap
+            items:
+              - key: log4j2.xml
+                path: log4j2.xml
+{{ end }}
+---
+{{ if eq .Values.syncnshareManual.enabled true }}
+## syncagent manual deployment ##
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  labels:
+    app: {{ .Values.prefix | default .Values.global.dccPrefix }}-{{ .Values.syncnshareManual.prefix }}
+  name: {{ .Values.prefix | default .Values.global.dccPrefix }}-{{ .Values.syncnshareManual.prefix }}
+  namespace: {{ .Values.namespace | default .Release.Namespace }}
+spec:
+  serviceName: {{ .Values.prefix | default .Values.global.dccPrefix }}-{{ .Values.syncnshareManual.prefix }}-service
+  replicas: {{ .Values.syncnshareManual.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Values.prefix | default .Values.global.dccPrefix }}-{{ .Values.syncnshareManual.prefix }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.prefix | default .Values.global.dccPrefix }}-{{ .Values.syncnshareManual.prefix }}
+    spec:
+      serviceAccountName: {{ .Values.serviceAccount.serviceAccountName | default .Values.global.documentumserviceaccount }}
+      {{- if .Values.images.pullSecrets | default .Values.global.pullSecretName }}
+      imagePullSecrets:
+        - name: {{ .Values.images.pullSecrets | default .Values.global.pullSecretName }}
+      {{ end }}
+      containers:
+        - name: {{ .Values.prefix | default .Values.global.dccPrefix }}-{{ .Values.syncnshareManual.prefix }}
+          image: {{ .Values.syncnshareManual.image.repository| default .Values.global.repository }}/{{ .Values.syncnshareManual.image.name }}:{{ .Values.syncnshareManual.image.tag }}
+          imagePullPolicy: {{ .Values.syncnshareManual.image.pullPolicy | default .Values.global.pullPolicyType }}
+        {{- if and ((empty (.Values.database.ssl | quote) | ternary .Values.global.db_ssl .Values.database.ssl)) (eq (.Values.database.dbSchemaName | default .Values.global.dbSchema_Name) "postgres") (eq .Values.database.sslcertRequired true) }}
+          command: ["/bin/sh","-c","openssl rsa -inform PEM -outform DER -in /usr/src/DCC/dbkey.key -out /usr/src/DCC/dbkey.der && sh /opt/DCCScript/pingDBHost.sh"]
+        {{ else }}
+          command: ["/bin/sh","-c","sh /opt/DCCScript/pingDBHost.sh"]
+        {{ end }}
+          env:
+            - name: DB_HOST
+              value: {{ .Values.database.db_host | default .Values.global.db_hostname | quote }}
+            - name: DB_PORT
+              value: {{ .Values.database.db_port | default .Values.global.dbport | quote }}
+            - name: vaultEnabled
+              value: {{ quote (.Values.vault.enabled | default .Values.global.isVaultEnabled) }}
+            - name: db_ssl
+              value: {{ quote (.Values.database.ssl | default .Values.global.db_ssl) }}
+            - name: db_p12_wallet_file
+              value: {{ quote .Values.database.db_p12_wallet_file }}
+            - name: db_sso_wallet_file
+              value: {{ quote .Values.database.db_sso_wallet_file }}
+            - name: db_name
+              value: {{ .Values.database.dbSchemaName  | default .Values.global.dbSchema_Name | quote }}
+            - name: httpsEnabled
+              value: {{ quote ( .Values.syncnshareManual.httpsmode.enabled | default .Values.global.internalTlsEnable) }}
+          ports:
+            - containerPort: {{ .Values.syncnshareManual.containerPort }}
+          livenessProbe:
+            httpGet:
+              path: /syncnshare-manual/health
+              port: {{ include "dctm-dcc.manualservicePortNumber" . }}
+              {{ if (empty (.Values.certificate.use_certificate | quote) | ternary .Values.global.useCertificate .Values.certificate.use_certificate) }}
+              scheme: HTTPS
+              {{ end }}
+            initialDelaySeconds: 300
+            periodSeconds: 150
+          readinessProbe:
+            httpGet:
+              path: /syncnshare-manual/health
+              port: {{ include "dctm-dcc.manualservicePortNumber" . }}
+              {{ if (empty (.Values.certificate.use_certificate | quote) | ternary .Values.global.useCertificate .Values.certificate.use_certificate) }}
+              scheme: HTTPS
+              {{ end }}
+            initialDelaySeconds: 300
+            periodSeconds: 150 
+          startupProbe:
+            httpGet:
+              path: /syncnshare-manual/health
+              port: {{ include "dctm-dcc.manualservicePortNumber" . }}
+              {{ if (empty (.Values.certificate.use_certificate | quote) | ternary .Values.global.useCertificate .Values.certificate.use_certificate) }}
+              scheme: HTTPS
+              {{ end }}
+            initialDelaySeconds: 150
+            periodSeconds: 60
+        {{- if eq (default .Values.global.proxy.enabled .Values.syncnshareManual.configMap.proxy.enabled) true  }}
+          env:
+            - name: DB_HOST
+              value: {{ .Values.database.db_host | default .Values.global.db_hostname | quote }}
+            - name: DB_PORT
+              value: {{ .Values.database.db_port | default .Values.global.dbport | quote }}
+            - name: db_ssl
+              value: {{ quote (.Values.database.ssl | default .Values.global.db_ssl) }}
+            - name: db_p12_wallet_file
+              value: {{ quote .Values.database.db_p12_wallet_file }}
+            - name: db_sso_wallet_file
+              value: {{ quote .Values.database.db_sso_wallet_file }}
+            - name: db_name
+              value: {{ .Values.database.dbSchemaName  | default .Values.global.dbSchema_Name | quote }}
+            - name: httpsEnabled
+              value: {{ quote ( .Values.syncnshareManual.httpsmode.enabled | default .Values.global.internalTlsEnable) }}
+            - name: CATALINA_OPTS
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ .Values.syncnshareManual.prefix }}-configmap
+                  key: catalina_opts
+            - name: HTTPS_PROXY
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ .Values.syncnshareManual.prefix }}-configmap
+                  key: httpsProxy
+            - name: https_proxy
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ .Values.syncnshareManual.prefix }}-configmap
+                  key: httpsProxy
+            - name: HTTP_PROXY
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ .Values.syncnshareManual.prefix }}-configmap
+                  key: httpProxy
+            - name: http_proxy
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ .Values.syncnshareManual.prefix }}-configmap
+                  key: httpProxy
+            - name: NO_PROXY
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ .Values.syncnshareManual.prefix }}-configmap
+                  key: noProxy
+            - name: no_proxy
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ .Values.syncnshareManual.prefix }}-configmap
+                  key: noProxy
+            - name: vaultEnabled
+              value: {{ quote (.Values.vault.enabled | default .Values.global.isVaultEnabled) }}
+            {{- if eq .Values.global.internalTlsEnable true }}
+            - name: tls_enabled
+              value: {{ .Values.global.internalTlsEnable | quote }}
+            {{- end }}  
+            - name: COMMON_KEYSTORE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secret.csConfigName | default .Values.global.csSecrets }}
+                  key: ingress.keystorepassword
+            - name: httpsEnabled
+              value: {{ quote ( .Values.syncnshareManual.httpsmode.enabled | default .Values.global.internalTlsEnable) }}
+        {{ else }}
+          {{- if eq (empty (.Values.syncnshareManual.newrelic.enabled | quote) | ternary .Values.global.newrelic .Values.syncnshareManual.newrelic.enabled) true }}
+          env:
+            - name: CATALINA_OPTS
+              value: "-javaagent:/opt/newrelic/newrelic.jar"
+            - name: DB_HOST
+              value: {{ .Values.database.db_host | default .Values.global.db_hostname | quote }}
+            - name: DB_PORT
+              value: {{ .Values.database.db_port | default .Values.global.dbport | quote }}
+            - name: vaultEnabled
+              value: {{ quote (.Values.vault.enabled | default .Values.global.isVaultEnabled) }}
+            - name: db_ssl
+              value: {{ quote (.Values.database.ssl | default .Values.global.db_ssl) }}
+            - name: db_p12_wallet_file
+              value: {{ quote .Values.database.db_p12_wallet_file }}
+            - name: db_sso_wallet_file
+              value: {{ quote .Values.database.db_sso_wallet_file }}
+            - name: db_name
+              value: {{ .Values.database.dbSchemaName  | default .Values.global.dbSchema_Name | quote }}
+            {{- if eq .Values.global.internalTlsEnable true }}
+            - name: tls_enabled
+              value: {{ .Values.global.internalTlsEnable | quote }}
+            {{- end }}  
+            - name: COMMON_KEYSTORE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secret.csConfigName | default .Values.global.csSecrets }}
+                  key: ingress.keystorepassword
+            - name: httpsEnabled
+              value: {{ quote ( .Values.syncnshareManual.httpsmode.enabled | default .Values.global.internalTlsEnable) }}
+          {{ end }}
+        {{ end }}                 
+          volumeMounts:
+            - mountPath: /opt/tomcat/webapps/syncnshare-manual/WEB-INF/classes/config/database.properties
+              subPath: database.properties
+              name: {{ .Values.syncnshareManual.prefix }}-config-volume
+            - mountPath: /opt/tomcat/webapps/syncnshare-manual/WEB-INF/classes/config/notification-service.properties
+              subPath: notification-service.properties
+              name: {{ .Values.syncnshareManual.prefix }}-config-volume
+            - mountPath: /opt/tomcat/webapps/syncnshare-manual/WEB-INF/classes/config/service-registry-location.properties
+              subPath: service-registry-location.properties
+              name: {{ .Values.syncnshareManual.prefix }}-config-volume
+            - mountPath: /opt/tomcat/webapps/syncnshare-manual/WEB-INF/classes/config/setup.properties
+              subPath: setup.properties
+              name: {{ .Values.syncnshareManual.prefix }}-config-volume
+            - mountPath: /opt/tomcat/webapps/syncnshare-manual/WEB-INF/classes/log4j
+              name: {{ .Values.syncnshareManual.prefix }}-log4j-config-volume
+            {{ if eq .Values.syncnshareManual.javaConfigModify true }}
+            - mountPath: /etc/crypto-policies/back-ends/java.config
+              subPath: java.config
+              name: {{ .Values.syncnshareManual.prefix }}-config-volume
+            {{ end }}
+            - name: {{ .Values.syncnshareManual.prefix }}-pv
+              mountPath: /usr/src/DCC/logs
+            - mountPath: /opt/tomcat/conf/server_configmap.xml
+              subPath: server.xml
+              name: {{ .Values.syncnshareManual.prefix }}-config-volume
+            {{- if eq (empty (.Values.syncnshareManual.newrelic.enabled | quote) | ternary .Values.global.newrelic .Values.syncnshareManual.newrelic.enabled) true }}
+            - mountPath: /opt/newrelic/newrelic.yml
+              subPath: newrelic.yml
+              name: {{ .Values.syncnshareManual.prefix }}-secret-volume
+            {{- end}}
+            {{- if and ((empty (.Values.database.ssl | quote) | ternary .Values.global.db_ssl .Values.database.ssl)) (eq (.Values.database.dbSchemaName | default .Values.global.dbSchema_Name) "postgres") }}
+            - mountPath: /usr/src/DCC/dbrootca.crt
+              subPath: dbrootca.crt
+              name: {{ .Values.syncnshareManual.prefix }}-db-secret-volume
+            - mountPath: /usr/src/DCC/dbserver.crt
+              subPath: dbserver.crt
+              name: {{ .Values.syncnshareManual.prefix }}-db-secret-volume
+            - mountPath: /usr/src/DCC/dbkey.key
+              subPath: dbkey.key
+              name: {{ .Values.syncnshareManual.prefix }}-db-secret-volume
+          {{- end}}
+            {{- if (empty (.Values.vault.enabled | quote) | ternary .Values.global.isVaultEnabled .Values.vault.enabled) }}
+            - mountPath: /opt/dctm_docker/vault_config
+              name: vault-volume
+            - mountPath: /opt/dctm_docker/dsis_binary_volume
+              name: dsis-binary-volume
+            {{- end }}
+            {{- if and ((empty (.Values.database.ssl | quote) | ternary .Values.global.db_ssl .Values.database.ssl)) (eq (.Values.database.dbSchemaName | default .Values.global.dbSchema_Name) "oracle") }}
+            - mountPath: /opt/dctm/data/oracle_wallet
+              subPath: data/dcs-pg/oracle_wallet
+              name: dcs-pg-pvc
+            {{- end }}
+          {{ if (empty (.Values.certificate.use_certificate | quote) | ternary .Values.global.useCertificate .Values.certificate.use_certificate) }}
+            - mountPath: /opt/dctm/certificate
+              name: {{ .Values.dbrpersistentVolume.dbrdataPVCName | default .Values.global.dbrdataPVCName }}
+              subPath: certificate/{{ .Values.dbrpersistentVolume.dbrdataPVCName | default .Values.global.dbrdataPVCName }}
+          {{ end }}
+          resources:
+            requests:
+              memory: {{ .Values.syncnshareManual.resources.requests.memory | quote  }}
+              cpu: {{ .Values.syncnshareManual.resources.requests.cpu | quote  }}
+            limits:
+              memory: {{ .Values.syncnshareManual.resources.limits.memory | quote  }}
+              cpu: {{ .Values.syncnshareManual.resources.limits.cpu | quote  }}
+      volumes:
+        - name: {{ .Values.syncnshareManual.prefix }}-config-volume
+          configMap:
+            name: {{ .Values.syncnshareManual.prefix }}-configmap
+            items:
+              - key: database.properties
+                path: database.properties
+              - key: notification-service.properties
+                path: notification-service.properties
+              - key: service-registry-location.properties
+                path: service-registry-location.properties
+              - key: setup.properties
+                path: setup.properties
+              - key: java.config
+                path: java.config
+              - key: server.xml
+                path: server.xml
+        - name: {{ .Values.syncnshareManual.prefix }}-pv
+        {{ if .Values.pvc.enablePV }}
+          persistentVolumeClaim:
+            claimName: {{ .Values.prefix | default .Values.global.dccPrefix }}-{{ .Values.syncnshareManual.prefix }}-pvc
+        {{ else }}
+          emptyDir : {}
+        {{ end }}
+        {{- if eq (empty (.Values.syncnshareManual.newrelic.enabled | quote) | ternary .Values.global.newrelic .Values.syncnshareManual.newrelic.enabled) true }}
+        - name: {{ .Values.syncnshareManual.prefix }}-secret-volume
+          secret:
+            secretName: {{ .Values.prefix | default .Values.global.dccPrefix }}-{{ .Values.syncnshareManual.prefix }}-secret
+            optional: false
+        {{- end}}
+        {{- if and ((empty (.Values.database.ssl | quote) | ternary .Values.global.db_ssl .Values.database.ssl)) (eq (.Values.database.dbSchemaName | default .Values.global.dbSchema_Name) "postgres") }}
+        - name: {{ .Values.syncnshareManual.prefix }}-db-secret-volume
+          secret:
+            secretName: db-secret
+            optional: false
+        {{- end}}
+        {{- if (empty (.Values.vault.enabled | quote) | ternary .Values.global.isVaultEnabled .Values.vault.enabled) }}
+        - name: dsis-binary-volume
+          persistentVolumeClaim:
+            claimName: dsis-binary-pvc
+        - name: vault-volume
+          configMap:
+            name: dctm-vault-configmap
+        {{- end }}
+        {{- if and ((empty (.Values.database.ssl | quote) | ternary .Values.global.db_ssl .Values.database.ssl)) (eq (.Values.database.dbSchemaName | default .Values.global.dbSchema_Name) "oracle") }}
+        - name: dcs-pg-pvc
+          persistentVolumeClaim:
+            claimName: dcs-pg-pvc
+        {{- end }}
+        {{- if (empty (.Values.certificate.use_certificate | quote) | ternary .Values.global.useCertificate .Values.certificate.use_certificate) }}
+        - name: {{ .Values.dbrpersistentVolume.dbrdataPVCName | default .Values.global.dbrdataPVCName }}
+          persistentVolumeClaim:
+            claimName: {{ .Values.certificate.dbrserviceName | default .Values.global.dbrServiceName }}-pvc
+        {{- end }}
+        - name: {{ .Values.syncnshareManual.prefix }}-log4j-config-volume
+          configMap:
+            name: {{ .Values.syncnshareManual.prefix }}-configmap
+            items:
+              - key: log4j2.xml
+                path: log4j2.xml
+{{ end }}
+---
+{{ if eq .Values.coreNotification.enabled true }}
+## Core Notification Deployment ##
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  labels:
+    app: {{ .Values.prefix | default .Values.global.dccPrefix }}-{{ .Values.coreNotification.prefix }}
+  name: {{ .Values.prefix | default .Values.global.dccPrefix }}-{{ .Values.coreNotification.prefix }}
+  namespace: {{ .Values.namespace | default .Release.Namespace }}
+spec:
+  serviceName: {{ .Values.prefix | default .Values.global.dccPrefix }}-{{ .Values.coreNotification.prefix }}-service
+  replicas: {{ .Values.coreNotification.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Values.prefix | default .Values.global.dccPrefix }}-{{ .Values.coreNotification.prefix }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.prefix | default .Values.global.dccPrefix }}-{{ .Values.coreNotification.prefix }}
+    spec:
+      serviceAccountName: {{ .Values.serviceAccount.serviceAccountName | default .Values.global.documentumserviceaccount }}
+      {{- if .Values.images.pullSecrets | default .Values.global.pullSecretName }}
+      imagePullSecrets:
+        - name: {{ .Values.images.pullSecrets | default .Values.global.pullSecretName }}
+      {{ end }}
+      containers:
+        - name: {{ .Values.prefix | default .Values.global.dccPrefix }}-{{ .Values.coreNotification.prefix }}
+          image: {{ .Values.coreNotification.image.repository| default .Values.global.repository }}/{{ .Values.coreNotification.image.name }}:{{ .Values.coreNotification.image.tag }}
+          imagePullPolicy: {{ .Values.coreNotification.image.pullPolicy | default .Values.global.pullPolicyType }}
+          env:
+            - name: DB_HOST
+              value: {{ .Values.database.db_host | default .Values.global.db_hostname | quote }}
+            - name: DB_PORT
+              value: {{ .Values.database.db_port | default .Values.global.dbport | quote }}
+            - name: db_ssl
+              value: {{ quote (.Values.database.ssl | default .Values.global.db_ssl) }}
+            - name: db_name
+              value: {{ .Values.database.dbSchemaName  | default .Values.global.dbSchema_Name | quote }}
+            - name: db_p12_wallet_file
+              value: {{ quote .Values.database.db_p12_wallet_file }}
+            - name: db_sso_wallet_file
+              value: {{ quote .Values.database.db_sso_wallet_file }}
+            - name: vaultEnabled
+              value: {{ quote (.Values.vault.enabled | default .Values.global.isVaultEnabled) }}
+            - name: httpsEnabled
+              value: {{ quote ( .Values.coreNotification.httpsmode.enabled | default .Values.global.internalTlsEnable) }}
+          command: ["/bin/sh","-c"]
+          readinessProbe:
+            grpc:
+              port: {{ .Values.coreNotification.configMap.serviceRegistry.serverPort }}
+            initialDelaySeconds: 300
+            periodSeconds: 150
+          livenessProbe:
+            grpc:
+              port: {{ .Values.coreNotification.configMap.serviceRegistry.serverPort }}
+            initialDelaySeconds: 300
+            periodSeconds: 150
+        {{- if and ((empty (.Values.database.ssl | quote) | ternary .Values.global.db_ssl .Values.database.ssl)) (eq (.Values.database.dbSchemaName | default .Values.global.dbSchema_Name) "postgres") (eq .Values.database.sslcertRequired true) }}
+        {{- if eq (default .Values.global.proxy.enabled .Values.coreNotification.proxy.enabled) true  }}
+          {{- if (empty (.Values.coreNotification.newrelic.enabled | quote) | ternary .Values.global.newrelic .Values.coreNotification.newrelic.enabled) }}
+          args: ["openssl rsa -inform PEM -outform DER -in /usr/src/dcc/dbkey.key -out /usr/src/dcc/dbkey.der && sh /usr/src/dcc/pingDBHost.sh && java -javaagent:/opt/newrelic/newrelic.jar -Djava.io.tmpdir=/var/tmp -Djava.net.useSystemProxies=true -Dhttps.proxyHost={{ .Values.coreNotification.proxy.proxyHost | default .Values.global.proxy.host }} -Dhttps.proxyPort={{ .Values.coreNotification.proxy.proxyPort | default .Values.global.proxy.port }} -Dhttps.nonProxyHosts=\"{{ .Values.coreNotification.proxy.noProxyHosts | default (include "formatNoProxy" . ) }}|{{ .Values.prefix | default .Values.global.dccPrefix }}-{{ .Values.consul.prefix }}-service\" -Dhttp.nonProxyHosts=\"{{ .Values.coreNotification.proxy.noProxyHosts | default (include "formatNoProxy" . ) }}|{{ .Values.prefix | default .Values.global.dccPrefix }}-{{ .Values.consul.prefix }}-service\" -Dlog4j.configurationFile=file:/usr/src/dcc/CoreNotificationService/config/log4j2.xml -jar /usr/src/dcc/CoreNotificationService/CoreNotificationService.jar"]
+          {{ else }}
+          args: ["openssl rsa -inform PEM -outform DER -in /usr/src/dcc/dbkey.key -out /usr/src/dcc/dbkey.der && sh /usr/src/dcc/pingDBHost.sh && java -Djava.net.useSystemProxies=true -Dhttps.proxyHost={{ .Values.coreNotification.proxy.proxyHost | default .Values.global.proxy.host }} -Dhttps.proxyPort={{ .Values.coreNotification.proxy.proxyPort | default .Values.global.proxy.port }} -Dhttps.nonProxyHosts=\"{{ .Values.coreNotification.proxy.noProxyHosts | default (include "formatNoProxy" . ) }}|{{ .Values.prefix | default .Values.global.dccPrefix }}-{{ .Values.consul.prefix }}-service\" -Dhttp.nonProxyHosts=\"{{ .Values.coreNotification.proxy.noProxyHosts | default (include "formatNoProxy" . ) }}|{{ .Values.prefix | default .Values.global.dccPrefix }}-{{ .Values.consul.prefix }}-service\" -Dlog4j.configurationFile=file:/usr/src/dcc/CoreNotificationService/config/log4j2.xml -jar /usr/src/dcc/CoreNotificationService/CoreNotificationService.jar"]
+          {{ end }}
+        {{ else }}
+          {{- if (empty (.Values.coreNotification.newrelic.enabled | quote) | ternary .Values.global.newrelic .Values.coreNotification.newrelic.enabled) }}
+          args: ["openssl rsa -inform PEM -outform DER -in /usr/src/dcc/dbkey.key -out /usr/src/dcc/dbkey.der && sh /usr/src/dcc/pingDBHost.sh && java -javaagent:/opt/newrelic/newrelic.jar -Djava.io.tmpdir=/var/tmp -Dlog4j.configurationFile=file:/usr/src/dcc/CoreNotificationService/config/log4j2.xml -jar /usr/src/dcc/CoreNotificationService/CoreNotificationService.jar"]
+          {{ else }}
+          args: ["openssl rsa -inform PEM -outform DER -in /usr/src/dcc/dbkey.key -out /usr/src/dcc/dbkey.der && sh /usr/src/dcc/pingDBHost.sh && java -Dlog4j.configurationFile=file:/usr/src/dcc/CoreNotificationService/config/log4j2.xml -jar /usr/src/dcc/CoreNotificationService/CoreNotificationService.jar"]
+          {{ end }}
+        {{ end }}
+        {{ else }}
+        {{- if eq (default .Values.global.proxy.enabled .Values.coreNotification.proxy.enabled) true  }}
+          {{- if (empty (.Values.coreNotification.newrelic.enabled | quote) | ternary .Values.global.newrelic .Values.coreNotification.newrelic.enabled) }}        
+          args: ["sh /usr/src/dcc/pingDBHost.sh && java -javaagent:/opt/newrelic/newrelic.jar -Djava.io.tmpdir=/var/tmp -Djava.net.useSystemProxies=true -Dhttps.proxyHost={{ .Values.coreNotification.proxy.proxyHost | default .Values.global.proxy.host }} -Dhttps.proxyPort={{ .Values.coreNotification.proxy.proxyPort | default .Values.global.proxy.port }} -Dhttps.nonProxyHosts=\"{{ .Values.coreNotification.proxy.noProxyHosts | default (include "formatNoProxy" . ) }}|{{ .Values.prefix | default .Values.global.dccPrefix }}-{{ .Values.consul.prefix }}-service\" -Dhttp.nonProxyHosts=\"{{ .Values.coreNotification.proxy.noProxyHosts | default (include "formatNoProxy" . ) }}|{{ .Values.prefix | default .Values.global.dccPrefix }}-{{ .Values.consul.prefix }}-service\" -Dlog4j.configurationFile=file:/usr/src/dcc/CoreNotificationService/config/log4j2.xml -jar /usr/src/dcc/CoreNotificationService/CoreNotificationService.jar"]
+          {{ else }}
+          args: ["sh /usr/src/dcc/pingDBHost.sh && java -Djava.net.useSystemProxies=true -Dhttps.proxyHost={{ .Values.coreNotification.proxy.proxyHost | default .Values.global.proxy.host }} -Dhttps.proxyPort={{ .Values.coreNotification.proxy.proxyPort | default .Values.global.proxy.port }} -Dhttps.nonProxyHosts=\"{{ .Values.coreNotification.proxy.noProxyHosts | default (include "formatNoProxy" . ) }}|{{ .Values.prefix | default .Values.global.dccPrefix }}-{{ .Values.consul.prefix }}-service\" -Dhttp.nonProxyHosts=\"{{ .Values.coreNotification.proxy.noProxyHosts | default (include "formatNoProxy" . ) }}|{{ .Values.prefix | default .Values.global.dccPrefix }}-{{ .Values.consul.prefix }}-service\" -Dlog4j.configurationFile=file:/usr/src/dcc/CoreNotificationService/config/log4j2.xml -jar /usr/src/dcc/CoreNotificationService/CoreNotificationService.jar"]
+          {{ end }}
+        {{ else }}
+          {{- if (empty (.Values.coreNotification.newrelic.enabled | quote) | ternary .Values.global.newrelic .Values.coreNotification.newrelic.enabled) }}
+          args: ["sh /usr/src/dcc/pingDBHost.sh && java -javaagent:/opt/newrelic/newrelic.jar -Djava.io.tmpdir=/var/tmp -Dlog4j.configurationFile=file:/usr/src/dcc/CoreNotificationService/config/log4j2.xml -jar /usr/src/dcc/CoreNotificationService/CoreNotificationService.jar"]
+          {{ else }}
+          args: ["sh /usr/src/dcc/pingDBHost.sh && java -Dlog4j.configurationFile=file:/usr/src/dcc/CoreNotificationService/config/log4j2.xml -jar /usr/src/dcc/CoreNotificationService/CoreNotificationService.jar"]
+          {{ end }}
+        {{ end }}
+        {{ end }}       
+          volumeMounts:
+            - mountPath: /usr/src/dcc/CoreNotificationService/config
+              name: {{ .Values.coreNotification.prefix }}-config-volume
+            - name: {{ .Values.coreNotification.prefix }}-pv
+              mountPath: /usr/src/DCC/logs
+            {{- if (empty (.Values.coreNotification.newrelic.enabled | quote) | ternary .Values.global.newrelic .Values.coreNotification.newrelic.enabled) }}
+            - mountPath: /opt/newrelic/newrelic.yml
+              subPath: newrelic.yml
+              name: {{ .Values.coreNotification.prefix }}-secret-volume
+            {{- end}}
+            {{- if and ((empty (.Values.database.ssl | quote) | ternary .Values.global.db_ssl .Values.database.ssl)) (eq (.Values.database.dbSchemaName | default .Values.global.dbSchema_Name) "postgres") }}
+            - mountPath: /usr/src/dcc/dbrootca.crt
+              subPath: dbrootca.crt
+              name: {{ .Values.coreNotification.prefix }}-db-secret-volume
+            - mountPath: /usr/src/dcc/dbserver.crt
+              subPath: dbserver.crt
+              name: {{ .Values.coreNotification.prefix }}-db-secret-volume
+            - mountPath: /usr/src/dcc/dbkey.key
+              subPath: dbkey.key
+              name: {{ .Values.coreNotification.prefix }}-db-secret-volume
+          {{- end}}
+            {{- if (empty (.Values.vault.enabled | quote) | ternary .Values.global.isVaultEnabled .Values.vault.enabled) }}
+            - mountPath: /opt/dctm_docker/vault_config
+              name: vault-volume
+            - mountPath: /opt/dctm_docker/dsis_binary_volume
+              name: dsis-binary-volume
+            {{- end }}
+            {{- if and ((empty (.Values.database.ssl | quote) | ternary .Values.global.db_ssl .Values.database.ssl)) (eq (.Values.database.dbSchemaName | default .Values.global.dbSchema_Name) "oracle") }}
+            - mountPath: /opt/dctm/data/oracle_wallet
+              subPath: data/dcs-pg/oracle_wallet
+              name: dcs-pg-pvc
+            {{- end }}
+            {{- if (empty (.Values.certificate.use_certificate | quote) | ternary .Values.global.useCertificate .Values.certificate.use_certificate) }}
+            - mountPath: /opt/dctm/certificate
+              name: {{ .Values.dbrpersistentVolume.dbrdataPVCName | default .Values.global.dbrdataPVCName }}
+              subPath: certificate/{{ .Values.dbrpersistentVolume.dbrdataPVCName | default .Values.global.dbrdataPVCName }}
+            {{- end }}
+            {{- if and .Values.global.internalTlsEnable .Values.global.useCertificate .Values.global.createCommonTruststore }}
+            - name: core-cert-volume
+              mountPath: /usr/src/dcc/corecertificate/corecertificate.crt
+              subPath: corecertificate.crt
+              readOnly: true
+            {{- end }}
+          resources:
+                requests:
+                  memory: {{ .Values.coreNotification.resources.requests.memory | quote  }}
+                  cpu: {{ .Values.coreNotification.resources.requests.cpu | quote  }}
+                limits:
+                  memory: {{ .Values.coreNotification.resources.limits.memory | quote  }}
+                  cpu: {{ .Values.coreNotification.resources.limits.cpu | quote  }}
+      volumes:
+        {{- if and .Values.global.internalTlsEnable .Values.global.useCertificate .Values.global.createCommonTruststore }}
+        - name: core-cert-volume
+          secret:
+            secretName: core-share-cert
+        {{- end }}
+        - name: {{ .Values.coreNotification.prefix }}-config-volume
+          configMap:
+            name: {{ .Values.coreNotification.prefix }}-configmap
+            items:
+              - key: database.properties
+                path: database.properties
+              - key: ExtApi.config
+                path: ExtApi.config
+              - key: log4j2.xml
+                path: log4j2.xml
+              - key: service-registry-location.properties
+                path: service-registry-location.properties
+        - name: {{ .Values.coreNotification.prefix }}-pv
+        {{ if .Values.pvc.enablePV }}
+          persistentVolumeClaim:
+            claimName: {{ .Values.prefix | default .Values.global.dccPrefix }}-{{ .Values.coreNotification.prefix }}-pvc
+        {{ else }}
+          emptyDir : {}
+        {{ end }}
+        {{- if (empty (.Values.coreNotification.newrelic.enabled | quote) | ternary .Values.global.newrelic .Values.coreNotification.newrelic.enabled) }}
+        - name: {{ .Values.coreNotification.prefix }}-secret-volume
+          secret:
+            secretName: {{ .Values.prefix | default .Values.global.dccPrefix }}-{{ .Values.coreNotification.prefix }}-secret
+            optional: false
+        {{- end}}
+        {{- if and ((empty (.Values.database.ssl | quote) | ternary .Values.global.db_ssl .Values.database.ssl)) (eq (.Values.database.dbSchemaName | default .Values.global.dbSchema_Name) "postgres") }}
+        - name: {{ .Values.coreNotification.prefix }}-db-secret-volume
+          secret:
+            secretName: db-secret
+            optional: false
+        {{- end}}
+        {{- if (empty (.Values.vault.enabled | quote) | ternary .Values.global.isVaultEnabled .Values.vault.enabled) }}
+        - name: dsis-binary-volume
+          persistentVolumeClaim:
+            claimName: dsis-binary-pvc
+        - name: vault-volume
+          configMap:
+            name: dctm-vault-configmap
+        {{- end }}
+        {{- if and ((empty (.Values.database.ssl | quote) | ternary .Values.global.db_ssl .Values.database.ssl)) (eq (.Values.database.dbSchemaName | default .Values.global.dbSchema_Name) "oracle") }}
+        - name: dcs-pg-pvc
+          persistentVolumeClaim:
+            claimName: dcs-pg-pvc
+        {{- end }}
+        {{- if (empty (.Values.certificate.use_certificate | quote) | ternary .Values.global.useCertificate .Values.certificate.use_certificate) }}
+        - name: {{ .Values.dbrpersistentVolume.dbrdataPVCName | default .Values.global.dbrdataPVCName }}
+          persistentVolumeClaim:
+            claimName: {{ .Values.certificate.dbrserviceName | default .Values.global.dbrServiceName }}-pvc
+        {{- end }}
+{{ end }}
+---
+{{ if eq .Values.mailService.enabled true }}
+## Mail Service Deployment ##
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  labels:
+    app: {{ .Values.prefix | default .Values.global.dccPrefix }}-{{ .Values.mailService.prefix }}
+  name: {{ .Values.prefix | default .Values.global.dccPrefix }}-{{ .Values.mailService.prefix }}
+  namespace: {{ .Values.namespace | default .Release.Namespace }}
+spec:
+  serviceName: {{ .Values.prefix | default .Values.global.dccPrefix }}-{{ .Values.mailService.prefix }}-service
+  replicas: {{ .Values.mailService.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Values.prefix | default .Values.global.dccPrefix }}-{{ .Values.mailService.prefix }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.prefix | default .Values.global.dccPrefix }}-{{ .Values.mailService.prefix }}
+    spec:
+      serviceAccountName: {{ .Values.serviceAccount.serviceAccountName | default .Values.global.documentumserviceaccount }}
+      {{- if .Values.images.pullSecrets | default .Values.global.pullSecretName }}
+      imagePullSecrets:
+        - name: {{ .Values.images.pullSecrets | default .Values.global.pullSecretName }}
+      {{ end }}
+      containers:
+        - name: {{ .Values.prefix | default .Values.global.dccPrefix }}-{{ .Values.mailService.prefix }}
+          image: {{ .Values.mailService.image.repository| default .Values.global.repository }}/{{ .Values.mailService.image.name }}:{{ .Values.mailService.image.tag }}
+          imagePullPolicy: {{ .Values.mailService.image.pullPolicy | default .Values.global.pullPolicyType }}
+          env:
+            - name: vaultEnabled
+              value: {{ quote (.Values.vault.enabled | default .Values.global.isVaultEnabled) }}
+            - name: httpsEnabled
+              value: {{ quote ( .Values.mailService.httpsmode.enabled | default .Values.global.internalTlsEnable) }}
+          command: ["/bin/sh","-c"]
+          readinessProbe:
+            grpc:
+              port: {{ .Values.mailService.configMap.serviceRegistry.serverPort }}
+            initialDelaySeconds: 300
+            periodSeconds: 150
+          livenessProbe:
+            grpc:
+              port: {{ .Values.mailService.configMap.serviceRegistry.serverPort }}
+            initialDelaySeconds: 300
+            periodSeconds: 150
+          {{- if (empty (.Values.mailService.newrelic.enabled | quote) | ternary .Values.global.newrelic .Values.mailService.newrelic.enabled) }}
+          {{- if eq (default .Values.global.proxy.enabled .Values.mailService.proxy.enabled) true }}
+          args: ["sh /usr/src/dcc/vaultServiceUtil.sh && sh /usr/src/dcc/exportcert.sh && java -Djava.net.useSystemProxies=true -Dhttps.proxyHost={{ .Values.mailService.proxy.proxyHost | default .Values.global.proxy.host }} -Dhttps.proxyPort={{ .Values.mailService.proxy.proxyPort | default .Values.global.proxy.port }} -Dhttps.nonProxyHosts=\"{{ .Values.mailService.proxy.noProxyHosts | default (include "formatNoProxy" . ) }}|{{ .Values.prefix | default .Values.global.dccPrefix }}-{{ .Values.consul.prefix }}-service\" -Dhttp.nonProxyHosts=\"{{ .Values.mailService.proxy.noProxyHosts | default (include "formatNoProxy" . ) }}|{{ .Values.prefix | default .Values.global.dccPrefix }}-{{ .Values.consul.prefix }}-service\" -javaagent:/opt/newrelic/newrelic.jar -Djava.io.tmpdir=/var/tmp -Dlog4j.configurationFile=file:/usr/src/dcc/MailService/config/log4j2.xml -jar /usr/src/dcc/MailService/mailservice-1.0.0-SNAPSHOT.jar"]
+          {{- else }}
+          args: ["sh /usr/src/dcc/vaultServiceUtil.sh && sh /usr/src/dcc/exportcert.sh && java -javaagent:/opt/newrelic/newrelic.jar -Djava.io.tmpdir=/var/tmp -Dlog4j.configurationFile=file:/usr/src/dcc/MailService/config/log4j2.xml -jar /usr/src/dcc/MailService/mailservice-1.0.0-SNAPSHOT.jar"]
+          {{- end }}
+          {{ else }}
+          {{- if eq (default .Values.global.proxy.enabled .Values.mailService.proxy.enabled) true }}
+          args: ["sh /usr/src/dcc/exportcert.sh && sh /usr/src/dcc/vaultServiceUtil.sh && java -Djava.net.useSystemProxies=true -Dhttps.proxyHost={{ .Values.mailService.proxy.proxyHost | default .Values.global.proxy.host }} -Dhttps.proxyPort={{ .Values.mailService.proxy.proxyPort | default .Values.global.proxy.port }} -Dhttps.nonProxyHosts=\"{{ .Values.mailService.proxy.noProxyHosts | default (include "formatNoProxy" . ) }}|{{ .Values.prefix | default .Values.global.dccPrefix }}-{{ .Values.consul.prefix }}-service\" -Dhttp.nonProxyHosts=\"{{ .Values.mailService.proxy.noProxyHosts | default (include "formatNoProxy" . ) }}|{{ .Values.prefix | default .Values.global.dccPrefix }}-{{ .Values.consul.prefix }}-service\" -Dlog4j.configurationFile=file:/usr/src/dcc/MailService/config/log4j2.xml -jar /usr/src/dcc/MailService/mailservice-1.0.0-SNAPSHOT.jar"]
+          {{- else }}
+          args: ["sh /usr/src/dcc/exportcert.sh && sh /usr/src/dcc/vaultServiceUtil.sh && java -Dlog4j.configurationFile=file:/usr/src/dcc/MailService/config/log4j2.xml -jar /usr/src/dcc/MailService/mailservice-1.0.0-SNAPSHOT.jar"]
+          {{- end }}
+          {{ end }}
+          volumeMounts:
+            - mountPath: /usr/src/dcc/MailService/config
+              name: {{ .Values.mailService.prefix }}-config-volume
+            - name: {{ .Values.mailService.prefix }}-pv
+              mountPath: /usr/src/DCC/logs
+            {{- if (empty (.Values.mailService.newrelic.enabled | quote) | ternary .Values.global.newrelic .Values.mailService.newrelic.enabled) }}
+            - mountPath: /opt/newrelic/newrelic.yml
+              subPath: newrelic.yml
+              name: {{ .Values.mailService.prefix }}-secret-volume
+            {{- end}}
+            {{- if (empty (.Values.vault.enabled | quote) | ternary .Values.global.isVaultEnabled .Values.vault.enabled) }}
+            - mountPath: /opt/dctm_docker/vault_config
+              name: vault-volume
+            - mountPath: /opt/dctm_docker/dsis_binary_volume
+              name: dsis-binary-volume
+            {{- end }}
+            {{- if (empty (.Values.certificate.use_certificate | quote) | ternary .Values.global.useCertificate .Values.certificate.use_certificate) }}
+            - mountPath: /opt/dctm/certificate
+              name: {{ .Values.dbrpersistentVolume.dbrdataPVCName | default .Values.global.dbrdataPVCName }}
+              subPath: certificate/{{ .Values.dbrpersistentVolume.dbrdataPVCName | default .Values.global.dbrdataPVCName }}
+            {{- end }}
+          resources:
+            requests:
+              memory: {{ .Values.mailService.resources.requests.memory | quote  }}
+              cpu: {{ .Values.mailService.resources.requests.cpu | quote  }}
+            limits:
+              memory: {{ .Values.mailService.resources.limits.memory | quote  }}
+              cpu: {{ .Values.mailService.resources.limits.cpu | quote  }}
+      volumes:
+        - name: {{ .Values.mailService.prefix }}-config-volume
+          configMap:
+            name: {{ .Values.mailService.prefix }}-configmap
+            items:
+              - key: mailservice.properties
+                path: mailservice.properties
+              - key: service-registry-location.properties
+                path: service-registry-location.properties
+              - key: log4j2.xml
+                path: log4j2.xml
+        - name: {{ .Values.mailService.prefix }}-pv
+        {{ if .Values.pvc.enablePV }}
+          persistentVolumeClaim:
+            claimName: {{ .Values.prefix | default .Values.global.dccPrefix }}-{{ .Values.mailService.prefix }}-pvc
+        {{ else }}
+          emptyDir : {}
+        {{ end }}
+        {{- if (empty (.Values.mailService.newrelic.enabled | quote) | ternary .Values.global.newrelic .Values.mailService.newrelic.enabled) }}
+        - name: {{ .Values.mailService.prefix }}-secret-volume
+          secret:
+            secretName: {{ .Values.prefix | default .Values.global.dccPrefix }}-{{ .Values.mailService.prefix }}-secret
+            optional: false
+        {{- end}}
+        {{- if (empty (.Values.vault.enabled | quote) | ternary .Values.global.isVaultEnabled .Values.vault.enabled) }}
+        - name: dsis-binary-volume
+          persistentVolumeClaim:
+            claimName: dsis-binary-pvc
+        - name: vault-volume
+          configMap:
+            name: dctm-vault-configmap
+        {{- end }}
+        {{- if (empty (.Values.certificate.use_certificate | quote) | ternary .Values.global.useCertificate .Values.certificate.use_certificate) }}
+        - name: {{ .Values.dbrpersistentVolume.dbrdataPVCName | default .Values.global.dbrdataPVCName }}
+          persistentVolumeClaim:
+            claimName: {{ .Values.certificate.dbrserviceName | default .Values.global.dbrServiceName }}-pvc
+        {{- end }}
+{{ end }}

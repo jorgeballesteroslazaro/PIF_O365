@@ -1,0 +1,130 @@
+
+## Notification configmap ##
+apiVersion: v1
+data:
+  database.properties: |
+    db.reconnect-attempts=10
+    jdbc.dbSchemaName={{ .Values.configMap.database.dbSchemaName |  default .Values.global.dbSchema_Name}}
+    jdbc.driverClassName={{ .Values.configMap.database.driverClassName |  default .Values.global.driverClass_Name }}
+{{- if and (eq (empty (.Values.configMap.database.db_ssl) | ternary .Values.global.db_ssl .Values.configMap.database.db_ssl) true) (eq (.Values.configMap.database.db_type |  default .Values.global.dbtype) "postgres") }}
+    jdbc.url={{ .Values.configMap.database.url }}&ssl=true&sslmode={{ .Values.configMap.database.db_ssl_mode |  default .Values.global.db_ssl_mode }}&sslrootcert=/usr/src/M365/dbrootca.crt
+{{ else }}
+    jdbc.url={{ .Values.configMap.database.url }}
+{{end}}
+    jdbc.username={{ .Values.configMap.database.username |  default .Values.global.databaseusername }}
+    jdbc.password={{ .Values.configMap.database.password  }}
+    database.secretkey_vault={{ .Values.configMap.database.dbSecretKeyName  }}
+    dbcp.initialSize=20
+    dbcp.maxActive=30
+    vaultEnabled={{ (empty (.Values.configMap.vault.enabled) | ternary .Values.global.isVaultEnabled .Values.configMap.vault.enabled) }}
+  ExtApi.config: |
+    core_notification_api_path = /api/v3/notifications
+    schedule_interval = {{ .Values.configMap.extApiconfig.schedule_interval }}
+    max_notification_limit = 100
+    config-load-from-database-retry-interval = {{ .Values.configMap.extApiconfig.config_load_from_database_retry_interval }}
+    otds-auth-rerty-interval = {{ .Values.configMap.extApiconfig.otds_auth_rerty_interval }}
+    otds-max-retries-before-account-lockout = {{ .Values.configMap.extApiconfig.otds_max_retries_before_account_lockout }}
+    otds-account-lockout-period = {{ .Values.configMap.extApiconfig.otds_account_lockout_period }}
+    notification_processing_child_threads_max_count = {{ .Values.configMap.extApiconfig.notification_processing_child_threads_max_count }}
+    service_port = {{ .Values.configMap.extApiconfig.service_port }}
+    ms-tenant-id = {{ .Values.configMap.extApiconfig.mstenantid |  default .Values.global.mstenantid }}
+    ms-client-id = {{ .Values.configMap.extApiconfig.msclientid |  default .Values.global.msClientId }}
+    ms-secret = {{ .Values.configMap.extApiconfig.mssecret }}
+    D2DocumentumRestURL = {{- $value := (.Values.configMap.extApiconfig.d2resturl) | default (include "documentum.publicIngress" .) }}
+                    {{- if eq $value (include "documentum.publicIngress" .)}}
+                      {{- $value = printf  "%s/%s" $value .Values.global.d2restWebappName }}
+                    {{- end }}
+                    {{- $value }}
+    otdsUrl = {{ .Values.configMap.extApiconfig.otdsserverurl  | default (include "documentum.publicOtdsSvcUrl" .)}}
+    otdsClientId = {{ .Values.configMap.extApiconfig.otdsclientid  }}
+    proxy-host= {{ .Values.configMap.extApiconfig.proxyhost | default .Values.global.proxy.host}}
+    proxy-port= {{ .Values.configMap.extApiconfig.proxyport | default .Values.global.proxy.port}}
+    teams-ns-enabled= {{ .Values.configMap.extApiconfig.teamsNSEnabled }}
+    oes-ns-enabled= {{ .Values.configMap.extApiconfig.oesNSEnabled }}
+    max-event-limit= {{ .Values.configMap.extApiconfig.maxEventLimit }}
+
+  log4j2.xml: |
+    <?xml version="1.0" encoding="UTF-8"?>
+    <Configuration status="debug" monitorInterval="5">
+
+        <Properties>
+            <Property name="logPath">//usr//src//ccsmartview//logs</Property>
+            <Property name="logPattern">%-5p: [%t]: [%tid]: %c - %d{dd MMM yyy HH:mm:ss,SSS} - %m%n</Property>
+            <Property name="teamsLogAppender">TeamsLogAppender</Property>
+            <Property name="oesLogAppender">OesLogAppender</Property>
+            <Property name="teamsLogFile">TeamsNotificationService</Property>
+            <Property name="oesLogFile">OesNotificationService</Property>
+            <Property name="logFileExt">.log</Property>
+            <Property name="rollOverLogFileExt">.log</Property>
+            <Property name="rollingSize">10 MB</Property>
+            <Property name="rollOverStrategy">5</Property>
+        </Properties>
+
+        <Appenders>
+            <Routing name="RoutingAppender">
+              <Routes pattern="${ctx:logType}">
+                <Route key="${teamsLogAppender}">
+                    <RollingFile name="RollingFileTeams"
+                                 fileName="${logPath}//${teamsLogFile}${logFileExt}"
+                                 filePattern="${logPath}//${teamsLogFile}%i${rollOverLogFileExt}">
+                    <PatternLayout pattern="${logPattern}"/>
+                    <Policies>
+                        <SizeBasedTriggeringPolicy size="${rollingSize}"/>
+                    </Policies>
+                    <DefaultRolloverStrategy max="${rollOverStrategy}"/>
+                    </RollingFile>
+                </Route>
+                <Route key="${oesLogAppender}">
+                  <RollingFile name="RollingFileOes"
+                                 fileName="${logPath}//${oesLogFile}${logFileExt}"
+                                 filePattern="${logPath}//${oesLogFile}%i${rollOverLogFileExt}">
+                    <PatternLayout pattern="${logPattern}"/>
+                    <Policies>
+                        <SizeBasedTriggeringPolicy size="${rollingSize}"/>
+                    </Policies>
+                    <DefaultRolloverStrategy max="${rollOverStrategy}"/>
+                    </RollingFile>
+                </Route>
+              </Routes>
+            </Routing>
+            <Console name="Console" target="SYSTEM_OUT">
+                <PatternLayout pattern="${logPattern}" />
+            </Console>
+        </Appenders>
+
+        <Loggers>
+            <!-- Application Loggers -->
+            <Logger name="com.opentext.teamscc" level="{{ .Values.configMap.logLevel }}">
+                <AppenderRef ref="RoutingAppender"/>
+            </Logger>
+            <Logger name="org.apache.log4j.xml" level="{{ .Values.configMap.logLevel }}">
+                <AppenderRef ref="CONSOLE"/>
+            </Logger>
+            <!-- Root Logger (optional) -->
+            <Root level="warn">
+                <AppenderRef ref="Console"/>
+                <AppenderRef ref="RoutingAppender"/>
+            </Root>
+        </Loggers>
+    </Configuration>
+{{- if and  (eq (empty (.Values.configMap.database.db_ssl) | ternary .Values.global.db_ssl .Values.configMap.database.db_ssl) true) (eq (.Values.configMap.database.db_type | default .Values.global.dbtype) "oracle") }}
+  tnsnames.ora: |
+    {{ .Values.configMap.database.db_servicename  |  default .Values.global.db_service }} =
+     (DESCRIPTION =
+       (ADDRESS = (PROTOCOL = TCPS)(HOST = {{ .Values.configMap.database.db_host | default .Values.global.db_hostname }} )(PORT = {{ .Values.configMap.database.db_port | default .Values.global.dbport }}))
+       (CONNECT_DATA =
+          (SERVER = DEDICATED)
+          (SERVICE_NAME = {{ .Values.configMap.database.db_servicename | default .Values.global.db_service }})
+      )
+      (SECURITY =
+       (MY_WALLET_DIRECTORY = /opt/ccsmartview/data/oracle_wallet)
+       (SSL_VERSION = 1.2)
+       (SSL_CLIENT_AUTHENTICATION = FALSE)
+      )
+    )
+{{end}}
+kind: ConfigMap
+metadata:
+  name: {{ .Values.prefix }}-configmap
+  namespace: {{  .Values.namespace  | default .Release.Namespace }}
+

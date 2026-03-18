@@ -1,0 +1,201 @@
+{{- if .Values.global.peinstaller.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.configMap.bpm_configMap_name }}
+data:
+{{- if (eq .Values.global.proxy.enabled true) }}
+  msgraph: |
+    network.proxy.server={{ .Values.bpm.msgraph.proxyServer | default .Values.global.proxy.host }}
+    network.proxy.port={{ .Values.bpm.msgraph.proxyPort | default .Values.global.proxy.port }}
+{{ end }}
+  dctm-rest-security: | 
+    #########################################################################
+    ##          Security Configuration for Client Token Cookie             ##
+    #########################################################################
+    # This property is used by all expiration policies. The timeout in seconds for the client token cookie.
+    # This property MUST be specified with a non-empty value. The default is 3600 seconds.
+    # This option won't take effect when rest.security.client.token.session.cookie=true
+    #
+    # BPM uses sort lived tickets average time for 3 mins or 180secs.
+    #
+    rest.security.client.token.timeout={{ .Values.bpm.dctmRestSecurity.clientTokenTimeout }}
+    # Whether disable the encryption and decryption for the client tokens
+    # When set the value to true, then no cryption is processed.
+    # And the REST services have no direct dependencies on the cryption library, such as RSA JSafe, Bouncy Castle.
+    # The secure random based on providers are also replaced by the standard JRE provided SecureRandom.
+    # The default value is false.
+    #
+    rest.security.crypto.disabled={{ .Values.bpm.dctmRestSecurity.cryptoDisabled }}
+    # Symmetric crypto algorithm that RESTful Services uses to encrypt and decrypt client tokens, the block cipher mode,
+    # and the padding strategy in the following pattern:
+    # rest.security.crypto.algorithm=<crypto_algorithm>/<block_cipher_mode>/<padding_strategy>
+    # Each provider MAY have different implementations and limitations. This property is optional. We do not recommend that
+    # you set <padding_strategy> to NoPadding because the CT length is not always compatible with the block size.
+    # Default: AES/CBC/PKCS5Padding
+    #
+    rest.security.crypto.algorithm={{ .Values.bpm.dctmRestSecurity.cryptoAlgorithm }}
+    # Crypto algorithm parameters class name
+    # Valid values: javax.crypto.spec.IvParameterSpec, or blank.
+    # If the algorithm requires extra parameters, such as initialization vector (IV), set this property to
+    # javax.crypto.spec.IvParameterSpec. Otherwise, leave it blank.
+    # For example, if AES/CBC/PKCS5Padding is used, the value MUST be set to javax.crypto.spec.IvParameterSpec.
+    # If AES/ECB/PKCS5Padding is used, the value MUST be blank. This property is optional for the ECB, CBC, OFB, and CFB
+    # modes. The system selects the correct class for these modes.
+    #
+    rest.security.crypto.algorithm.parameters.class={{ .Values.bpm.dctmRestSecurity.cryptoAlgorithmParametersClass }}
+    # Algorithm to generate the secret key
+    # Examples: AES, DESede, DES, RC5, HmacMD5, and Blowfish
+    # The key generating algorithm MUST be compatible with the crypto algorithm. This property is optional.
+    # Default: AES
+    #
+    rest.security.key.algorithm={{ .Values.bpm.dctmRestSecurity.keyAlgorithm }}
+    # Random algorithm name
+    # Default: SHA1PRNG
+    # You CAN set this property to other random generation algorithms.
+    #
+    rest.security.random.algorithm={{ .Values.bpm.dctmRestSecurity.randomAlgorithm }}
+    # Crypto provider name
+    # Default: empty (the JVM provider)
+    # Alternatively, set this property to 'BC' to use the Bouncy Castle provider. When REST Services uses the Bouncy Castle
+    # provider, its library MUST be specified in the class path.
+    # To use RSA provider, the value can be set to JsafeJCE. And also please make sure the RSA libs are in the class path.
+    #
+    rest.security.crypto.provider={{ .Values.bpm.dctmRestSecurity.cryptoProvider }}
+    # Whether replace the application/web server's registered provider with the same provider name.
+    # Default: false
+    # If the provider with name specified by rest.security.crypto.provider is already registered in the server, then whether
+    # replace it by rest.security.crypto.provider.class, depends on the value of this configuration. Set the value to false,
+    # if the provider is already existed, then the REST will try to reuse it. Otherwise, the registered provided will be
+    # removed, and rest.security.crypto.provider.class will be registered.
+    #
+    rest.security.crypto.provider.force.replace={{ .Values.bpm.dctmRestSecurity.cryptoProviderForceReplace }}
+    # Crypto provider class name
+    # Default: empty (the JVM provider)
+    # It can be com.rsa.jsafe.provider.JsafeJCE for the RSA JsafeJCE provider.
+    # Or org.bouncycastle.jce.provider.BouncyCastleProvider for the Bouncy Castle as well.
+    # This property is optional if the provider is RSA JsafeJCE or Bouncy Castle.
+    #
+    rest.security.crypto.provider.class={{ .Values.bpm.dctmRestSecurity.cryptoProviderClass }}
+    # Key size in bit for the secret key
+    # This property MUST be compatible with the crypto algorithm.
+    # If you want to use a key size larger than 128 bits, download the "JCE Unlimited Strength Jurisdiction Policy Files" from
+    # the Oracle web site. By default, the key size is 64 for DES, and 128 for all other algorithms.
+    #
+    rest.security.crypto.key.size={{ .Values.bpm.dctmRestSecurity.cryptoKeySize }}
+    # Block size in bit
+    # This property MUST be compatible with the crypto algorithm. By default, the block size is 64 bits for Blowfish, DES,
+    # DESede, RC2, and RC5, and 128 bits for all other algorithms.
+    #
+    rest.security.crypto.block.size={{ .Values.bpm.dctmRestSecurity.cryptoBlockSize }}
+    # Crypto salt for client token encryption and decryption
+    # For a multi-node deployment of REST servers, this property MUST be consistently 	set across all REST servers. For a
+    # single-node deployment of REST servers, this property is optional. The value CAN be any ascII characters. We recommend
+    # that you specify a text no less than 8 characters.
+    #
+    {{- if .Values.bpm.dctmRestSecurity.cryptoKeySalt }}
+    rest.security.crypto.key.salt={{ .Values.bpm.dctmRestSecurity.cryptoKeySalt }}
+    {{- else }}
+    rest.security.crypto.key.salt=
+    {{- end }}
+    # Specifies the mode of the JsafeJCE provider.
+    # Valid values are:
+    #  -	FIPS140_MODE: only FIPS140-approved algorithms and default algorithms are allowed
+    #  -	NON_FIPS140_MODE: all algorithms are allowed
+    # When you deploy Documentum REST Services on IBM WebSphere and use CAS or Kerberos authentication, the value must be
+    # set to NON_FIPS140_MODE.
+    #
+    # This property only takes effect when CryptoJ toolkit in runtime supports to switch mode.
+    #
+    # Editing property "com.rsa.cryptoj.fips140initialmode" in Java security properties file
+    # (by default, it is JAVA_HOME/lib/security/java.security) will change the initial FIPS mode.
+    # For example, "com.rsa.cryptoj.fips140initialmode=NON_FIPS140_MODE" will set the initial mode as NON FIPS.
+    #
+    # Currently REST will only try to switch mode at runtime when NON_FIPS140_MODE is specified here no matter what the initial FIPS mode is.
+    # When it fails to switch mode, logs are dumped to indicate the failure and the working FIPS mode is dumped as well.
+    #
+    # Default value: FIPS140_MODE
+    #
+    rest.security.crypto.provider.jsafejce.mode={{ .Values.bpm.dctmRestSecurity.cryptoProviderJsafejceMode }}
+
+  {{- if .Values.bpm.log4j.enable }}
+  log4j: |
+    #------------------- Log4j2 internals  --------------------------
+    #The level of internal Log4j events that should be logged to the console.
+    # Valid values for this attribute are "trace", "debug", "info", "warn",
+    # "error" and "fatal"
+    status = error
+    #Either "err" for stderr, "out" for stdout, a file path, or a URL.
+    dest = err
+    #The name of the configuration.
+    name = BPMPropertiesConfig
+    monitorInterval = 5
+    
+    rootLogger.level= {{ .Values.bpm.log4j.rootLogLevel }}
+    rootLogger.appenderRefs = A1,F1
+    rootLogger.appenderRef.A1.ref = STDOUT
+    rootLogger.appenderRef.F1.ref = File
+    
+    #------------------- CONSOLE --------------------------
+    appender.A1.type = Console
+    appender.A1.name = STDOUT
+    appender.A1.filter.threshold.type = ThresholdFilter
+    appender.A1.filter.threshold.level = ERROR
+    appender.A1.layout.type = PatternLayout
+    appender.A1.layout.pattern = %d{ISO8601} %5p [%t] [%c] - %m%n
+    
+    #------------------- FILE --------------------------
+    appender.F1.type = RollingFile
+    appender.F1.name = File
+    appender.F1.fileName = /opt/dctm/{{ .Values.jmsVersion }}/logs/bpm.log
+    appender.F1.filePattern = /opt/dctm/{{ .Values.jmsVersion }}/logs/bpm-%d{MM-dd-yy-HH-mm-ss}-%i.log
+    appender.F1.layout.type = PatternLayout
+    appender.F1.layout.pattern = %d{ISO8601} %5p [%t] [%c] - %m%n
+    appender.F1.policies.type = Policies
+    appender.F1.policies.size.type = SizeBasedTriggeringPolicy
+    appender.F1.policies.size.size = 10MB
+    appender.F1.strategy.type = DefaultRolloverStrategy
+    appender.F1.strategy.max = 10
+    
+    #------------------- BPM --------------------------
+    appender.bpm.type = RollingFile
+    appender.bpm.name = bpm
+    appender.bpm.fileName = /opt/dctm/{{ .Values.jmsVersion }}/logs/bpm-runtime.log
+    appender.bpm.filePattern = /opt/dctm/{{ .Values.jmsVersion }}/logs/bpm-runtime-%d{MM-dd-yy-HH-mm-ss}-%i.log
+    appender.bpm.layout.type = PatternLayout
+    appender.bpm.layout.pattern = %d{ISO8601} %5p [%t] [%c] - %m%n
+    appender.bpm.policies.type = Policies
+    appender.bpm.policies.size.type = SizeBasedTriggeringPolicy
+    appender.bpm.policies.size.size = 1MB
+    appender.bpm.strategy.type = DefaultRolloverStrategy
+    appender.bpm.strategy.max = 10
+    
+    logger.bpm.name = com.documentum.bpm
+    logger.bpm.level = {{ .Values.bpm.log4j.bpmLogLevel }}
+    logger.bpm.additivity = false
+    logger.bpm.appenderRef.bpm.ref = bpm
+    
+    logger.bps.name = com.documentum.bps
+    logger.bps.level = {{ .Values.bpm.log4j.bpsLogLevel }}
+    logger.bps.additivity = false
+    logger.bps.appenderRef.bpm.ref = bpm
+    #------------------- FILE_TRACE --------------------------
+    
+    appender.FILE_TRACE.type = RollingFile
+    appender.FILE_TRACE.name = FILE_TRACE
+    appender.FILE_TRACE.fileName = /opt/dctm/{{ .Values.jmsVersion }}/logs/bpm_trace.log
+    appender.FILE_TRACE.filePattern = /opt/dctm/{{ .Values.jmsVersion }}/logs/bpm_trace-%d{MM-dd-yy-HH-mm-ss}-%i.log
+    appender.FILE_TRACE.layout.type = PatternLayout
+    appender.FILE_TRACE.layout.pattern= %d{ISO8601} %5p [%t] [%c] - %m%n
+    appender.FILE_TRACE.policies.type = Policies
+    appender.FILE_TRACE.policies.size.type = SizeBasedTriggeringPolicy
+    appender.FILE_TRACE.policies.size.size=100MB
+    appender.FILE_TRACE.strategy.type = DefaultRolloverStrategy
+    appender.FILE_TRACE.strategy.max = 10
+    
+    logger.FILE_TRACE.name = tracing
+    logger.FILE_TRACE.level = {{ .Values.bpm.log4j.traceLogLevel }}
+    logger.FILE_TRACE.additivity = false
+    logger.FILE_TRACE.appenderRef.FILE_TRACE.ref = FILE_TRACE
+  {{- end }}
+{{- end }}

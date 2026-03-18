@@ -1,0 +1,84 @@
+# Default values for content parser.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+service:
+  name: ds-parser
+  port: 8400
+  targetPort: 8400
+  protocol: TCP
+  portname: http
+replicaCount: 1
+
+image:
+  repository: 
+  name: ot-dctm-search-parser
+  tag: latest
+  pullPolicy:
+
+ssl:
+  enabled: false
+  protocol: TLS
+  enabledProtocols: TLSv1.3
+  certificateMountPath: /opt/dctm/certificate
+  keyStore:
+  keyStorePassword:
+  keyStoreType:
+  keyAlias: commontls
+  keyPassword:
+zookeeper:
+  clientCnxnSocket: "org.apache.zookeeper.ClientCnxnSocketNetty"
+  clientSecure: true
+  sslProtocol: 'TLSv1.3'
+  sslTrustStoreLocation:
+  sslTrustStorePassword:
+javax:
+  sslTrustStoreLocation: #Solr truststore
+  sslTrustStorePassword: #Solr truststore
+jdk:
+  tlsClientProtocols: 'TLSv1.3'
+
+env:
+  JAVA_OPTS: -Xms1500m -Xmx3750m
+  CONTENT_INDEXING_JMS_CONCURRENCY: "16"
+
+# Configuration
+persistence:
+  pvcName: parser-pvc
+  accessModes: ReadWriteMany
+  size: 8Gi
+  storageClass: 
+  allowUninstallWithVolumes: false
+  existVolumePv:
+  awsEFS: false
+  awsEFSCSIDriver: efs.csi.aws.com
+  awsEFSCSIHandle: fs-07440be4bc6d8e2a6::fsap-0661fb732267344fc
+  awsEFSCSIClaimPolicy: Retain
+
+serviceAccount:
+  createserviceaccount:
+  serviceAccountName: 
+newrelic:
+  enable:
+  app_name: DCTM_PARSER_APP
+livenessProbe:
+  initialDelaySeconds: 60
+  periodSeconds: 30
+
+readinessProbe:
+  initialDelaySeconds: 60
+  periodSeconds: 30
+
+resources:
+  requests:
+    cpu: 200m
+    memory: 1Gi
+  limits:
+    cpu: 1000m
+    memory: 2Gi
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}

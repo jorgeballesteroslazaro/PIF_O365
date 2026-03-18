@@ -1,0 +1,222 @@
+################################################################################################
+#                                                                                              #
+#                                  This is a YAML-formatted file.                              #
+#                             Helm Chart for Output Server environment.                        #
+#                        Declare the variables to be passed to the templates.                  #
+################################################################################################
+
+###################################### G L O B A L S ###########################################
+    global:
+    
+      # Enter docker image tag number
+      # We are using Anchor Tag to change right hand side value. 
+      # Example: 25.2.0
+      release_version: &version 25.2.0
+      
+      #Termination Grace period in seconds
+      #Recommended min value is 120 sec
+      #Example: "120"
+      graceperiodinseconds: "120"
+
+      # Enable/Disable Sanity test post deployment      
+      #Example: "1" or "0"
+      sanitytest: "1"
+      
+###################################### G L O B A L S   E N D S ################################# 
+
+###################################### S E C R E T S ###########################################
+
+    #Enter the password for below mentioned components
+    #Example shown here for password is base64 encoded
+    secrets:
+
+      ####################### OUTPUT SERVER SECRETS #################
+           
+      #Only if Output Server Solr Module is enabled
+      #Enter Solr Password
+      #Example: "T1QxMjM0NTY="
+      SOLR_PASSWORD: "T3QwczEh"
+
+###################################### S E C R E T S   E N D ################################### 
+
+###################################### R E L E A S E   T A G S #################################
+
+    #Enter the tag for below mentioned components  
+    tags:
+    
+      osprimary: *version
+      
+      osscale: *version
+      
+      osclient: *version
+      
+      oshaproxy: *version
+      
+      graylog: *version
+      
+###################################### R E L E A S E   T A G S   E N D #########################
+
+###################################### S E R V I C E S #########################################
+
+    ##################################################### 
+    # Enter the value to enable the services 
+    # We are using Anchor Tag to change right hand side value.
+    # Example: true
+    enabled: &service_enabled "true"
+      
+    # Enter the value to disable the services 
+    # We are using Anchor Tag to change right hand side value. 
+    # Example: true
+    disabled: &service_disabled "false"      
+    #####################################################  
+    
+    services:
+    
+      otds: *service_enabled
+      
+      osprimary: *service_enabled
+      
+      osscale: *service_disabled
+      
+      osclient: *service_disabled
+      
+      ingress: *service_enabled 
+      
+      pvc: *service_enabled
+      
+###################################### S E R V I C E S    E N D ################################
+
+###################################### C O M P O N E N T S #####################################
+
+    #Enter the container name for below mentioned components
+    components:
+    
+      #Enter otds container name
+      #Example: "otds"
+      otds: "otds"
+      
+      #Enter Output Server Primary container name
+      #Example: "osprimary"
+      osprimary: "osprimary"
+      
+      #Enter Output Server Scale up container name
+      #Example: "osscale"  
+      osscale: "osscale"
+      
+      #Enter Output Server Client container name
+      #Example: "osclient"  
+      osclient: "osclient"
+      
+      #Enter Output Server haproxy container name
+      #Example: "oshaproxy"
+      oshaproxy: "oshaproxy" 
+      
+###################################### C O M P O N E N T S   E N D #############################
+
+###################################### O U T P U T   S E R V E R    P A R A M E T E R S ########
+
+    #Enter the values for below mentioned environment variables
+    envvariables:
+    
+      #######################################################################   
+      #         OSPRIMARY Container Environment Variables                   #
+      #######################################################################
+      
+      osprimary:
+        
+        #######################################################################   
+        #         OUTPUT SERVER DISTRIBUTOR Environment Variables             #
+        #######################################################################        
+        
+        #Enter 1 to enable Output Server Distributor; if not enter 0 
+        #Example: "1"    
+        ENABLE_OTOS_DISTRIBUTOR: "0"
+        
+        #######################################################################   
+        #         OUTPUT SERVER INTERNATIONAL PRINTING Environment Variables  #
+        #######################################################################         
+        
+        #Enter 1 to enable International Printing; if not enter 0
+        #Example: "1"    
+        ENABLE_INTERNATIONAL_PRINTING: "0"
+        
+        #Enter 1 to enable EOTE; if not enter 0
+        #Example: "1"
+        ENABLE_IP_EOTE: "0"
+        
+        #######################################################################   
+        #         OUTPUT SERVER SECURE ACCESS Environment Variables           #
+        #######################################################################        
+        
+        #Enter 1 to configure Secure Access; if not enter 0
+        #Example: "1"
+        CONFIGURE_SECURE_ACCESS: "0"
+        
+        #Enter 1 to configure IPP Service; if not enter 0
+        #Example: "1"
+        CONFIGURE_IPP_SERVICE: "0"
+        
+        #Enter 1 to configure cloudfax service; if not enter 0
+        #Example: "1"
+        CONFIGURE_CLOUDFAX_SERVICE: "0"
+        
+        #######################################################################   
+        #         OUTPUT SERVER OTOS ANALYTICS Environment Variables          #
+        #######################################################################        
+        
+        #Enter 1 to configure Secure Access; if not enter 0
+        #Example: "1"
+        CONFIGURE_OTOS_ANALYTICS: "0"
+
+        #######################################################################   
+        #         OUTPUT SERVER SAP OMSCB Environment Variables               #
+        ####################################################################### 
+
+
+          ###########################################################   
+          #                    OMSCB Environment Variables          #          
+          ###########################################################         
+        
+        #Enter 1 to configure SAP omscb server; if not enter 0
+        #Example: "0"
+        CONFIGURE_SAP_OMSCB: "0"
+
+          ###########################################################   
+          #                    SAPCON Environment Variables         #          
+          ###########################################################          
+        
+        #Enter 1 to configure SAP sapcon server; if not enter 0
+        #Example: "1"
+        CONFIGURE_SAP_SAPCON: "0"      
+        
+          ###########################################################   
+          #             HPOSMAIL/SAP SMTP Environment Variables     #          
+          ###########################################################         
+        
+        #Enter 1 to configure SAP hposmail server; if not enter 0
+        #Example: "0"
+        CONFIGURE_SAP_HPOSMAIL: "0"
+       
+         ############################################################
+         #             SCPS Environment Variables                   #
+         ############################################################
+
+        #Enter 1 to configure SCPS. It will configure SCPS and SCPSGW servers; if not enter 0
+        #Example: "0"
+        CONFIGURE_SCPS: "0"
+
+        #######################################################################   
+        #         WEB DELIVERY CLIENT Environment Variables                   #
+        #######################################################################
+        
+        #Enter 1 to enable Web Delivery Agent; if not enter 0
+        #Example: "1"
+        ENABLE_WEB_DELIVERY_AGENT: "0"
+        
+       #######################################################################
+       #         WEBSERVER_MEM_BUFFER_SIZE                                   #
+       #######################################################################
+        
+        WEBSERVER_MEM_BUFFER_SIZE: "200"
+
+########################## O U T P U T   S E R V E R    P A R A M E T E R S   E N D #############

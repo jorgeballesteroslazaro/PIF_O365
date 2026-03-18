@@ -1,0 +1,16 @@
+# Headless Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.service.name }}
+spec:
+  clusterIP: None
+  ports:
+  - name: port
+    port: {{ .Values.service.port }}
+    targetPort: {{ .Values.service.targetPort }}
+    protocol: TCP
+  selector:
+    app: {{ .Values.service.name }}
+    name: {{ .Chart.Name }}
+    release: {{ .Release.Name }}  

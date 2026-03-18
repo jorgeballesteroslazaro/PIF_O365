@@ -1,0 +1,19 @@
+{{- if .Values.persistentVolume.users.createPV }}
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: {{ .Values.persistentVolume.users.pvName }}
+spec:
+  capacity:
+    storage: {{ .Values.persistentVolume.users.size }}
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: {{ .Values.persistentVolume.users.storageClass | default .Values.global.rwmStorage }}
+{{ if .Values.persistentVolume.users.awsEFSCSIHandle }}
+  csi:
+    driver: {{ .Values.persistentVolume.awsEFSCSIDriver }}
+    volumeHandle: {{ .Values.persistentVolume.users.awsEFSCSIHandle }}
+{{ end }}
+{{- end }}

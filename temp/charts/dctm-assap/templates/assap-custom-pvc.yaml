@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ .Values.custom.PVCname }}
+spec:
+  accessModes:
+    - {{ .Values.persistentVolumeClaim.accessMode }}
+  # VE #4852332 - Adding the default rwm Storage class
+  storageClassName: {{ .Values.persistentVolumeClaim.storageClass | default .Values.global.rwmStorage}}
+  resources:
+    requests:
+      storage: {{ .Values.custom.size }}

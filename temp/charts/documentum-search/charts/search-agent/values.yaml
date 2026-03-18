@@ -1,0 +1,105 @@
+# Default values for agent.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+service:
+  name: ds-search-agent
+  port: 8200
+  targetPort: 8200
+replicaCount: 1
+
+#use this when connecting to on prem CS
+ingress:
+  name: dsagent
+  domain: search-cs.xplore.cfcr-lab.bp-paas.otxlab.net
+  enable: false
+
+image:
+  repository: 
+  name: ot-dctm-search-agent
+  tag:  latest
+  pullPolicy:
+
+ssl:
+  enabled: false
+  protocol: TLS
+  enabledProtocols: TLSv1.3
+  certificateMountPath: /opt/dctm/certificate
+  keyStore:
+  keyStorePassword:
+  keyStoreType:
+  keyAlias: commontls
+  keyPassword:
+zookeeper:
+  clientSecure: true
+  sslProtocol: 'TLSv1.3'
+  sslTrustStoreLocation:
+  sslTrustStorePassword:
+javax:
+  sslTrustStoreLocation: #Solr truststore
+  sslTrustStorePassword: #Solr truststore
+jdk:
+  tlsClientProtocols: 'TLSv1.3'
+
+env:
+  JAVA_OPTS: -Xms1500m -Xmx3750m
+  #AGENT_ENGINE_HOST_NAME: ds-agent #dsagent.search-cs.xplore.cfcr-lab.bp-paas.otxlab.net
+  #AGENT_ENGINE_PORT: 8200 #80
+  LOG_LEVEL_AGENT: info
+  logging.level.com.opentext.searchsvc.agent.dctm.controller.AgentDctmController: trace
+  dfc.connection.handle_waiting_threads: true
+  dfc.connection.queue_wait_time: 30
+
+docbase:
+  name:
+  user:
+
+configMap:
+  cs:
+    name:
+  jupiter:
+    name: jupiter-configmap
+  fetcher:
+    name: fetcher-configmap
+       
+useSecrets: true
+secrets:
+  cs:
+    name:
+    key: 
+      docbasePassword: installOwnerPassword
+serviceAccount:
+  createserviceaccount: true
+  serviceAccountName: 
+newrelic:
+  enable:
+  app_name: DCTM_AGENT_APP
+vault:
+  enable:
+  vault_configmap: dctm-vault-configmap
+livenessProbe:
+  initialDelaySeconds: 120
+  periodSeconds: 30
+
+readinessProbe:
+  initialDelaySeconds: 120
+  periodSeconds: 30
+resources:
+  requests:
+    cpu: 200m
+    memory: 256Mi
+  limits:
+    cpu: 2000m
+    memory: 1024Mi
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+global:
+  extraDocbases:
+    - name:
+      user:
+      password:

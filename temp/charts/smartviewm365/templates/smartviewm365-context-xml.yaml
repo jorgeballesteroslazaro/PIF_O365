@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Chart.Name }}-context-xml
+  namespace: {{ .Values.namespace  | default .Release.Namespace }}
+  {{- template "configMap.labels" . }}
+data:
+  context.xml: |-
+    <?xml version="1.0" encoding="UTF-8"?>
+
+    <Context>
+    <Resources allowLinking="true" />
+    
+    </Context>

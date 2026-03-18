@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.userName }}-dfc-properties
+  {{- template "configMap.labels" . }}
+data:
+  dfc.properties: |-
+    dfc.data.dir=/opt/dctm
+    dfc.tokenstorage.dir=/opt/dctm/apptoken
+    dfc.tokenstorage.enable=false
+    dfc.docbroker.host={{ .Values.docbroker.serviceName | default .Values.global.dbrServiceName }}-0.{{ .Values.docbroker.serviceName | default .Values.global.dbrServiceName }}.{{ .Values.env.domain  | default (include "documentum.envDomain" .) }}
+    dfc.docbroker.port={{ .Values.docbroker.port | default .Values.global.dbr_port }}
+    dfc.crypto.repository={{ .Values.docbase.name | default .Values.global.docbase }}
+    {{ if (empty (.Values.certificate.use_certificate | quote) | ternary .Values.global.useCertificate .Values.certificate.use_certificate) -}}
+    dfc.session.secure_connect_default=try_secure_first
+    dfc.security.ssl.truststore=/opt/dctm/certificate/dfc.keystore
+    dfc.security.ssl.truststore_password=DFC_SECURITY_SSL_TRUSTSTORE_PASSWORD_AS_ENV_VARIABLE_DFC_SSL_TRUSTSTORE_PASSWORD
+    {{- else -}}
+    dfc.session.secure_connect_default=try_native_first
+    {{- end }}        
+    dfc.globalregistry.repository={{ .Values.docbase.name | default .Values.global.docbase }}
+    dfc.globalregistry.username=dm_bof_registry
+    dfc.globalregistry.password=DFC_GLOBALREGISTRY_PASSWORD_AS_ENV_VARIABLE_BOF_REGISTRY_USER_PASSWORD
+    dfc.security.ssl.use_anonymous_cipher=true
+    dfc.security.keystore.file=/opt/tomcat/CustomConf/DFCKeystore/dfc.keystore

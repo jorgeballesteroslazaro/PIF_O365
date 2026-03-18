@@ -1,0 +1,131 @@
+# Default values for indexer.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+# Number of indexer instances to run
+replicaCount: 1
+# indexer image settings
+image:
+  repository: 
+  name: ot-coresearch-indexer
+  tag: 23.4.0000.0179
+  pullPolicy:
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+
+ssl:
+  enabled: false
+  certificateMountPath: /opt/dctm/certificate
+  keystoreFile:
+  keystorePassword:
+  keyAlias: commontls
+  keyStoreType: pkcs12
+  sslPort: 8080
+artemis:
+  protocol: SSL         #Values allowed: NONE/SSL
+  truststoreFile:   #amq truststore location.
+  truststorePassword:   #amq truststore password.
+zookeeper:
+  sslEnabled:              #Set it to true to enable secure connection with zookeeper
+  tlsProtocol:             #Set the protocol to be used during TLS negotiation. Default: TLSv1.2
+  trustStoreFile:      #Set the truststore location for zookeeper.
+  trustStorePassword:      #Set the truststore password for zookeeper.
+solr:
+  trustStoreFile:   #Solr truststore location
+  trustStorePassword:   #Solr truststore password
+jdk:
+  tlsClientProtocols: 'TLSv1.3'
+
+env:
+  MAX_POLL_RECORDS: 1
+  SOLR_AUTH_USERNAME: solr
+  SOLR_CLIENT_READ_TIMEOUT: 600000
+  ACTIVE_PROFILE: default,secretNative,activemq
+podAnnotations: {}
+
+podSecurityContext: {}
+  # fsGroup: 2000
+
+securityContext: {}
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+  # runAsUser: 1000
+
+# Configuration for the indexer service
+service:
+  port: 8080
+  targetPort: 8080
+  name: ds-indexer
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+    # kubernetes.io/ingress.class: nginx
+    # kubernetes.io/tls-acme: "true"
+  # Configuration for indexer TLS handling, see README.md for more instructions
+tls:
+  enabled: false
+  wantClientAuth: "false"
+  needClientAuth: "false"
+  keystorePassword: "changeit"
+  importKubernetesCA: "false"
+  checkPeerName: "false"
+  caSecret:
+    name: ""
+    bundlePath: ""
+  certSecret:
+    name: ""
+    keyPath: "tls.key"
+    certPath: "tls.crt"
+
+  #  - secretName: chart-example-tls
+  #    hosts:
+  #      - chart-example.local
+# Set the limits and requests on indexer pod resources
+resources: {}
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  # limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  # requests:
+  #   cpu: 100m
+  #   memory: 128Mi
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 100
+  targetCPUUtilizationPercentage: 80
+  # targetMemoryUtilizationPercentage: 80
+  
+# Indexer pod liveness
+livenessProbe:
+  initialDelaySeconds: 60
+  periodSeconds: 30
+# Indexer pod readiness
+readinessProbe:
+  initialDelaySeconds: 60
+  periodSeconds: 30
+
+serviceAccount:
+  createserviceaccount: true
+  serviceAccountName: 
+newrelic:
+  enable:
+  app_name: DCTM_INDEXER_APP
+secrets:
+  cs:
+    name:
+
+# Affinity group rules or the indexer pods
+affinity: {}
+
+# Tolerations for pod assignment
+tolerations: []

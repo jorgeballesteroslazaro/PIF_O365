@@ -1,0 +1,46 @@
+{{- if .Values.global.createSC }}
+
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: {{ .Values.global.sc.name }}
+provisioner: {{ .Values.global.sc.provisioner }}
+{{- if .Values.global.sc.mountoptions }}
+mountOptions:
+- {{.Values.global.sc.mountoptions }}
+{{- end }}  
+{{- if .Values.global.sc.parameters }}
+parameters:
+{{ toYaml .Values.global.sc.parameters | indent 2 }}
+  gid: {{ .Values.global.sc.gid | quote}}
+{{- end }}
+
+reclaimPolicy: Delete
+volumeBindingMode: Immediate
+
+{{- end }}
+
+
+---
+ 
+
+{{- if .Values.global.createSftpSC }}
+
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: {{ .Values.global.sc.name }}-sftp
+provisioner: {{ .Values.global.sc.provisioner }}
+{{- if .Values.global.sc.mountoptions }}
+mountOptions:
+- {{.Values.global.sc.mountoptions }}
+{{- end }}  
+{{- if .Values.global.sc.parameters }}
+parameters:
+{{ toYaml .Values.global.sc.parameters | indent 2 }}
+  gid: {{ .Values.global.sc.sftp_gid | quote}}
+{{- end }}
+reclaimPolicy: Delete
+volumeBindingMode: Immediate
+
+{{- end }}

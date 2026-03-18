@@ -1,0 +1,233 @@
+#IJMS StatefulSet
+
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+   name: {{ .Values.serviceName }}
+spec:
+  serviceName: {{ .Values.serviceName }}
+  replicas: {{ .Values.ijms.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Values.serviceName }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.serviceName }}
+    spec:
+{{- if (empty (.Values.images.pullSecrets | quote) | ternary .Values.global.pullSecretName .Values.images.pullSecrets) }}
+      imagePullSecrets:
+        - name: {{ .Values.images.pullSecrets | default .Values.global.pullSecretName }}
+{{ end }}
+      serviceAccountName: {{ .Values.serviceAccount.serviceAccountName | default .Values.global.documentumserviceaccount }}
+      containers:
+      hostname: {{ .Values.serviceName }}
+{{ if eq .Values.custom.useInitContainers true }}
+      initContainers:
+{{- if .Values.extraInitContainers }}
+{{ include "resolveInitContainers" (dict "initContainerLists" .Values.extraInitContainers "global" .Values.global "nindent" 8) }}
+{{- end }}
+{{- end }}
+
+      containers: 
+      - name: {{ .Values.serviceName }}
+        image: {{ .Values.images.repository | default .Values.global.repository }}/{{ .Values.images.ijms.name }}:{{ .Values.images.ijms.tag }}
+        imagePullPolicy: {{ .Values.images.pullPolicy | default .Values.global.pullPolicyType }}
+        readinessProbe:
+          exec: {
+            command: [
+              bash,
+              -c,
+              {{ .Values.ijms.readiness.readinessScript }}
+            ]            
+          }
+          initialDelaySeconds: {{ .Values.ijms.readiness.initialDelaySeconds }}
+          periodSeconds: {{ .Values.ijms.readiness.periodSeconds }}
+          failureThreshold: {{ .Values.ijms.readiness.failureThreshold }}
+          successThreshold: 1
+          timeoutSeconds: 30
+{{- if .Values.ijms.liveness.enable }}
+        livenessProbe:
+          exec: {
+            command: [
+              bash,
+              -c,
+              {{ .Values.ijms.liveness.livenessScript }}
+            ]            
+          }
+          initialDelaySeconds: {{ .Values.ijms.liveness.initialDelaySeconds }}
+          periodSeconds: {{ .Values.ijms.liveness.periodSeconds }}
+          failureThreshold: {{ .Values.ijms.liveness.failureThreshold }}
+          timeoutSeconds: 30
+{{ end }}
+
+        env:
+        - name: GLOBAL_REGISTRY_DOCBASE
+          value: {{ .Values.globalRepository.globalRepositoryName | default .Values.global.docbase }}
+        - name: GLOBAL_REGISTRY_USER
+          value: {{ .Values.globalRepository.globalRepositoryUser | default .Values.global.globalRegistryUsername }}
+        - name: GLOBAL_REGISTRY_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.secret.name | default .Values.global.csSecrets }}
+              key: globalRegistryPassword
+        - name: DOCBROKER_TRUST_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.secret.name | default .Values.global.csSecrets }}
+              key: dbrCertTrustPassword
+        - name: CONTENT_SERVER_NAME
+          value: {{ .Values.ijms.ijmsConfiguringContentServer }}
+        - name: PROXY_HOST
+          value: {{ .Values.ijms.proxyHost | quote }}
+        - name: PROXY_PORT
+          value: {{ .Values.ijms.proxyPort | quote }}
+        - name: DOCBROKERS_COUNT
+          value: {{ .Values.docbroker.docbrokersCount | quote}}
+        - name: DOCBROKER_HOST
+          value: {{ .Values.docbroker.serviceName | default .Values.global.dbrServiceName }}
+        - name: DOCBROKER_PORT
+          value: {{ .Values.docbroker.port | default .Values.global.dbr_port | quote }} 
+        - name: DOCBROKER_CLUSTER_SPACE
+          value: {{ .Values.docbroker.clusterSpace | default (include "documentum.envDomain" .) }}
+        - name: INSTALL_OWNER_USER
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.secret.name | default .Values.global.csSecrets }}
+              key: installOwner
+        - name: INSTALL_OWNER_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.secret.name | default .Values.global.csSecrets }}
+              key: installOwnerPassword
+        - name: APP_SERVER_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.secret.name | default .Values.global.csSecrets }}
+              key: appServerAdminPassword
+        - name: DOCBASE_NAME
+          value: {{ .Values.docbase.name | default .Values.global.docbase }}
+        - name: JMS_PORT
+          value: {{ .Values.ports.jmsport | quote }}
+        - name: JMS_PROTOCOL
+          value: {{ .Values.ports.protocol | quote}}
+        - name: INTERNAL_TLS_ENABLED
+          value: {{ .Values.internalTlsEnable | default .Values.global.internalTlsEnable | default false | quote }}
+        - name: INGRESS_KEYSTORE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.secret.name | default .Values.global.csSecrets }}
+              key: ingress.keystorepassword
+        - name: INGRESS_HOST
+          value: {{ .Values.ingress.host | default (include "documentum.ijmsinternalIngress" . | trimPrefix (printf "%s://" .Values.global.ingressProtocol)) | quote}}
+        - name: INGRESS_PROTOCOL
+          value: {{ .Values.ingress.protocol | default .Values.global.ingressProtocol}}
+        - name: DOCKER_HOST
+          value: {{ .Values.ijms.host | quote}}
+        - name: PRIMARY_LOG_LOCATION
+          value: /opt/dctm/dba/log
+        - name: USE_INITCONTAINERS
+          value: {{ .Values.custom.useInitContainers | quote}}
+        - name: IS_VAULT_ENABLED
+          value: {{ (empty (.Values.vault.enable | quote) | ternary .Values.global.isVaultEnabled .Values.vault.enable) | quote }}
+        - name: CONFIGURE_OTDS
+          value: {{ (empty (.Values.otds.configureOTDS | quote) | ternary .Values.global.otdsEnabled .Values.otds.configureOTDS) | quote }}
+        - name: OTDS_USERS_CLIENT_CAPABILITY
+          value: {{ .Values.otds.clientCapability | quote}}
+        - name: OTDS_USERS_PRIVILEGES
+          value: {{ .Values.otds.userPrivileges | quote}}
+        - name: OTDS_USERS_XPRIVILEGES
+          value: {{ .Values.otds.userXPrivileges | quote}}
+        - name: OTDS_USER_RENAME_ENABLED
+          value: {{ .Values.otds.userRenameEnabled | quote}}
+        - name: OTDS_USER_RENAME_UNLOCK_LOCKEDOBJ
+          value: {{ .Values.otds.userRenameUnlockLockedObject | quote}}
+        - name: OTDS_GROUP_RENAME_ENABLED
+          value: {{ .Values.otds.groupRenameEnabled | quote}}
+        - name: SMTP_SSL_CERTIFICATE
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.secret.name | default .Values.global.csSecrets | quote }}
+              key: smtpSSLCertificate  
+{{- if .Values.extraEnv }}
+{{ toYaml .Values.extraEnv | indent 8 }}
+{{- end }}
+        ports:
+        - containerPort: {{ .Values.ports.jmsport }}
+          name: jmsport
+        volumeMounts:
+        - mountPath: /opt/dctm_docker/mdserver_conf
+          name: {{ .Values.volumeClaimTemplate.vctName }}
+          subPath: mdserver_conf
+        - mountPath: /opt/dctm/share
+          name: {{ .Values.persistentVolume.ijmsdataPVCName }}
+          subPath: share/{{ .Values.serviceName }}          
+        - mountPath: /opt/tomcat/logs
+          name: {{ .Values.persistentVolume.ijmsdataPVCName }}
+          subPath: DctmServer_MethodServerHA1/logs
+        - mountPath: /opt/dctm/dba/log
+          name: {{ .Values.persistentVolume.ijmsdataPVCName }}
+          subPath: dba/log
+        - mountPath: /opt/dctm_docker/jms/logs
+          name: {{ .Values.persistentVolume.ijmsdataPVCName }}
+          subPath: jms/logs
+{{- if eq .Values.custom.useInitContainers true }}
+        - mountPath: /opt/dctm_docker/customscriptpvc
+          name: {{ .Values.persistentVolume.ijmsdataPVCName }}
+          subPath: ijmscustomscripts/{{ .Values.serviceName }}
+{{- end }}
+{{- if (empty (.Values.vault.enable | quote) | ternary .Values.global.isVaultEnabled .Values.vault.enable) }}
+        - mountPath: /opt/dsis_binary_volume
+          name: dsis-binary-volume
+          subPath: dsis-binary
+        - mountPath: /opt/vault_config
+          name: vault-volume
+{{- end }}
+       
+        - mountPath: /opt/tomcat/ServerXML
+          name: ijms-appserver-xml-volume     
+
+{{ if or (eq .Values.certificate.use_certificate true) (eq .Values.global.useCertificate true) }}
+        - mountPath: /opt/dctm/certificate
+          name: {{ .Values.dbrpersistentVolume.dbrdataPVCName }}
+          subPath: certificate/{{ .Values.dbrpersistentVolume.dbrdataPVCName }}
+{{ end }}
+
+      volumes:
+        - name: {{ .Values.persistentVolume.ijmsdataPVCName }}
+          persistentVolumeClaim:
+            claimName: {{ .Values.serviceName }}-pvc
+{{- if (empty (.Values.vault.enable | quote) | ternary .Values.global.isVaultEnabled .Values.vault.enable) }}
+        - name: vault-volume
+          configMap:
+            name: {{ .Values.vault.vault_configmap }}
+{{- end }}
+{{- if (empty (.Values.vault.enable | quote) | ternary .Values.global.isVaultEnabled .Values.vault.enable) }}
+        - name: dsis-binary-volume
+          persistentVolumeClaim:
+            claimName: {{ .Values.vault.PVCName }}
+{{- end }}
+
+        - name: ijms-appserver-xml-volume
+          projected:
+            sources:
+            - configMap:
+                name: {{ .Values.serviceName }}-configmap-server-xml
+
+{{ if or (eq .Values.certificate.use_certificate true) (eq .Values.global.useCertificate true) }}
+        - name: {{ .Values.dbrpersistentVolume.dbrdataPVCName }}
+          persistentVolumeClaim:
+            claimName: {{ .Values.certificate.dbrserviceName | default .Values.global.dbrServiceName }}-pvc
+{{- end }}
+
+  volumeClaimTemplates:
+  - metadata:
+      name: {{ .Values.volumeClaimTemplate.vctName }}
+    spec:
+      accessModes:
+        - {{ .Values.volumeClaimTemplate.vctAccessModes }}
+      resources:
+         requests:
+            storage: {{ .Values.volumeClaimTemplate.size }}
+      storageClassName: {{ .Values.volumeClaimTemplate.storageClass | default .Values.global.rwoStorage }}
+            

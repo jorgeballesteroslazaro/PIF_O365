@@ -1,0 +1,203 @@
+  apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.service.name }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      app: {{ .Values.service.name }}
+      name: {{ .Chart.Name }}
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        app: {{ .Values.service.name }}
+        name: {{ .Chart.Name }}
+        release: {{ .Release.Name }}
+    spec:
+      {{- if (empty (.Values.global.pullSecrets | quote) | ternary .Values.global.pullSecretName .Values.global.pullSecrets) }}
+      imagePullSecrets:
+        - name: {{ .Values.global.pullSecrets | default .Values.global.pullSecretName }}
+      {{ end }}
+      serviceAccountName:  {{ .Values.serviceAccount.serviceAccountName | default .Values.global.documentumserviceaccount }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+# container 
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: {{ .Values.image.repository | default .Values.global.repository }}/{{ .Values.image.name }}:{{ .Values.image.tag }}
+          imagePullPolicy: {{ .Values.image.pullPolicy | default .Values.global.pullPolicyType }}
+          ports:
+            - name: http
+              containerPort: 80
+              protocol: TCP
+          livenessProbe:
+            initialDelaySeconds: {{ .Values.livenessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.livenessProbe.periodSeconds }}
+            httpGet:
+              scheme: {{ if or .Values.ssl.enabled .Values.global.useCertificate }}"HTTPS"{{ else }}"HTTP"{{ end }}
+              path: /health/ready
+              port: {{ .Values.service.targetPort }}
+          readinessProbe:
+            initialDelaySeconds: {{ .Values.readinessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.readinessProbe.periodSeconds }}
+            httpGet:
+              scheme: {{ if or .Values.ssl.enabled .Values.global.useCertificate }}"HTTPS"{{ else }}"HTTP"{{ end }}
+              path: /health/ready
+              port: {{ .Values.service.targetPort }}
+
+          env:
+          {{- range $key, $value := .Values.env }}
+           - name: {{ $key }}
+             value: {{ $value | quote }}
+          {{- end }}
+          {{- if or .Values.ssl.enabled .Values.global.useCertificate }}
+           - name: INDEXER_SSL_ENABLED
+             value: "true"
+           - name: ZK_REGISTER_HTTP_SCHEMA
+             value: "https"
+           - name: INDEXER_COMMON_CERT_MOUNT_PATH
+             value: {{ .Values.ssl.certificateMountPath | quote }}
+           - name: INDEXER_SSL_KEYSTORE_PATH
+             value: '{{ .Values.ssl.certificateMountPath | default "/opt/dctm/certificate" }}/{{  .Values.ssl.keystoreFile | default "common-keystore.p12" }}'
+           - name: INDEXER_SSL_KEYSTORE_PASSWORD
+             valueFrom:
+               secretKeyRef:
+                 name: {{ .Values.secrets.cs.name | default .Values.global.csSecrets }}
+                 key: commontruststorepassword
+           - name: INDEXER_KEY_ALIAS
+             value: {{ .Values.ssl.keyAlias | quote }}
+           - name: INDEXER_SSL_KEYSTORE_TYPE
+             value: '{{ .Values.ssl.keyStoreType | default "PKCS12" }}'
+           - name: ACTIVEMQ_SECURITY_PROTOCOL
+             value: '{{ .Values.artemis.protocol | default "SSL" }}'
+           - name: ACTIVEMQ_TRUSTSTORE_LOCATION
+             value: '{{ .Values.ssl.certificateMountPath | default "/opt/dctm/certificate" }}/{{  .Values.artemis.truststoreFile | default "common-truststore.p12" }}'
+           - name: ACTIVEMQ_TRUSTSTORE_PASSWORD
+             valueFrom:
+               secretKeyRef:
+                 name: {{ .Values.secrets.cs.name | default .Values.global.csSecrets }}
+                 key: commontruststorepassword
+           - name: CLIENT_SSL_TRUSTORE_LOCATION
+             value: '{{ .Values.ssl.certificateMountPath | default "/opt/dctm/certificate" }}/{{  .Values.solr.truststoreFile | default "common-truststore.p12" }}'
+           - name: CLIENT_SSL_TRUSTORE_PASSWORD
+             valueFrom:
+               secretKeyRef:
+                 name: {{ .Values.secrets.cs.name | default .Values.global.csSecrets }}
+                 key: commontruststorepassword
+           - name: ZK_SSL_ENABLED
+             value: "true"
+           - name: ZK_CLIENT_CONNECTION_SOCKET
+             value: org.apache.zookeeper.ClientCnxnSocketNetty
+           - name: ZK_TLS_PROTOCOL
+             value: "TLSv1.3"
+           - name: START_EXTRA_ARGS
+             value: >-
+               -Dzookeeper.ssl.trustStore.type=PKCS12
+               -Dzookeeper.ssl.hostnameVerification=false
+           - name: ZK_TRUSTSTORE_LOCATION
+             value: '{{ .Values.ssl.certificateMountPath | default "/opt/dctm/certificate" }}/{{ .Values.zookeeper.trustStoreFile | default "common-truststore.p12" }}'
+           - name: ZK_TRUSTSTORE_PASSWORD
+             valueFrom:
+               secretKeyRef:
+                 name: {{ .Values.secrets.cs.name | default .Values.global.csSecrets }}
+                 key: commontruststorepassword
+          {{- end }}
+           - name: ZK_HOST
+             valueFrom:
+               configMapKeyRef:
+                 name: zoo-search-configmap
+                 key: zk.host
+           - name: SOLR_AUTH_PASSWORD
+             valueFrom:
+               secretKeyRef:
+                 name: {{ .Values.secrets.cs.name | default .Values.global.csSecrets }}
+                 key: solr_auth_password
+           - name: ACTIVEMQ_HOST
+             valueFrom:
+               configMapKeyRef:
+                 name: {{ .Values.configMap.amq.name | default .Values.global.amqConfigmap }}
+                 key: jms.host
+           - name: ACTIVEMQ_PORT
+             valueFrom:
+               configMapKeyRef:
+                 name: {{ .Values.configMap.amq.name | default .Values.global.amqConfigmap }}
+                 key: jms.port
+           - name: ACTIVEMQ_USERNAME
+             valueFrom:
+               secretKeyRef:
+                 name: {{ .Values.secrets.amq.name | default .Values.global.amqSecret }}
+                 key: user
+           - name: ACTIVEMQ_PASSWORD
+             valueFrom:
+               secretKeyRef:
+                 name: {{ .Values.secrets.amq.name | default .Values.global.amqSecret }}
+                 key: password
+           {{- if (empty (.Values.newrelic.enable | quote) | ternary .Values.global.newrelic .Values.newrelic.enable) }}
+           - name: NEWRELIC_ENABLE
+             value: {{ .Values.newrelic.enable | default .Values.global.newrelic | quote  }}
+           - name: NEWRELIC_APP_NAME
+             value: {{ .Values.newrelic.app_name }}.{{ .Release.Namespace }}
+           - name: NEWRELIC_PROXY_HOST
+             value: {{ .Values.global.newrelic_proxy_host | default .Values.global.newrelicProxyHost }}
+           - name: NEWRELIC_PROXY_PROTOCOL
+             value: {{ .Values.global.newrelic_proxy_protocol | default .Values.global.newrelicProxyProtocol }}
+           - name: NEWRELIC_PROXY_PORT
+             value: {{ .Values.global.newrelic_proxy_port | default .Values.global.newrelicProxyPort | quote  }}
+           - name: NEWRELIC_LICENSE_KEY
+             value: {{ .Values.global.newrelic_license_key | default .Values.global.licenseKeyName }}
+           {{- end }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+
+          volumeMounts:
+            - mountPath: /opt/indexer/logs
+              name: shared-logs
+              subPath: logs
+          {{- if or .Values.ssl.enabled .Values.global.useCertificate }}
+            - name: common-certificate-volume
+              mountPath: '{{ .Values.ssl.certificateMountPath | default "/opt/dctm/certificate" }}'
+              subPath: 'certificate/{{ .Values.global.dbrdataPVCName | default "certdbr-data-pvc" }}'
+          {{- end }}
+            {{- if (empty (.Values.newrelic.enable | quote) | ternary .Values.global.newrelic .Values.newrelic.enable) }}
+            - name: newrelic-config-map
+              mountPath: /opt/newrelic/newrelic.yml
+              subPath: newrelic.yml
+            {{- end }}
+      volumes:
+        - name: shared-logs
+          emptyDir: {}
+      {{- if or .Values.ssl.enabled .Values.global.useCertificate }}
+        - name: common-certificate-volume
+          persistentVolumeClaim:
+            claimName: '{{ .Values.global.dbrServiceName | default "dbr" }}-pvc'
+      {{- end }}
+        {{- if (empty (.Values.newrelic.enable | quote) | ternary .Values.global.newrelic .Values.newrelic.enable) }}
+        - name: newrelic-config-map
+          configMap:
+            name: indexer-newrelic-config
+            items:
+              - key: newrelic.yml
+                path: newrelic.yml
+        {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

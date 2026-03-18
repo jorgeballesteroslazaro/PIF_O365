@@ -1,0 +1,215 @@
+#StatefulSet
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+   name: {{ .Values.prefix }}
+spec:
+  serviceName: {{ .Values.prefix }}
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Values.prefix }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.prefix }}        
+    spec:
+{{- if (empty (.Values.serviceAccount.serviceAccountName | quote) | ternary .Values.global.documentumserviceaccount .Values.serviceAccount.serviceAccountName) }}
+      serviceAccountName: {{ .Values.serviceAccount.serviceAccountName | default .Values.global.documentumserviceaccount }}
+{{- end }}
+{{- if (empty (.Values.image.pullSecrets  | quote) | ternary .Values.global.pullSecretName .Values.image.pullSecrets) }}
+      imagePullSecrets:
+      - name: {{ .Values.image.pullSecrets | default .Values.global.pullSecretName }}
+{{ end }}   
+    
+      containers:
+      - name: {{ .Values.prefix }}
+        image: {{ .Values.image.repository | default .Values.global.repository }}/{{ .Values.image.name }}:{{ .Values.image.tag }}
+        imagePullPolicy: {{ .Values.image.pullPolicy | default .Values.global.pullPolicyType }}
+        resources:
+{{ toYaml .Values.resources | indent 12 }}
+        env:
+        - name: BPS_TRUSTSTORE_PASSWORD 
+          value: {{ .Values.docbaseConnection.truststorePassword | quote}}
+        - name: METHOD_SVR_HOST
+          value: {{ (.Values.docbaseConnection.jmsservicename | quote) | default (.Values.global.jmsServiceName | quote) }}
+        - name: METHOD_SVR_PORT
+          value: {{ (.Values.docbaseConnection.jmsport | quote) | default (.Values.global.jmsPort | quote) }}         
+        - name: KUBERNETES
+          value: "true"
+        - name: CONTAINER_NAME
+          value: {{ .Values.prefix }}
+{{- if (empty (.Values.docbaseConnection.use_certificate | quote) | ternary .Values.global.useCertificate .Values.docbaseConnection.use_certificate) }}
+        - name: DOCBASE_USE_CERTIFICATES
+          value: {{ (.Values.docbaseConnection.use_certificate | quote) | default (.Values.global.useCertificate | quote) }}
+{{ end }}          
+        - name: DOCBROKER_HOST
+          value: {{ .Values.docbaseConnection.docbroker | default .Values.global.dbrServiceName }}
+        - name: DOCBROKER_PORT
+          value: {{ (.Values.docbaseConnection.port | quote) | default (.Values.global.dbr_port | quote) }}
+        - name: DOCBROKERS_COUNT
+          value: {{ .Values.docbroker.count | quote}}
+        - name: DOCBROKER_CLUSTER_SPACE
+          value: {{ .Values.env.domain | default (include "documentum.envDomain" .) }}          
+        - name: TOMCAT_LOG_FILE_ROTATION
+          value: {{ .Values.tomcat.logfilerotation | quote }}
+        - name: TOMCAT_LOG_FILE_SIZE
+          value: {{ .Values.tomcat.logfilesize | quote }}
+        - name: TOMCAT_LOGROTATE_FREQUENCY
+          value: {{ .Values.tomcat.logrotateFrequency | quote }}          
+        - name: TOMCAT_ADMIN_USER
+          value: {{ .Values.tomcat.username }}
+        - name: TOMCAT_ADMIN_PWD
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.prefix }}-secret
+              key: tomcatPassword
+        - name: TOMCAT_JAVA_OPTS
+          value: {{ .Values.tomcat.javaOptions }}              
+{{- if (empty (.Values.newrelic.enable | quote) | ternary .Values.global.newrelic .Values.newrelic.enable) }}
+        - name: NEWRELIC_ENABLE
+          value: {{ (.Values.newrelic.enable | quote) | default (.Values.global.newrelic | quote) }}
+        - name: NEWRELIC_APP_NAME
+          value: {{ .Values.newrelic.app_name }}.{{ .Release.Namespace }}
+        - name: NEWRELIC_PROXY_HOST
+          value: {{ .Values.newrelic.proxy_host  | default .Values.global.newrelicProxyHost }}
+        - name: NEWRELIC_PROXY_PORT
+          value: {{ ( .Values.newrelic.proxy_port  | default .Values.global.newrelicProxyPort ) | quote }}
+        - name: NEWRELIC_LICENSE_KEY
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.secret.name | default .Values.global.csSecrets }}
+              key: {{ .Values.newrelic.licenseKeyName }}
+{{- end }}
+        - name: VAULT_ENABLED
+          value: {{ (empty (.Values.vault.enable | quote) | ternary .Values.global.isVaultEnabled .Values.vault.enable) | quote }}
+        - name: DSIS_BIN_ZIP_PVC_PATH
+          valueFrom:
+            configMapKeyRef:
+              name: {{ .Values.prefix }}-bps-config
+              key: DSIS_BIN_ZIP_PVC_PATH
+        - name: DSIS_APP_PROPERTIES_FILE_PVC_PATH
+          valueFrom:
+            configMapKeyRef:
+              name: {{ .Values.prefix }}-bps-config
+              key: DSIS_APP_PROPERTIES_FILE_PVC_PATH
+        - name: VAULT_TIMEOUT
+          value: {{ .Values.vault.vault_timeout | quote }}
+        - name: DSIS_STATUS_CHECK_RETRY_COUNT
+          value: {{ .Values.vault.statusCheckRetryCount | quote }}
+        - name: DSIS_STATUS_CHECK_TIME_INTERVAL
+          value: {{ .Values.vault.statusCheckTimeInterval | quote }}
+{{- if .Values.global.internalTlsEnable }}
+        - name: BPS_INGRESS_PASSWORD 
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.prefix }}-secret
+              key: bpsingressPassword 
+{{- end }}               
+        ports:       
+        - containerPort: {{ eq .Values.global.internalTlsEnable true | ternary .Values.tomcat.httpsPort .Values.tomcat.httpPort }}
+          name: bpsport
+        livenessProbe:
+          httpGet:
+            path: /bps/lsnrs.jsp
+            port: bpsport       
+            scheme: {{ eq .Values.global.internalTlsEnable true | ternary "HTTPS" "HTTP" }}         
+            
+          initialDelaySeconds: 180
+          periodSeconds: 300
+          failureThreshold: 2
+          successThreshold: 1
+          timeoutSeconds: 60
+        readinessProbe:
+          httpGet:
+            path: /bps/lsnrs.jsp
+            port: bpsport
+            scheme: {{ eq .Values.global.internalTlsEnable true | ternary "HTTPS" "HTTP" }}            
+
+          initialDelaySeconds: 180
+          periodSeconds: 300
+          failureThreshold: 2
+          successThreshold: 1
+          timeoutSeconds: 60                  
+        volumeMounts:
+{{- if (default false .Values.global.proxy.enabled) }}
+          - mountPath: /opt/tomcat/webapps/bps/WEB-INF/classes/
+            name: webinf-classes-volume    
+{{- end }}
+          - mountPath: /opt/tomcat/CustomConf
+            name: custom-conf-volume         
+          - mountPath: /opt/tomcat/LogConf
+            name: log4j-properties-volume
+          - mountPath: /opt/tomcat/logs
+            name: {{ .Values.prefix }}-vct
+            subPath: bps_logs
+{{- if (empty (.Values.docbaseConnection.use_certificate | quote) | ternary .Values.global.useCertificate .Values.docbaseConnection.use_certificate) }}
+          - mountPath: /opt/dctm/certificate
+            name: {{ .Values.dbrpersistentVolume.dbrdataPVCName | default .Values.global.dbrdataPVCName }}
+            subPath: certificate/{{ .Values.dbrpersistentVolume.dbrdataPVCName | default .Values.global.dbrdataPVCName }}
+{{ end }} 
+
+{{- if (empty (.Values.vault.enable | quote) | ternary .Values.global.isVaultEnabled .Values.vault.enable) }}
+          - mountPath: {{ .Values.vault.vault_config_mount_path }}
+            name: vault-volume
+{{- end }}
+{{- if (empty (.Values.vault.enable | quote) | ternary .Values.global.isVaultEnabled .Values.vault.enable) }}
+          - mountPath: {{ .Values.vault.binary_volume_mount_path }}
+            name: dsis-binary-volume
+{{- end }}            
+          #If message store is configured, uncomment the following lines:            
+          #- mountPath: {{ .Values.bpsConfig.messageStoreHomeDir }}
+          #  name: {{ .Values.prefix }}-vct
+          #  subPath: bps_msgstore
+      volumes:
+{{- if (empty (.Values.vault.enable | quote) | ternary .Values.global.isVaultEnabled .Values.vault.enable) }}
+        - name: vault-volume
+          configMap:
+            name: {{ .Values.vault.vault_configmap }}
+{{- end }}
+        - name: custom-conf-volume
+          configMap:
+            name: {{ .Values.prefix }}-bps-dfc-config
+            items:
+              - key: dfc-properties-config
+                path: dfc.properties
+              - key: bps-config
+                path: bps_template.xml      
+              - key: server_tls.xml
+                path: server.xml
+{{- if (default false .Values.global.proxy.enabled) }}
+        - name: webinf-classes-volume
+          configMap:
+            name: {{ .Values.prefix }}-bps-dfc-config
+            items:   
+              - key: msgraph
+                path: msgraph.properties
+{{- end }}                
+        - name: log4j-properties-volume
+          configMap:
+            name: {{ .Values.prefix }}-log4j-properties-config
+            items:
+              - key: log4j-properties-config
+                path: log4j2.properties
+{{- if (empty (.Values.docbaseConnection.use_certificate | quote) | ternary .Values.global.useCertificate .Values.docbaseConnection.use_certificate) }}
+        - name: {{ .Values.dbrpersistentVolume.dbrdataPVCName | default .Values.global.dbrdataPVCName }}
+          persistentVolumeClaim:
+            claimName: {{ .Values.docbaseConnection.docbroker | default .Values.global.dbrServiceName }}-pvc
+{{- end }}
+{{- if (empty (.Values.vault.enable | quote) | ternary .Values.global.isVaultEnabled .Values.vault.enable) }}
+        - name: dsis-binary-volume
+          persistentVolumeClaim:
+            claimName: {{ .Values.vault.PVCName }}
+{{- end }}              
+      restartPolicy: Always
+  volumeClaimTemplates:
+  - metadata:
+      name: {{ .Values.prefix }}-vct
+    spec:
+      accessModes:
+        - ReadWriteOnce
+      resources:
+         requests:
+            storage: {{ .Values.volumeClaimTemplates.size }}
+      storageClassName: {{ .Values.volumeClaimTemplates.storageClassReadWriteOnce | default .Values.global.rwoStorage }}
+      

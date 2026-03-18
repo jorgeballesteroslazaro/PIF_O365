@@ -1,0 +1,109 @@
+# Default values for dctm-search-fetcher.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+service:
+  name: ds-fetcher
+  port: 8900
+  targetPort: 8900
+replicaCount: 1
+
+image:
+  repository: 
+  name: ot-dctm-content-fetcher
+  tag: latest
+  pullPolicy:
+
+ssl:
+  enabled: false
+  protocol: TLS
+  enabledProtocols: TLSv1.3
+  certificateMountPath: /opt/dctm/certificate
+  keyStore:
+  keyStorePassword:
+  keyStoreType:
+  keyAlias: commontls
+  keyPassword:
+zookeeper:
+  clientSecure: true
+  sslProtocol: 'TLSv1.3'
+  sslTrustStoreLocation:
+  sslTrustStorePassword:
+javax:
+  sslTrustStoreLocation: #Solr truststore
+  sslTrustStorePassword: #Solr truststore
+jdk:
+  tlsClientProtocols: 'TLSv1.3'
+env:
+  JAVA_OPTS: -Xms500m -Xmx2250m
+  dfc.connection.handle_waiting_threads: true
+  dfc.connection.queue_wait_time: 30
+
+docbase:
+  name:
+  user:
+
+globalregistry:
+  repository: 
+  username:
+
+docbrokers:
+  - docbrokerHost:
+    docbrokerPort:
+
+configMap:
+  cs:
+    name:   #use cs configmap or onPrem search-dfc-configmap
+
+useSecrets: true
+secrets:
+  cs:
+    name:
+    key: 
+      docbasePassword: installOwnerPassword
+serviceAccount:
+  createserviceaccount: true
+  serviceAccountName: 
+newrelic:
+  enable:
+  app_name: DCTM_FETCHER_APP
+vault:
+  enable:
+  vault_configmap: dctm-vault-configmap
+livenessProbe:
+  initialDelaySeconds: 90
+  periodSeconds: 120
+
+readinessProbe:
+  initialDelaySeconds: 90
+  periodSeconds: 120
+
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  # limits:
+  #  cpu: 100m
+  #  memory: 128Mi
+  # requests:
+  #  cpu: 100m
+  #  memory: 128Mi
+resources:
+  requests:
+    cpu: 200m
+    memory: 256Mi
+  limits:
+    cpu: 2000m
+    memory: 1024Mi
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+global:
+  extraDocbases:
+    - name:
+      user:
+      password:

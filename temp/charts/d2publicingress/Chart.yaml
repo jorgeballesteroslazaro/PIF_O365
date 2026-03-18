@@ -1,0 +1,5 @@
+apiVersion: v2
+appVersion: 25.4.1-153
+description: A Helm chart for Kubernetes
+name: d2publicingress
+version: 25.4.1

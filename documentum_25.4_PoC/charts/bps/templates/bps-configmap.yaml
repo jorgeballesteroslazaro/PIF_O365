@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.prefix }}-bps-config
+  labels:
+    name: {{ .Values.prefix }}-bps-config
+data:
+  DSIS_BIN_ZIP_PVC_PATH: {{ .Values.vault.binary_volume_mount_path }}/dsis-binary
+  DSIS_APP_PROPERTIES_FILE_PVC_PATH: {{ .Values.vault.vault_config_mount_path }}
+  

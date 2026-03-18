@@ -1,0 +1,299 @@
+{{- if .Values.global.dctmclientinstaller.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: d2config-d2-config-properties
+  {{- template "configMap.labels" . }}
+data:
+  D2-Config.properties: |-
+    {{- if and (eq .Values.customConfigurations.custom true ) (.Values.customConfigurations.settings) }}
+    {{- range .Files.Lines .Values.customConfigurations.settings }}
+        {{ . }}
+    {{- end }}
+    {{- else }}
+    #################################
+    #         Plugins               #
+    #################################
+    # Below dollar plugin expression will be replaced with the actual plugin configuration
+    # during the maven resource filtering build process.  It is used so we can
+    # have different variation of the D2-Config.properties based on the maven
+    # profile used for the build.  Please check out the profiles section of the
+    # pom.xml file.
+    # The plugin configuration syntax is below
+    # plugin_1=plugins/D2-Widget-Plugin.jar
+    # plugin_2=../C2/C2-Plugin.jar
+    # plugin_3=../O2/O2-Plugin.jar
+    # plugin_4=../P2/P2-Plugin.jar
+    # plugin_5=../D2-RPS/D2-RPS-Plugin.jar
+    # plugin_6=../D2-InfoArchive/D2-InfoArchive-Plugin.jar
+    # plugin_7=../D2-xECM/D2-xECM-Plugin.jar
+    # plugin_8=../D2-Core-Signature/D2-Core-Signature-Plugin.jar
+    {{- $webappname := .Values.env.webappName | default .Values.global.d2configWebappName }}
+    plugin_1={{ .Values.tomcat.catalinaHome }}/webapps/{{ $webappname }}/WEB-INF/classes/plugins/D2-Widget-Plugin-{{ .Values.d2version }}.jar
+    plugin_2={{ .Values.tomcat.catalinaHome }}/webapps/{{ $webappname }}/WEB-INF/classes/plugins/D2-RPS-Plugin-{{ .Values.d2version }}.jar
+    plugin_3={{ .Values.tomcat.catalinaHome }}/webapps/{{ $webappname }}/WEB-INF/classes/plugins/D2-InfoArchive-Plugin-{{ .Values.d2version }}.jar
+    plugin_4={{ .Values.tomcat.catalinaHome }}/webapps/{{ $webappname }}/WEB-INF/classes/plugins/D2-xECM-Plugin-{{ .Values.d2version }}.jar
+    plugin_5={{ .Values.tomcat.catalinaHome }}/webapps/{{ $webappname }}/WEB-INF/classes/plugins/D2-Specifications-Plugin-{{ .Values.d2version }}.jar
+    plugin_6={{ .Values.tomcat.catalinaHome }}/webapps/{{ $webappname }}/WEB-INF/classes/plugins/D2-Core-Signature-Plugin-{{ .Values.d2version }}.jar
+    plugin_7={{ .Values.tomcat.catalinaHome }}/webapps/{{ $webappname }}/WEB-INF/classes/plugins/C2-Plugin-{{ .Values.d2version }}.jar
+    plugin_8={{ .Values.tomcat.catalinaHome }}/webapps/{{ $webappname }}/WEB-INF/classes/plugins/O2-Plugin-{{ .Values.d2version }}.jar
+    plugin_9={{ .Values.tomcat.catalinaHome }}/webapps/{{ $webappname }}/WEB-INF/classes/plugins/D2-Bin-Plugin-{{ .Values.d2version }}.jar
+    plugin_10={{ .Values.tomcat.catalinaHome }}/webapps/{{ $webappname }}/WEB-INF/classes/plugins/D2-DocuSign-Plugin-{{ .Values.d2version }}.jar
+    {{- if .Values.customConfigurations.custom }}
+    {{ if (empty (.Values.reports_plugin.enable | quote) | ternary .Values.global.dtrbase.enabled .Values.reports_plugin.enable) }}
+    plugin_11={{ .Values.tomcat.catalinaHome }}/webapps/{{ $webappname }}/WEB-INF/classes/plugins/DCTM-Reports-Plugin-{{ .Values.d2version }}.jar
+    {{- $k := 12 }}
+    {{- range $v := .Values.customConfigurations.plugins }}
+    {{ printf "plugin_%d=/opt/tomcat/webapps/%s/WEB-INF/classes/plugins/%s" $k $webappname $v }}
+    {{- $k = $k|add1|int }}
+    {{- end }}
+    {{- else }}
+    {{- $k := 11 }}
+    {{- range $v := .Values.customConfigurations.plugins }}
+    {{ printf "plugin_%d=/opt/tomcat/webapps/%s/WEB-INF/classes/plugins/%s" $k $webappname $v }}
+    {{- $k = $k|add1|int }}
+    {{- end }}
+    {{- end }}
+    {{- end }}
+
+
+    #################################
+    #         Plugins Clients   #
+    #################################
+    #plugin_4=../Client/Client-Plugin.jar
+
+    #################################
+    #           Security            #
+    #################################
+    #Set true for secure cookie, only with https mode
+    #secureCookie=false
+
+    #################################
+    #         Options           #
+    #################################
+    #default_language=en
+    #forceServerInDocbaseName=true
+    #hideDomain=true (or false)
+    #docbaseFilter=<docbases list separated by comma>
+    #temporaryMaxFiles=10240
+    #allowLegacyUI=false
+
+    #################################
+    #         Debug Mode          #
+    #################################
+    #logLevel=off | error | warn | info | debug | trace | all
+    #logFilter=GetLabels,GetVD
+    #logSaveMethod=true
+
+    #################################
+    #        Load on startup        #
+    #################################
+    ## Deprecated
+    #LoadOnStartup.docbase.1=
+    #LoadOnStartup.username.1=
+    #LoadOnStartup.password.1=
+    #LoadOnStartup.domain.1=
+
+    # Add the name of the repos (comma separated) to initialize those repositories on Startup. All variable for
+    # each repo needs to be defined in the D2 global registry keystore.
+    # Example: LoadOnStartup=repository1, repository2
+    # The following variables needs to be defined in the D2 global registry keystore
+    # LoadOnStartup.<repository>.username, LoadOnStartup.<repository>.password and LoadOnStartup.<repository>.domain
+    LoadOnStartup=
+
+    #################################
+    #               ACS/BOCS        #
+    #################################
+    #D2-BOCS=false
+    #includeAcsServer=true
+    #proxyClientIpHeader=
+
+    #Parameter is used to define a custom client name for the audit which can be used in the audit entry
+    # default value is D2-Config
+    #AuditAppName=
+
+    #Below parameter is used to set the temporary directory where D2-Config application places its temp files
+    #If not configured, defaults to java.io.tmpdir
+    #The parameter value should be absolute path and JVM should have read/write permission
+    #Any changes to this property need application server restart.
+    #application.tmp.dir=
+
+    #Parameter is used to mention the supported file types for the entry conditions for the worflowdigital signatures
+    # Please use the dos extensions for specifying the file types
+    #supportedFileTypes=
+
+
+    #####################################
+    #       Temp files management       #
+    #####################################
+
+    # From version 25.2 onwards the temporary files are tracked using .json file considered as temp storage file.
+    # Tracker file located in the appserver temp directory and file name is in following syntax FileTrackerStore_<App name>.json when initialized by default from appserver or FileTrackerStore.json when not initialized in case of custom logic.
+    #
+    # The D2FileCleaningTracker is to manage and track temporary files generated within an application. The primary objective of this tracker is to monitor, store, and clean up temporary files based on specific parameters to optimize disk usage. The tracker maintains a record of each temporary file in a JSON file stored at a designated application directory and periodically removes files that meet specified cleanup criteria.
+    # Maintains its temporary file record information in two types: one type is \u2018hold\u2019, and another type is 'remove'.
+    # The 'hold' type of temporary records will only be deleted when an application server restarts.
+    # The 'remove' type of temporary records will delete on every D2FileCleaningTracker job run. And all the provided cleanup configuration parameters are only applicable for the remove type of temporary records.
+    # The cleanup process is triggerred when "remove" type temporary records counts are more than maxTempFiles or records file size exceeds maxTempSizeMB or enableTimeBasedCleanup and deletes every "remove" type temporary file whose creation time is more than timeToLive minutes.
+    #
+    # Each file record will have the following structure:
+    #
+    #"<file path as key>":
+    #  {
+    #    "filename": "string",          // Name of the file and along with path
+    #    "creationTime": number,       // Timestamp as number when temp file added to FileCleanTracker in milliseconds
+    #    "size": number,               // File size in bytes
+    #    "type": "string",           // "hold" or "remove"
+    #    "priority": number,          // File priority to clean up faster
+    #    "timeToLive": number          // Minutes after creationTime file duration to live safe
+    #  }
+    #  ,...
+    #
+
+    # This property value will allow to disable or enable the Temp file Cleanup Process. Can be used to customize cleanup process by reading .json storage file.
+    # Setting 'true' consider to disable the Cleanup process and 'false' to enable. Default value 'false'
+    # Note: Tracker task will not be stopped and updates the temporary files to .json storage file on every task run.
+    #disableCleanupProcess=false
+
+
+    # Threshold limit to trigger cleanup process
+    # The property to set number of 'remove' type cleanup files added to File Cleaning tracker, when value exceeds act as a trigger to initiate cleanup process.
+    # If unset, default value = 2000, minimum value = 10
+    #maxTempFiles=2000
+
+
+    # Threshold limit to trigger cleanup process
+    # The property to set memory size of 'remove' type cleanup files added to File Cleaning tracker, when value exceeds to act as a trigger to initiate cleanup process.
+    # If unset, default value = 1024 MB, minimum value = 10 MB
+    #maxTempSizeMB=1024 MB
+
+    # This property value is used to schedule File cleaner thread.
+    # On each run thread update updates newly added files into .json storage file and initiates cleanup process if enabled.
+    # By default, this is set to 15 minutes, minimum value 5.
+    # Note: For the property value change, to take effect, the server must restart.
+    #fileCleanSchedulerInterval=15
+
+    #This property value is used enable/disable to print all pending temporary files on every run
+    #Note: prints only on LOG4j.properties INFO mode.
+    #printPendingRecords=false
+
+    # Enable to trigger cleanup process
+    # The property to enable or disable the time based cleanup for 'remove' type cleanup files added to File Cleaning tracker.
+    # If it is enabled, cleanup process will be initiated on every run and tries to delete 'remove' type cleanup file creation time exceed timeToLive. Does not wait for maxTempFiles or maxTempFileSizeMB threshold limit.
+    #enableTimeBasedCleanup=false
+
+
+    # The property to set timeToLive value for every cleanup file considered as minutes. To live file safe in given minutes after creation time.
+    # If value unset, by default value = 5, minimum value = 5
+    #timeToLive=5
+
+
+    # The property to override timeToLive value for every cleanup file while doing bulk import operation (FolderStructure import), value is considered as minutes. To live file safe in given minutes after creation time.
+    # If value unset, by default value = 15, minimum value = 5
+    #bulkImportTimeToLive=15
+
+    ##############################################
+    #               Max FileSize in KB        #
+    ##############################################
+    importC2FileMaxSize=50000
+    importDictionaryFileMaxSize=50000
+    importFileD2WebFileMaxSize=50000
+    importFileX3ConfigFileMaxSize=50000
+    importRegisterFileMaxSize=50000
+    importTaxonomyFileMaxSize=60000
+
+    ######################################################################################################################
+    # START - Allowed file types for Import in D2-Config
+    ######################################################################################################################
+
+    # Define allowed File Types
+    # IMP Note - The property name for a file type should be defined in a format "FILE_TYPE_" + {actual File Type Name in capital letters}
+    # For example for "PNG" filetype the property name should be "FILE_TYPE_PNG"
+    FILE_TYPE_PNG=PNG
+    FILE_TYPE_JPG=JPG
+    FILE_TYPE_PDF=PDF
+    FILE_TYPE_ZIP=ZIP
+    FILE_TYPE_SEVEN_ZIP=SEVEN_ZIP
+    FILE_TYPE_XML=XML
+    FILE_TYPE_XLSX=XLSX
+    FILE_TYPE_XLS=XLS
+    FILE_TYPE_DOCX=DOCX
+    FILE_TYPE_DOC=DOC
+    FILE_TYPE_CSV=CSV
+    FILE_TYPE_TTF=TTF
+    FILE_TYPE_OTF=OTF
+    FILE_TYPE_SVG=SVG
+    FILE_TYPE_XSL=XSL
+    FILE_TYPE_GIF=GIF
+
+
+    # DEFINE MAGIC BYTES here (corresponding to FILE TYPE NAMES declared above)
+    # IMP Note - The property name for magic bytes should be defined in a format "MAGIC_BYTE_" + {actual File Type Name in capital letters}
+    # AND the "actual file type name in capital letters" MUST match the file type name in the property names for allowed file types above
+    # For example for "PNG" filetype the property name should be "MAGIC_BYTE_PNG"
+    # Note that For a few file types like XML, XSL there are no corresponding magic bytes
+    MAGIC_BYTE_PNG=0x89,0x50,0x4E,0x47,0x0D,0x0A,0x1A,0x0A
+    MAGIC_BYTE_JPG=0xFF,0xD8
+    MAGIC_BYTE_PDF=0x25,0x50
+    MAGIC_BYTE_ZIP=0x50,0x4B,0x03,0x04
+    MAGIC_BYTE_SEVEN_ZIP=7,z,0xBC,0xAF,0x27,0x1C
+    MAGIC_BYTE_XLSX=0x50,0x4B,0x03,0x04
+    MAGIC_BYTE_XLS=0xD0,0xCF,0x11,0xE0,0xA1,0xB1,0x1A,0xE1
+    MAGIC_BYTE_DOCX=0x50,0x4B,0x03,0x04
+    MAGIC_BYTE_DOC=0xD0,0xCF,0x11,0xE0,0xA1,0xB1,0x1A,0xE1
+    MAGIC_BYTE_TTF=0x00,0x01,0x00,0x00,0x00
+    MAGIC_BYTE_OTF=0x4F,0x54,0x54,0x4F
+
+
+    #### import C2 File ####
+    IMPORT_C2_FILE_ALLOWED_FILE_TYPES_DEFAULT=PNG, JPG
+    IMPORT_C2_FILE_ALLOWED_FILE_TYPES_FOR_C2_TOC_C2_XSL_C2_LAYER=PDF, PNG, JPG, SVG, XML, XSL
+    IMPORT_C2_FILE_ALLOWED_FILE_TYPES_FOR_C2_MERGE=PDF
+    IMPORT_C2_FILE_ALLOWED_FILE_TYPES_FOR_C2_WATERMARK=PDF, PNG, JPG, SVG
+    ########################
+
+    #### import Dictionary ####
+    IMPORT_DICTIONARY_ALLOWED_FILE_TYPES=XLS, XLSX, XML, CSV
+    ########################
+
+    #### import File D2 Web ######
+    IMPORT_FILE_D2_WEB_FILE_TYPES=ZIP, XML, TTF, OTF
+    ##############################
+
+    #### import File X3 Config ####
+    IMPORT_FILE_X3_CONFIG_FILE_TYPES_X3_IMAGE=PNG, JPG, SVG, GIF
+    IMPORT_FILE_X3_CONFIG_FILE_TYPES_X3_IMAGE_CATEGORY_SVICON=SVG
+    IMPORT_FILE_X3_CONFIG_FILE_TYPES_X3_SPACE=XML
+    ###############################
+
+    #### import Register ####
+    IMPORT_REGISTER_FILE_TYPES=XLS, XLSX, CSV
+    ###############################
+
+    #### import Taxonomy ####
+    IMPORT_TAXONOMY_FILE_TYPES=XLS, XLSX, XML, CSV
+    ###############################
+
+
+    ######################################################################################################################
+    # END
+    ######################################################################################################################
+
+
+
+    {{- if $configFileAppendsValues := .Values.D2_Config_properties }}
+    {{ $configFileAppendsValues | nindent 4 }}
+    {{- end }}
+
+{{- $configFileOverridesFile := printf "%s/%s" .Values.configFileOverrideFilesDir "D2-Config.properties" }}
+{{- $configFileMsg0 := printf "\n\n##### Begin lines added from %s\n" $configFileOverridesFile }}
+{{- $configFileMsg1 := printf "##### End lines added from %s" $configFileOverridesFile }}
+{{- $configFileLinesToAppend := .Files.Get $configFileOverridesFile }}
+{{- if $configFileLinesToAppend }}
+{{ $configFileMsg0 | indent 4 }}
+{{ $configFileLinesToAppend | indent 4 }}
+{{ $configFileMsg1 | indent 4 }}
+{{- end }}
+
+{{- end }}
+    {{- end }}

@@ -1,0 +1,177 @@
+#######################################################
+# Documentum Reports Base default values.            #
+# This is This is a YAML-formatted file.              #
+# Declare variables to be passed into your templates. #
+#######################################################
+
+persistentVolumeClaim:  
+  pvcName: dtr-pvc
+  accessMode: ReadWriteMany
+  size: 1Gi
+  storageClass:
+  PVCSubPath: dtr-customscript
+ 
+imagePullSecrets:
+serviceAccount:
+  createserviceaccount: false
+  serviceAccountName: 
+
+service:
+  name: dtrbase
+  type: 
+  dtrBasePort: 8080
+  dtrBasePorthttps: 8443
+  dtrCoreport: 5001
+  dtrCorePorthttps: 5002
+  serviceAnnotations: {}
+  
+fluentd: 
+  graylogEnabled:
+  servicedataPVCName: fluentd-data-pvc
+  readiness:
+    enable: true
+# Details of graylog-server to which the fluentd-sidecar uses to push logs
+  tags: '["linux", "apache"]'
+  server: 
+  TCPPort: 
+  businessUnit: 
+  datacenter: 
+  environment: 
+
+cs:  
+  useCSDfcConfigMap: true            
+  configMapName: dbr.configmap
+  csSecretConfigName: cs-secret-config
+  installOwnerKey: installOwner
+  installOwnerPasswordkey: installOwnerPassword
+  globalRegistryPasswordKey: globalRegistryPassword
+  allowTrustedLogin: false  
+####################################################################################
+# Suppose Content Server config map not used                                       #
+# then uncomment and update the below listed parameters with appropriate values of # 
+# dfc.properties and ensure to toggle the flag useDfcConfigMap to false.           #
+####################################################################################
+#dfc:  
+#  properties:
+#  - dfc.data.dir=/opt/dctm
+#  - dfc.tokenstorage.dir=/opt/dctm/apptoken
+#  - dfc.tokenstorage.enable=false
+#  - dfc.security.ssl.use_anonymous_cipher=true
+#  - dfc.security.ssl.truststore=/opt/dctm/certificate/dfc.keystore
+#  - dfc.security.ssl.use_existing_truststore=false
+#  - dfc.docbroker.host[0]=dbr-1.dbr.docu.svc.cluster.local
+#  - dfc.docbroker.port[0]=1489
+#  - dfc.crypto.repository=docbase2
+#  - dfc.globalregistry.repository=docbase2
+#  - dfc.session.secure_connect_default=try_secure_first
+#  - dfc.globalregistry.username=dm_bof_registry
+#  - dfc.globalregistry.password=password   
+#  - dfc.session.allow_trusted_login=false
+
+docbroker:
+  port:
+  replicaCount: 1
+  serviceName:
+
+env:
+  domain:
+
+methodsvr:
+  containerName: dcs-pg
+
+   
+deployment:  
+  name: dtrbase
+  appName: dtrbase
+  replicaCount: 1
+  strategyType: RollingUpdate
+  
+images:
+  dtrbase:
+    repository: 
+    name: ot-dctm-reports-base
+    tag: 25.4.0001.0008
+    pullPolicy: 
+                   
+containers:
+  dtrbase:
+    name: dtrbase
+    kubernetes: true
+    dtrKubernetesInstall: true
+    darInstallRepo:
+    drServiceUserEmailID: dctmreports@ot.com
+    ingressHost:   
+    drCoreDefaultStyleFile: /opt/dtr_build/DCTM-ReportsCore/App_Data/SimpleList.sts
+    drCoreServerTimeout: 00:30:00      
+    drCoreSmtpPort: 25
+    drCoreSmtpAuthRequired: true
+    drCoreMailSubject: test eMail from DR Job
+    drCoreMaxAttachmentSize: 0        
+    drCoreAttachAsZip: false
+    drCoreSmtpUser: username
+    drCoreUrlTimeout: 30000
+    drCoreSmtpStarttlsEnable: true
+    drCoreSmtpHost: smtp.org.net 
+    drCoreFromAddress: user@opentext.com
+    drCoreSmtpPassword: pwd
+    drCoreReportServlet: http://localhost:8080/DCTM-Reports
+    drCoreAllowPlainTextParamsInReportUrl: false
+    drCoreEnableSessionValidationWithClientIp: false           
+    drCoreReportCacheTimeout: 00:30:00    
+    externalFolderPath: /opt/tomcat/webapps/DCTM-Reports/external-configurations
+    execQueryByBatch: false
+    rowNumThreshholdForJob: 200000
+    #probing:
+    healthPath: /dtr/TestServletConnection
+
+# log4j2 logging config details.
+logging:  
+  rootLoggerLevel: WARN
+  consoleThresholdLevel: WARN
+  filename: /opt/dtr_build/logs/Reports-Servlet.log
+  logFileSize: 100MB
+  maxLogFiles: 5
+  monitorInterval: 30
+  
+vault:
+  enable:
+  vaultConfigmap: dctm-vault-configmap
+  PVCName: dsis-binary-pvc
+  vault_config_mountPath: /opt/dctm_docker/vault_config
+  vault_binary_mountPath: /opt/dctm_docker/dsis_binary_volume
+
+newrelic:
+  enable: 
+  appName: DOCUMENTUM_DTR-PROD-OT2_CFCR_BP2-ECD
+  licenseKeyName: 
+  proxyHost: 
+  proxyPort: 
+  proxyScheme: 
+
+certificate:
+  useCertificate: 
+  dbrServiceName:
+  dbrDataPVCName:
+
+internalTlsEnable:
+ 
+resources:
+  limits:
+    cpu: 1500m
+    memory: 4Gi
+  requests:
+    cpu: 800m
+    memory: 2Gi
+
+tomcat:
+  connectionTimeout:
+  maxHttpHeaderSize:
+  maxThreads:
+  keepAliveTimeout:
+  acceptCount:
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}

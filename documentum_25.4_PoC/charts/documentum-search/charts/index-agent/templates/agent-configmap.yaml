@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: index-agent-configmap
+
+data:
+  index.agent.server.url.check: http://{{ .Values.service.name }}:{{ .Values.service.targetPort }}/agent-dctm/manager
+  cs.server.url.check: http://{{ .Values.csreadiness.jmsServiceName | default .Values.global.jmsServiceName }}:{{ .Values.csreadiness.jmsServicePort | default .Values.global.jmsPort}}/DmMethods/servlet/DoMethod

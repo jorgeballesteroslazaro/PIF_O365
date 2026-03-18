@@ -1,0 +1,41 @@
+{{ if eq .Values.platform "cfcr" }}
+{{ if (empty (.Values.ExtDocbroker.enable | quote) | ternary .Values.global.externalAccessEnabled .Values.ExtDocbroker.enable) }}
+{{ if eq .Values.ExtDocbroker.createExtService true }}
+#Nodeport Service exposing docbroker native port
+apiVersion: v1
+kind: Service
+metadata:
+  name: native-{{ .Values.serviceName | default .Values.global.dbrServiceName }}
+  labels:
+    app: native-{{ .Values.serviceName | default .Values.global.dbrServiceName }}    
+spec:
+  type: NodePort
+  ports:
+  - port: {{ .Values.ports.extNativePort }} 
+    nodePort: {{ .Values.ExtDocbroker.extNativeNodePort }}
+    protocol: TCP
+    name: xdbrnativeport
+    targetPort: {{ .Values.ports.extNativePort }}  
+  selector:
+    app: {{ .Values.serviceName | default .Values.global.dbrServiceName }}
+---
+#Nodeport Service exposing docbroker ssl port
+apiVersion: v1
+kind: Service
+metadata:
+  name: ssl-{{ .Values.serviceName | default .Values.global.dbrServiceName }}
+  labels:
+    app: ssl-{{ .Values.serviceName | default .Values.global.dbrServiceName }}    
+spec:
+  type: NodePort
+  ports:
+  - port: {{ .Values.ports.extSSLPort }}
+    nodePort: {{ .Values.ExtDocbroker.extSSLNodePort }}
+    protocol: TCP
+    name: xdbrsslport
+    targetPort: {{ .Values.ports.extSSLPort }}
+  selector:
+    app: {{ .Values.serviceName | default .Values.global.dbrServiceName }}
+{{ end }}
+{{ end }}
+{{ end }}

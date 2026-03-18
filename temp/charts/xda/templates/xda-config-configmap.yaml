@@ -1,0 +1,455 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.prefix }}-xda-config
+  labels:
+    name: {{ .Values.prefix }}-xda-config
+data:
+  DSIS_BIN_ZIP_PVC_PATH: {{ .Values.vault.binary_volume_mount_path }}/dsis-binary
+  DSIS_APP_PROPERTIES_FILE_PVC_PATH: {{ .Values.vault.vault_config_mount_path }}
+  xda-properties: |-
+    xda-host = localhost
+    xda-port = {{ .Values.adminConsoleServicePort }}
+    xda-schema = {{ eq .Values.global.internalTlsEnable true | ternary "https" "http" }}
+    {{- if (eq .Values.global.internalTlsEnable true) }}
+    xda.ssl.enabled=true
+    xda.ssl.trust-store=/opt/dctm/certificate/ingress.p12
+    xda.ssl.trust-store-password={{ .Values.docbaseConnection.truststorePassword }}
+    xda.ssl.trust-store-type=PKCS12
+    {{- end }}
+    {{- if (empty (.Values.vault.enable | quote) | ternary .Values.global.isVaultEnabled .Values.vault.enable) }}
+    vault.enabled=true
+    vault.scheme=http
+    vault.hostname=127.0.0.1
+    vault.port=8200
+    vault.appcontext=dsis
+    vault.token=
+    {{- end }}
+  
+  xda-config-properties: |-
+    # Property to specify location of logging configuration file. User should not change the value of this property.
+    logging.config = /opt/xDA/config/log4j2.properties
+    AekFilePath=/opt/xDA/bin/aek.key
+    # Property to specify the port on which xDA application should run. Default is 7000.
+    server.port = {{ .Values.adminConsoleServicePort }}
+    # Redirection Parameters
+    redirectToHTTPS={{ .Values.redirectionParameters.redirectToHTTPS }}
+    redirectPort={{ .Values.redirectionParameters.redirectPort }}
+    dfc.properties.file=/opt/xDA/bin/dfc.properties
+    spring.main.allow-bean-definition-overriding=true
+    spring.http.log-request-details=true
+    spring.main.allow-circular-references = true
+    spring.mvc.pathmatch.matching-strategy=ant_path_matcher
+    server.servlet.register-default-servlet=true
+    server.servlet.context-path=/xda
+    server.tomcat.remote_ip_header=x-forwarded-for
+    server.tomcat.protocol_header=x-forwarded-proto
+    {{- if (eq .Values.global.internalTlsEnable true) }}
+    xda.ssl.enabled=true
+    xda.ssl.key-store=/opt/dctm/certificate/ingress.p12
+    xda.ssl.key-store-password={{ .Values.docbaseConnection.truststorePassword }}
+    xda.ssl.key-store-type=PKCS12
+    server.ssl.trust-store=/opt/jdk/lib/security/cacerts
+    {{- end }}
+    {{- if (empty (.Values.vault.enable | quote) | ternary .Values.global.isVaultEnabled .Values.vault.enable) }}
+    vault.enabled=true
+    vault.scheme=http
+    vault.hostname=127.0.0.1
+    vault.port=8200
+    vault.appcontext=dsis
+    vault.token=    
+    {{- end }}
+  dfc-properties-config: |-
+    dfc.tracing.enable={{ if .Values.dfcTracing }} {{ default "false" .Values.dfcTracing.isEnabled }} {{ end }}
+    dfc.tracing.verbose=true
+    dfc.tracing.dir = /opt/xDA/logs
+    dfc.tracing.include_rpcs=true
+    dfc.tracing.max_stack_depth = 20
+    dfc.tracing.timing_style=date
+    dfc.tracing.date_column_width=12
+    dfc.tracing.date_format=yyyy-MM-dd hh:mm:ss.SSS
+    dfc.tracing.mode=standard
+    dfc.tracing.log.level = INFO
+    {{- if (empty (.Values.docbaseConnection.use_certificate | quote) | ternary .Values.global.useCertificate .Values.docbaseConnection.use_certificate) }}
+    dfc.security.ssl.truststore=/opt/dctm/certificate/dfc.keystore    
+    dfc.security.ssl.truststore_password={{ .Values.docbaseConnection.truststorePassword }}
+    dfc.security.ssl.use_existing_truststore=false
+    dfc.session.secure_connect_default=try_secure_first 
+    {{ end }}    
+  log4j-properties-config: |-
+    monitorInterval = 30
+    appender.console.type=Console
+    appender.console.name=STDOUT
+    appender.console.layout.type=PatternLayout
+    appender.console.layout.pattern=%d{ABSOLUTE} %5p [%t] %c - %m%n
+    appender.console.filter.threshold.type=ThresholdFilter
+    appender.rolling.type=RollingFile
+    appender.rolling.name=core
+    appender.rolling.fileName=/opt/xDA/logs/xda.log
+    appender.rolling.filePattern=/opt/xDA/logs/xda-%d{MM-dd-yy}-%i.log
+    appender.rolling.layout.type=PatternLayout
+    appender.rolling.layout.pattern=%d{yyyy/MM/dd HH:mm:ss,SSS} %5p [%t][%c] - %m%n
+    appender.rolling.policies.type=Policies
+    appender.rolling.policies.time.type=TimeBasedTriggeringPolicy
+    appender.rolling.policies.time.interval=1
+    appender.rolling.policies.time.modulate=true
+    appender.rolling.policies.size.type=SizeBasedTriggeringPolicy
+    appender.rolling.policies.size.size=10MB
+    appender.rolling.strategy.type=DefaultRolloverStrategy
+    appender.rolling.strategy.max=10
+    appender.rolling.filter.threshold.type=ThresholdFilter
+    appender.rolling.filter.threshold.level=info
+    appender.full.type=RollingFile
+    appender.full.name=full
+    appender.full.fileName=/opt/xDA/logs/xda-full.log
+    appender.full.filePattern=/opt/xDA/logs/xda-full-%d{MM-dd-yy}-%i.log
+    appender.full.layout.type=PatternLayout
+    appender.full.layout.pattern=%d{yyyy/MM/dd HH:mm:ss,SSS} %5p [%t] - %m%n
+    appender.full.policies.type=Policies
+    appender.full.policies.time.type=TimeBasedTriggeringPolicy
+    appender.full.policies.time.interval=1
+    appender.full.policies.time.modulate=true
+    appender.full.policies.size.type=SizeBasedTriggeringPolicy
+    appender.full.policies.size.size=10MB
+    appender.full.strategy.type=DefaultRolloverStrategy
+    appender.full.strategy.max=10
+    appender.full.filter.threshold.type=ThresholdFilter
+    appender.full.filter.threshold.level=info
+    rootLogger.level=WARN
+    appenders=console,rolling,full,command,aspectj
+    rootLogger.appenderRefs=rolling,full,command
+    rootLogger.appenderRef.rolling.ref=core
+    rootLogger.appenderRef.full.ref=full
+    rootLogger.appenderRef.command.ref=command
+    logger.A.name=com.documentum.xms
+    logger.A.level=info
+    logger.B.name=com.documentum.xms.persistence
+    logger.B.level=info
+    logger.C.name=com.emc.xms
+    logger.C.level=info
+    # Configuring loggers for Builder code
+    logger.D.name=com.documentum.deployment
+    logger.D.level=info
+    #log4j.logger.com.emc.xms.commands=INFO
+    logger.E.name=com.emc.xcp
+    logger.E.level=info
+    logger.F.name=com.emc.xcp.builder
+    logger.F.level=info
+    logger.G.name=com.emc.xcp.installer
+    logger.G.level=info
+    logger.H.name=internal.com.emc.xcp
+    logger.H.level=info
+    logger.I.name=com.emc.xms.extension.core.impl.EclipseExtensionLoader
+    logger.I.level=warn
+    logger.J.name=internal.com.emc.xms.commands
+    logger.J.level=warn
+    #logger.C1.name=logger.com.emc.xms.commands
+    #logger.C1.level=info
+    # Configuring loggers for commands
+    appender.command.type=File
+    appender.command.name=command
+    appender.command.fileName=/opt/xDA/logs/commands-log/catalog-commands.log
+    appender.command.layout.type=PatternLayout
+    appender.command.layout.pattern=%d{yyyy/MM/dd HH:mm:ss,SSS} %5p [%t] - %m%n
+    appender.command.filter.threshold.type=ThresholdFilter
+    appender.command.filter.threshold.level=info
+    #!!!!!! SET AspectLogger log level to INFO to disable tracing
+    appender.aspectj.type=RollingFile
+    appender.aspectj.name=aspectj
+    appender.aspectj.fileName=/opt/xDA/logs/xda-aspectj.log
+    appender.aspectj.filePattern=/opt/xDA/logs/xda-aspect-%d{MM-dd-yy}-%i.log
+    appender.aspectj.layout.type=PatternLayout
+    appender.aspectj.layout.pattern=%d{yyyy/MM/dd HH:mm:ss,SSS} %5p [%t] - %m%n
+    appender.aspectj.policies.type=Policies
+    appender.aspectj.policies.time.type=TimeBasedTriggeringPolicy
+    appender.aspectj.policies.time.interval=1
+    appender.aspectj.policies.time.modulate=true
+    appender.aspectj.policies.size.type=SizeBasedTriggeringPolicy
+    appender.aspectj.policies.size.size=10MB
+    appender.aspectj.strategy.type=DefaultRolloverStrategy
+    appender.aspectj.strategy.max=10
+    appender.aspectj.filter.threshold.type=ThresholdFilter
+    appender.aspectj.filter.threshold.level=info
+    logger.K.name=com.documentum.xms.logger.aspects.AspectLogger
+    logger.K.level=info
+    logger.K.appenderRef.aspectj.ref=aspectj
+    logger.K.additivity=false
+    logger.K.name=com.documentum.xms.logger.aspects.AspectLogger
+    logger.K.level=info
+    logger.K.appenderRef.aspectj.ref=aspectj
+    logger.K.additivity=false
+    logger.L.name=com.documentum.xms.core.utils.jaxb.CompositeMarshallerListener
+    logger.L.level=info
+    logger.M.name=com.documentum.xms.core.utils.jaxb.CompositeUnmarshallerListener
+    logger.M.level=info
+    logger.N.name=com.documentum.xms.services.impl.CryptService
+    logger.N.level=info
+    logger.O.name=com.documentum.xms.core.el.UnmarshallerListener
+    logger.O.level=info
+    logger.P.name=com.documentum.xms.api.client.impl.XmsRestTemplate
+    logger.P.level=info
+    logger.Q.name=com.documentum.xms.core.utils.MarshallerUtils
+    logger.Q.level=info
+    logger.R.name=com.emc.xms.server.filter.AjaxSessionTimeoutFilter
+    logger.R.level=info
+    logger.S.name=org.apache.http.client
+    logger.S.level=error
+    logger.T.name=com.emc.xms.spring.http.converter.xml.XmlRootElementClassesRegistry
+    logger.T.level=error
+    logger.U.name=com.emc.xms.extension.core.impl.AnnotationExtensionLoader
+    logger.U.level=error
+    logger.V.name=com.emc.xms.spring.http.converter.xml.XmlRootElementHttpMessageConverter
+    logger.V.level=error
+    logger.W.name=com.emc.xms.server.controller.ExecutionController
+    logger.W.level=error
+    #logger.X.name=com.documentum.xms.core.crypt.jaxb.PasswordsMarshallerListener
+    #logger.X.level=info
+    #logger.Y.name=com.documentum.xms.core.crypt.jaxb.PasswordsUnMarshallerListener
+    #logger.Y.level=info
+    #logger.Z.name=com.documentum.xms.core.crypt.jaxb.PasswordsMarshallingProcessor
+    #logger.Z.level=info
+    #logger.A1.name=com.documentum.xms.core.user.User.getPlainPassword
+    #logger.A1.level=info
+    #logger.B1.name=com.documentum.xms.core.user.User.getPlainPassword
+    #logger.B1.level=info
+
+  environment-config: |-
+    environmentTemplate: xCP-25.4-Developer-Environment-Template
+    environmentName: DeploymentEnvironment
+    environmentMode: {{ .Values.xdacli.environmentMode }}
+    environmentDescription: My Environment Description
+    defaultSystemAccount: 
+      username: {{ .Values.xdacli.username }}
+      password: 
+      domain:    
+    hostGroups:
+      - name: xCPVM1
+        description: Developer Environment Host Group 1
+        hosts:
+        - hostname: dbr
+          ipAddress: 
+        - hostname: bam-server
+          ipAddress: 
+      - name: xCPVM2
+        description: Developer Environment Host Group 2
+        hosts:
+        - hostname: apphost
+          ipAddress:
+        - hostname: bps
+          ipAddress:
+        - hostname: indexserver,indexagent
+          ipAddress:
+    services:
+      - serviceName: AdtsService
+        enabled: false
+        version: 25.4.0.0
+        hostGroup: xCPVM2
+        endpoints:
+        - endpointName: adtsEndpoint
+          properties:
+            port: 9095
+          useDefaultSystemAccount: true
+          systemAccountInfo: 
+            username: 
+            password: 
+            domain: 
+          hosts:
+             - MYHOST3
+             - 
+      - serviceName: AppHostService
+        enabled: true
+        version: 25.4.0.0
+        hostGroup: xCPVM2
+        endpoints:
+        - endpointName: appHostEndpoint
+          properties:
+            port: {{ eq .Values.global.internalTlsEnable true | ternary "8443" "8080" }}
+            protocol: {{ eq .Values.global.internalTlsEnable true | ternary "https" "http" }}
+            url: {{ eq .Values.global.internalTlsEnable true | ternary "https://apphost:8443/" "http://apphost:8080/" }}
+          useDefaultSystemAccount: true
+          systemAccountInfo: 
+            username:
+            password:
+            domain: 
+          hosts:
+             - apphost
+      - serviceName: AppHostLoadBalancerService
+        enabled: false
+        version: 2.4.0.0
+        hostGroup: xCPVM1
+        endpoints:
+        - endpointName: loadBalancerEndpoint
+          properties:
+            port: 9990
+            protocol: http
+            url: http://MYHOST1:9990/console
+          useDefaultSystemAccount: true
+          systemAccountInfo: 
+            username: 
+            password: 
+            domain: 
+          hosts:
+             - MYHOST1
+      - serviceName: AvtsService
+        enabled: false
+        version: 25.4.0.0
+        hostGroup: xCPVM2
+        endpoints:
+        - endpointName: avtsEndpoint
+          properties:
+            port: 9095
+          useDefaultSystemAccount: true
+          systemAccountInfo: 
+            username: 
+            password: 
+            domain: 
+          hosts:
+             - MYHOST3
+      - serviceName: BamService
+        enabled: false
+        version: 25.4.0.0
+        hostGroup: xCPVM1
+        endpoints:
+        - endpointName: bamEndpoint
+          properties:
+            port: 8080
+            protocol: http
+            url: http://bam-server:8080/bam-server
+          useDefaultSystemAccount: true
+          systemAccountInfo: 
+            username: 
+            password: 
+            domain: 
+          hosts:
+             - bam-server
+      - serviceName: BamLoadBalancerService
+        enabled: false
+        version: 2.4.0.0
+        hostGroup: xCPVM1
+        endpoints:
+        - endpointName: loadBalancerEndpoint
+          properties:
+            port: 8000
+            protocol: http
+            url: http://MYHOST1:8000/console
+          useDefaultSystemAccount: true
+          systemAccountInfo: 
+            username: 
+            password: 
+            domain: 
+          hosts:
+             - MYHOST1
+      - serviceName: BpsService
+        enabled: true
+        version: 25.4.0.0
+        hostGroup: xCPVM2
+        endpoints:
+        - endpointName: bpsEndpoint
+          properties:
+            port: {{ eq .Values.global.internalTlsEnable true | ternary "8443" "8080" }}
+            protocol: {{ eq .Values.global.internalTlsEnable true | ternary "https" "http" }}
+            url: {{ eq .Values.global.internalTlsEnable true | ternary "https://bps:8443/" "http://bps:8080/" }}
+          useDefaultSystemAccount: true
+          systemAccountInfo: 
+            username: 
+            password: 
+            domain: 
+          hosts:
+             - bps
+      - serviceName: CisService
+        enabled: false
+        version: 20.2.0.0
+        hostGroup: xCPVM2
+        endpoints:
+        - endpointName: cisEndpoint
+          properties:
+            port: 8079
+          useDefaultSystemAccount: true
+          systemAccountInfo: 
+            username: 
+            password: 
+            domain: 
+          hosts:
+             - MYHOST3
+      - serviceName: DaService
+        enabled: false
+        version: 25.4.0.0
+        hostGroup: xCPVM1
+        endpoints:
+        - endpointName: daEndpoint
+          properties:
+            port: 8001
+            protocol: http
+            url: http://localhost:8001/da
+          useDefaultSystemAccount: true
+          systemAccountInfo: 
+            username: 
+            password: 
+            domain: 
+          hosts:
+             - localhost
+      - serviceName: FileServerService
+        enabled: false
+        version: 1.0.0.0
+        hostGroup: xCPVM2
+        endpoints:
+        - endpointName: dataAccess
+          properties:
+            uncPath: http://UNCPATH:8020/UNCPATH	
+          useDefaultSystemAccount: true
+          systemAccountInfo: 
+            username: 
+            password: 
+            domain: 
+          hosts:
+             - MYHOST3 
+      - serviceName: MtsService
+        enabled: false
+        version: 25.4.0.0
+        hostGroup: xCPVM2
+        endpoints:
+        - endpointName: mtsEndpoint
+          properties:
+            port: 9095
+          useDefaultSystemAccount: true
+          systemAccountInfo: 
+            username: 
+            password: 
+            domain: 
+          hosts:
+             - MYHOST3
+      - serviceName: RepositoryService
+        enabled: true
+        version: 25.4.0.0
+        hostGroup: xCPVM1
+        endpoints:
+        - endpointName: repositoryEndpoint
+          properties:
+            repositoryName: {{ .Values.xdacli.reponame | default .Values.global.docbase }}
+            docbrokerPort: 1489
+          useDefaultSystemAccount: true
+          systemAccountInfo: 
+            username: 
+            password: 
+            domain: 
+          hosts:
+             - dbr 
+      - serviceName: SearchService
+        enabled: false
+        version: 25.4.0.0
+        hostGroup: xCPVM2
+        endpoints:
+        - endpointName: xploreEndpoint
+          properties:
+            eSSPort: 9300
+            eSSUrl: http://indexserver:9300/dsearch
+            indexAgentPort: 9200
+            indexAgentUrlPrefix: http://indexagent:9200/IndexAgent
+          useDefaultSystemAccount: false
+          systemAccountInfo: 
+            username: admin
+            password: adminPass1
+            domain: 
+          hosts:
+             - indexserver,indexagent             
+         

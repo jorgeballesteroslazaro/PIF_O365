@@ -1,0 +1,142 @@
+# RQM values yaml file.
+
+### Namespace details ###
+namespace:
+serviceName: documentum-rqm-pg
+serviceAnnotations: {}
+userName: 
+
+custom:
+  scriptinPVC: false
+  scriptPVCname: shared-pvc
+  PVCSubPath: customscripts
+  useInitContainers: false
+    ### Persistent Volume ###
+persistentVolumeClaim:
+  pvcName: rqmpvc 
+  accessMode: ReadWriteMany
+  size: 1Gi
+  storageClass: 
+  awsEFSCSIDriver: efs.csi.aws.com
+  awsEFSCSIHandle: 
+ # Content Server Helm deployment details.
+cs:   
+  useCSDfcConfigMap: true             
+  configMapName: 
+  csSecretConfigName: 
+  allowTrustedLogin: false
+  
+certificate:
+  useCertificate: 
+  dbrServiceName: 
+  dbrDataPVCName: certdbr-data-pvc
+  
+  ####################################################################################
+# Suppose Content Server config map not used                                       #
+# then update the below listed parameters with appropriate values of dfc.properties#
+# and ensure to toggle the flag useDfcConfigMap to false.                          #
+####################################################################################
+dfc:  
+  properties:  
+  - dfc.docbroker.host[0]=<DOCBROKER_HOST_NAME>
+  - dfc.docbroker.port[0]=<PORT_NO>
+  - dfc.globalregistry.repository=<GLOBAL_REPO>
+  - dfc.globalregistry.username=dm_bof_registry  
+  - dfc.security.ssl.use_anonymous_cipher=true
+  - dfc.session.allow_trusted_login=false
+  - dfc.globalregistry.password=<GLOBAL_REPO_PASSWORD>
+  - dfc.security.ssl.truststore=/opt/dctm/certificate/dfc.keystore 
+
+### Docker Images ###  
+images:
+  rqm:
+    repository: 
+    name: ot-dctm-rqm
+    tag: 25.4
+    pullPolicy: 
+    pullSecrets:  
+  # Containers details
+containers:
+  rqm:    
+     name: rqm
+     containerName: RQMContainer
+     rqmSingleHelm: false
+     kubernetes: true
+     externalFolderPath: /opt/external-configurations     
+     replicaCount: 1
+     rqmInstallationDir: /home/recordsadmin/dctm      
+     installFiles: false
+     docbaseName:     
+     rqmDocbaseUser:     
+     rqmSysAdminName: recordsadmin
+     rqmSysAdminPass: password    
+     globalRegistryRepository:   
+     bofRegistryUser: 
+     docbrokerhostname: records221dbr-0.records221dbr.rm-docu.svc.cluster.local        
+     rqmadminport: 9095
+     rqmjettyport: 9096
+     docbrokerport:  
+     rqmHomeDir: /home/recordsadmin   
+     recordsaws: false
+     probing:
+       readinessProbe:
+         initialDelaySeconds: 120
+         periodSeconds: 120
+       livenessProbe:
+         initialDelaySeconds: 120
+         periodSeconds: 120
+
+### Docbroker ###
+
+docbroker:
+  replicaCount: 2
+  serviceName: 
+  port: 
+  
+### Environment ###
+env:
+  domain: 
+  # Only used in cloud tenant environment to add subscriptionName query string 
+  # parameter to the OTDS authentication URL when redirecting the user.
+  #subscriptionName: subscription1  
+
+vault:
+  enable: 
+  vault_configmap: dctm-vault-configmap
+  createPVC: false
+  PVCName: dsis-binary-pvc
+  pvcAccessModes: ReadWriteMany
+  size: 100Mi
+  storageClass: 
+  existVolumePv:
+
+userProvidedServices:
+  newrelic:
+    enable: 
+    appName: <MY_APPLICATION>
+    proxyHost: 
+    proxyPort:
+    proxyScheme: 
+serviceAccount:
+  createserviceaccount: false
+  serviceAccountName: 
+
+  # log4j2 logging config details.
+logging:
+  rootLoggerLevel: WARN
+  rps:
+    rpsThresholdLevel: WARN
+    rpsFilename: rps.log
+    rpsLogFileSize: 10MB
+    rpsMaxLogFiles: 5
+  workorder:
+    workorderThresholdLevel: WARN
+    workorderFilename: workorder.log
+    workorderLogFileSize: 10MB
+    workorderMaxLogFiles: 5
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}

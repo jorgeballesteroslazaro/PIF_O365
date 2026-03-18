@@ -1,0 +1,148 @@
+# Default values for LSPrint.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+###User Name/ID
+userName: lsprint
+webAppName: ControlledPrint
+##Namespace
+namespace:
+### Environment ###
+env:
+  domain:
+
+ingressClass: nginx
+timeoutSec: 180
+drainingTimeoutSec: 600
+
+secret:
+  csSecretName:
+  lsSecretName: 
+
+### Dockbroker ###
+docbroker:
+  serviceName:
+  port:
+
+methodsvr:
+  containerName: dcs-pg
+  port:
+
+fsGroup: 
+
+### Docbase ###
+docbase:
+  name:
+
+replicaCount: 1
+
+image:
+  repository:
+  name:
+  tag:
+  pullPolicy:
+  pullSecrets:
+extensionImage:
+  repository:
+  name: dctm-ls-print
+  tag: 25.4.0
+  pullPolicy:
+
+extraInitContainers: []
+#uncomment the lines between "#start - dsisinit" and "#end - dsisinit"section if vault is enabled and add in extrainitcontainer section. Also make sure indentation is correct.
+#start - dsisinit
+# - name: dsisinit
+#   image: artifactory.otxlab.net/bpdockerhub/ot-dctm-dsis:25.4
+#   imagePullPolicy: IfNotPresent
+#   command: ['/bin/sh', '-c', 'sudo cp -pf /opt/dsis_binary/dsis.zip /opt/dctm_docker/dsis_binary_volume']
+#   volumeMounts:
+#     - name: dsis-binary-volume
+#       mountPath: /opt/dctm_docker/dsis_binary_volume
+#       subPath: dsis-binary
+#end - dsisinit
+extension:
+  pvcName:
+
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAnnotations: {}
+
+serviceType:
+servicePort:
+
+ports:
+  containerHttpPort: 8080
+  containerSslPort: 8443
+
+log4j2:
+  # Log Levels for log4j2 XML. Valid values are DEBUG, INFO, WARN, ERROR, FATAL
+  rootLogLevel: INFO
+  printServerLogLevel: INFO
+
+logback:
+  # Log Levels for logback XML for D2 logging inside the print container
+  printServerRootLogLevel: WARN
+  printServerLogLevel: WARN
+
+###Enabled by default to mount logs on PVC ###
+persistLogsOnPvc:
+  enable:
+  volumeClaimTemplate:
+    logVctAccessModes: ReadWriteOnce
+    logVctSize: 2Gi
+    logVctStorageClass:
+
+resources:
+  limits:
+    cpu: 1000m
+    memory: 2Gi
+  requests:
+    cpu: 500m
+    memory: 1Gi
+
+newrelic:
+  enable:
+
+persistentVolume:
+  vctName: lsprint-pvc
+  accessModes: ReadWriteOnce
+  storageClass:
+
+vault:
+  enable:
+  vault_configmap: dctm-vault-configmap
+  vault_config_mount_path: /opt/dctm_docker/vault_config
+  PVCName: dsis-binary-pvc
+  binary_volume_mount_path: /opt/dctm_docker/dsis_binary_volume
+  statusCheckRetryCount: 20
+  # seconds
+  statusCheckTimeInterval: 1
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+logrotate:
+  enable:
+  configmap: |-
+
+#used only in development
+keystorePassword: changeit  
+
+tomcat:
+  connectionTimeoutInMilliseconds: 
+  maxHttpHeaderSize:
+  maxThreads:
+  keepAliveTimeout:
+  acceptCount:
+  
+certificate:
+  use_certificate: 
+  dbrserviceName: 
+  
+dbrpersistentVolume:
+  dbrdataPVCName: 
+
+web_xml: |-

@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: validation-config
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade
+    "helm.sh/hook-weight": "-4"
+    "helm.sh/hook-delete-policy": hook-succeeded
+data:
+  validation: |
+    {{- if and .Values.global.internalTlsEnable (not .Values.global.useCertificate) }}
+    {{- fail "Error: .Values.global.internalTlsEnable is set to true but .Values.global.useCertificate is not set to true. Please re-check both the global values and set .Values.global.useCertificate to true if Values.global.internalTlsEnable is needed to be true for the deployment." }}
+    {{- end }}

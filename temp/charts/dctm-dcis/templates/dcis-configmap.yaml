@@ -1,0 +1,122 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.service.name }}-dcis-configmap
+data:
+  application.properties: |
+    spring.activemq.broker-url=${ACTIVEMQ_BROKER_URL}
+    spring.activemq.user=${ACTIVEMQ_USER}
+    spring.activemq.password=${ACTIVEMQ_PASSWORD}
+    input.queue=${DCIS_MQ_NAME}
+    concurrency=6-10
+
+    # comma separated docbase names
+    spring.docbase.name=${DOCBASE_NAME}
+    spring.docbase.user=${DOCBASE_USER}
+    spring.docbase.password=${DOCBASE_PASSWORD}
+
+    #Retry max limit setting
+    embedding.retry.max.limit=3
+    embedding.retry.time.limit=10
+    # keep it false for test profile
+    spring.dcis.run-setup=true
+
+    # CSAI Service Embedding URL
+    spring.csai.embedding.url = ${CSAI_EMBEDDING_SERVICE_URL}
+    parser.url=${PARSER_SERVICE_URL}
+    fetcher.url=${FETCHER_SERVICE_URL}
+    input.folder_queue=${DCIS_AMQ_FOLDER_QUEUE_NAME}
+    folderConsumer.concurrency=6-10
+
+    # Proxy details for embedding URL
+    spring.dcis.proxy-enable=${PROXY_ENABLE}
+    spring.dcis.proxy-host=${PROXY_HOST}
+    spring.dcis.proxy-port=${PROXY_PORT}
+
+    # Settings for OAUTH IDP (OTDS)
+    spring.security.oauth2.enabled=${OAUTH_ENABLED}
+    spring.security.oauth2.client.registration.otds.client-id=${OAUTH_CLIENT_ID}
+    spring.security.oauth2.client.registration.otds.client-secret=${OAUTH_CLIENT_SECRET}
+    spring.security.oauth2.client.registration.otds.authorization-grant-type=client_credentials
+    spring.security.oauth2.client.registration.otds.client-authentication-method=client_secret_post
+    spring.security.oauth2.client.provider.otds.token-uri=${OAUTH_TOKEN_ENDPOINT_URL}
+    #spring.main.web-application-type=none
+    management.endpoint.health.show-details=ALWAYS
+    management.endpoints.web.exposure.include = health
+
+    parser.httpclient.connection.read-timeout=300
+    parser.httpclient.connection.timeout=60000
+    parser.httpclient.connection.request-timeout=60000
+    parser.httpclient.connection.max-total=200
+    parser.httpclient.connection.default-max-per-route=70
+  dfc_log4j_properties: |
+    rootLogger.level = WARN
+    rootLogger.appenderRefs = A1
+    rootLogger.appenderRef.A1.ref = STDOUT
+    monitorInterval = 30
+
+    #------------------- CONSOLE --------------------------
+    appender.A1.type=Console
+    appender.A1.name=STDOUT
+    appender.A1.layout.type=PatternLayout
+    appender.A1.layout.pattern=%d{ABSOLUTE} %5p [%t] %c - %m%n
+    appender.A1.filter.threshold.type = ThresholdFilter
+    appender.A1.filter.threshold.level = ERROR
+
+    #------------------- FILE --------------------------
+
+    logger.DCIS_LOG.name = com.documentum.fc
+    logger.DCIS_LOG.level=INFO
+    logger.DCIS_LOG.additivity = true
+    logger.DCIS_LOG.appenderRefs = DCIS_LOG
+    logger.DCIS_LOG.appenderRef.DCIS_LOG.ref = DcisLogFile
+
+    appender.DCIS_LOG.type=RollingFile
+    appender.DCIS_LOG.fileName=/home/dmadmin/dcis/logs/dfc.log
+    appender.DCIS_LOG.name=DcisLogFile
+    appender.DCIS_LOG.filePattern=${filename}.%d{yyyy-MM-dd}
+    appender.DCIS_LOG.layout.type=PatternLayout
+    appender.DCIS_LOG.layout.pattern=%d{ABSOLUTE} %5p [%t] %c - %m%n
+    appender.DCIS_LOG.policies.type=Policies
+    appender.DCIS_LOG.policies.time.type=TimeBasedTriggeringPolicy
+    appender.DCIS_LOG.policies.time.interval=1
+    appender.DCIS_LOG.policies.time.modulate=true
+    appender.DCIS_LOG.policies.size.type=SizeBasedTriggeringPolicy
+    appender.DCIS_LOG.policies.size.size=10MB
+    appender.DCIS_LOG.strategy.type=DefaultRolloverStrategy
+    appender.DCIS_LOG.strategy.max=5
+  logback-spring.xml: |
+    <?xml version="1.0" encoding="UTF-8"?>
+    <configuration>
+
+        <statusListener class="ch.qos.logback.core.status.OnConsoleStatusListener" />
+
+        <property name="LOG_PATTERN"
+                  value="%d{yyyy-MM-dd HH:mm:ss.SSS}| %thread | %X{docbaseName} | %X{correlationId} | %X{objectId} | %X{operation} | %-5level %logger{36} : %msg%n"/>
+
+        <appender name="Console" class="ch.qos.logback.core.ConsoleAppender">
+            <encoder>
+                <pattern>${LOG_PATTERN}</pattern>
+            </encoder>
+        </appender>
+
+        <appender name="File" class="ch.qos.logback.core.FileAppender">
+            <file>/home/dmadmin/dcis/logs/dcis.log</file>
+            <append>true</append>
+            <encoder>
+                <pattern>${LOG_PATTERN}</pattern>
+            </encoder>
+        </appender>
+
+        <root level="INFO">
+            <appender-ref ref="Console"/>
+            <appender-ref ref="File"/>
+        </root>
+
+        <logger name="com.documentum.consumer" level="INFO"/>
+        <logger name="org.springframework.jms" level="WARN"/>
+        <logger name="org.springframework.security" level="WARN"/>
+        <logger name="java.net.http" level="WARN"/>
+
+    </configuration>
+

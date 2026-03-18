@@ -1,0 +1,299 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ .Values.service.name }}
+  labels:
+    app: {{ .Values.service.name }}
+    chart: {{ .Chart.Name }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+    component: server
+spec:
+  serviceName: {{ .Values.service.name }}-headless
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Values.service.name }}
+      release: {{ .Release.Name }}
+      component: server
+  updateStrategy:
+{{ toYaml .Values.updateStrategy | indent 4 }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.service.name }}
+        release: {{ .Release.Name }}
+        component: server
+      {{- if .Values.podLabels }}
+        ## Custom pod labels
+        {{- range $key, $value := .Values.podLabels }}
+        {{ $key }}: {{ $value | quote }}
+        {{- end }}
+      {{- end }}
+{{- if .Values.podAnnotations }}
+      annotations:
+        ## Custom pod annotations
+        {{- range $key, $value := .Values.podAnnotations }}
+        {{ $key }}: {{ $value | quote }}
+        {{- end }}
+{{- end }}
+    spec:
+      {{- if (empty (.Values.global.pullSecrets | quote) | ternary .Values.global.pullSecretName .Values.global.pullSecrets) }}
+      imagePullSecrets:
+        - name: {{ .Values.global.pullSecrets | default .Values.global.pullSecretName }}
+      {{ end }}
+      serviceAccountName: {{ .Values.serviceAccount.serviceAccountName | default .Values.global.documentumserviceaccount }}
+      terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
+{{- if .Values.schedulerName }}
+      schedulerName: "{{ .Values.schedulerName }}"
+{{- end }}
+      securityContext:
+{{ toYaml .Values.securityContext | indent 8 }}
+{{- if .Values.priorityClassName }}
+      priorityClassName: "{{ .Values.priorityClassName }}"
+{{- end }}
+      containers:
+
+        - name: zookeeper
+          image: {{ .Values.image.repository }}/{{ .Values.image.name }}:{{ .Values.image.tag }}
+          imagePullPolicy: {{ .Values.image.pullPolicy | default .Values.global.pullPolicyType }}
+        {{- with .Values.command }}
+          command: {{ range . }}
+             - {{ . | quote }}
+          {{- end }}
+        {{- end }}
+          ports:
+{{- range $key, $port := .Values.ports }}
+            - name: {{ $key }}
+{{ toYaml $port | indent 14 }}
+{{- end }}
+          livenessProbe:
+            exec:
+              command:
+                - sh
+                - /config-scripts/ok
+            initialDelaySeconds: 20
+            periodSeconds: 30
+            timeoutSeconds: 30
+            failureThreshold: 2
+            successThreshold: 1
+          readinessProbe:
+            exec:
+              command:
+                - sh
+                - /config-scripts/ready
+            initialDelaySeconds: 20
+            periodSeconds: 30
+            timeoutSeconds: 30
+            failureThreshold: 2
+            successThreshold: 1
+          env:
+            #Kafka
+            - name: ZOOKEEPER_dataLogDir
+              value: "/kafka-setup/zookeeper/zook_logs"
+            - name: ZOOKEEPER_dataDir
+              value: "/kafka-setup/zookeeper/zook_data"
+          {{- if or .Values.ssl.enabled .Values.global.useCertificate }}
+            # General SSL
+            - name: ZK_SSL_ENABLED
+              value: {{ default "true" .Values.ssl.enabled | quote }}
+            - name: ZK_COMMON_CERT_MOUNT_PATH
+              value: {{ .Values.ssl.certificateMountPath | quote }}
+            - name: ZK_SSL_SECURE_CLIENT_PORT
+              value: {{ default "2182" .Values.ssl.secureClientPort | quote }}
+            - name: ZK_SSL_SERVER_CNXN_FACTORY
+              value: org.apache.zookeeper.server.NettyServerCnxnFactory
+            - name: ZK_SSL_PROTOCOL
+              value: {{ default "TLSv1.3" .Values.ssl.protocol | quote }}
+            - name: ZK_SSL_CLIENT_AUTH
+              value: {{ default "none" .Values.ssl.clientAuth | quote }}
+            - name: ZK_SSL_CIPHERSUITES
+              value: {{ default "TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256,TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256,TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA,TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA,TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384,TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384,TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA,TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA,TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_AES_128_GCM_SHA256,TLS_AES_256_GCM_SHA384" .Values.ssl.cipherSuites | quote }}
+
+             # SSL Keystore (server)
+            - name: ZK_SSL_KEYSTORE_TYPE
+              value: {{ default "PKCS12" .Values.ssl.keyStore.type | quote }}
+            - name: ZK_SSL_KEYSTORE_LOCATION
+              value: '{{ .Values.ssl.certificateMountPath | default "/opt/dctm/certificate" }}/{{ .Values.ssl.keyStore.file | default "common-keystore.p12" }}'
+            - name: ZK_SSL_KEYSTORE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: '{{ .Values.secrets.cs.name | default .Values.global.csSecrets }}'
+                  key: commontruststorepassword
+            # Quorum SSL enable/disable
+            - name: ZK_SSL_QUORUM_ENABLED
+              value: {{ default "false" .Values.ssl.sslQuorum | quote }}
+            # Quorum SSL settings
+            - name: ZK_QUORUM_SSL_PROTOCOL
+              value: {{ default "TLSv1.3" .Values.ssl.quorum.protocol | quote }}
+            - name: ZK_QUORUM_SSL_CLIENT_AUTH
+              value: {{ default "none" .Values.ssl.quorum.clientAuth | quote }}
+            - name: ZK_QUORUM_SSL_CIPHERSUITES
+              value: {{ default "TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256,TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256,TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA,TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA,TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384,TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384,TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA,TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA,TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_AES_128_GCM_SHA256,TLS_AES_256_GCM_SHA384" .Values.ssl.quorum.cipherSuites | quote }}
+              # Quorum Keystore
+            - name: ZK_QUORUM_KEYSTORE_LOCATION
+              value: '{{ .Values.ssl.certificateMountPath | default "/opt/dctm/certificate" }}/{{ .Values.ssl.quorum.keyStore.file | default "common-keystore.p12" }}'
+            - name: ZK_QUORUM_KEYSTORE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: '{{ .Values.secrets.cs.name | default .Values.global.csSecrets }}'
+                  key: commontruststorepassword
+            # Quorum Truststore
+            - name: ZK_QUORUM_TRUSTSTORE_LOCATION
+              value: '{{ .Values.ssl.certificateMountPath | default "/opt/dctm/certificate" }}/{{ .Values.ssl.quorum.trustStore.file | default "common-truststore.p12" }}'
+            - name: ZK_QUORUM_TRUSTSTORE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: '{{ .Values.secrets.cs.name | default .Values.global.csSecrets }}'
+                  key: commontruststorepassword
+          {{- end}}
+            - name: ZK_REPLICAS
+              value: {{ .Values.replicaCount | quote }}
+          {{- range $key, $value := .Values.env }}
+            - name: {{ $key | upper | replace "." "_" }}
+              value: {{ $value | quote }}
+          {{- end }}
+          {{- range $secret := .Values.secrets }}
+            {{- range $key := $secret.keys }}
+            - name: {{ (print $secret.name "_" $key) | upper }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $secret.name }}
+                  key: {{ $key }}
+            {{- end }}
+          {{- end }}
+            - name: JVMFLAGS
+              value:  {{ .Values.HEAP }} -Djute.maxbuffer=10000000 -XX:+UseG1GC -XX:MaxGCPauseMillis=200 -XX:+UseStringDeduplication -XX:+ExitOnOutOfMemoryError
+
+          resources:
+{{ toYaml .Values.resources | indent 12 }}
+          volumeMounts:
+            - name: data
+              mountPath: /data
+#            {{- range $secret := .Values.secrets }}
+#              {{- if $secret.mountPath }}
+#                {{- range $key := $secret.keys }}
+#            - name: {{ $.Release.Name }}-{{ $secret.name }}
+#              mountPath: {{ $secret.mountPath }}/{{ $key }}
+#              subPath: {{ $key }}
+#              readOnly: true
+#                {{- end }}
+#              {{- end }}
+#            {{- end }}
+            - name: config
+              mountPath: /config-scripts
+          {{- if or .Values.ssl.enabled .Values.global.useCertificate }}
+            - name: common-certificate-volume
+              mountPath: '{{ .Values.ssl.certificateMountPath | default "/opt/dctm/certificate" }}'
+              subPath: 'certificate/{{ .Values.global.dbrdataPVCName | default "certdbr-data-pvc" }}'
+          {{- end }}
+
+
+
+{{- if .Values.exporters.jmx.enabled }}
+        - name: jmx-exporter
+          image: "{{ .Values.exporters.jmx.image.repository }}:{{ .Values.exporters.jmx.image.tag }}"
+          imagePullPolicy: {{ .Values.exporters.jmx.image.pullPolicy }}
+          ports:
+  {{- range $key, $port := .Values.exporters.jmx.ports }}
+            - name: {{ $key }}
+{{ toYaml $port | indent 14 }}
+  {{- end }}
+          livenessProbe:
+{{ toYaml .Values.exporters.jmx.livenessProbe | indent 12 }}
+          readinessProbe:
+{{ toYaml .Values.exporters.jmx.readinessProbe | indent 12 }}
+          env:
+            - name: SERVICE_PORT
+              value: {{ .Values.exporters.jmx.ports.jmxxp.containerPort | quote }}
+          {{- with .Values.exporters.jmx.env }}
+            {{- range $key, $value := . }}
+            - name: {{ $key | upper | replace "." "_" }}
+              value: {{ $value | quote }}
+            {{- end }}
+          {{- end }}
+          resources:
+{{ toYaml .Values.exporters.jmx.resources | indent 12 }}
+          volumeMounts:
+            - name: config-jmx-exporter
+              mountPath: /opt/jmx_exporter/config.yml
+              subPath: config.yml
+{{- end }}
+
+{{- if .Values.exporters.zookeeper.enabled }}
+        - name: zookeeper-exporter
+          image: "{{ .Values.exporters.zookeeper.image.repository }}:{{ .Values.exporters.zookeeper.image.tag }}"
+          imagePullPolicy: {{ .Values.exporters.zookeeper.image.pullPolicy }}
+          args:
+            - -bind-addr=:{{ .Values.exporters.zookeeper.ports.zookeeperxp.containerPort }}
+            - -metrics-path={{ .Values.exporters.zookeeper.path }}
+            - -zookeeper=localhost:{{ .Values.ports.client.containerPort }}
+            - -log-level={{ .Values.exporters.zookeeper.config.logLevel }}
+            - -reset-on-scrape={{ .Values.exporters.zookeeper.config.resetOnScrape }}
+          ports:
+  {{- range $key, $port := .Values.exporters.zookeeper.ports }}
+            - name: {{ $key }}
+{{ toYaml $port | indent 14 }}
+  {{- end }}
+          livenessProbe:
+{{ toYaml .Values.exporters.zookeeper.livenessProbe | indent 12 }}
+          readinessProbe:
+{{ toYaml .Values.exporters.zookeeper.readinessProbe | indent 12 }}
+          env:
+          {{- range $key, $value := .Values.exporters.zookeeper.env }}
+            - name: {{ $key | upper | replace "." "_" }}
+              value: {{ $value | quote }}
+          {{- end }}
+          resources:
+{{ toYaml .Values.exporters.zookeeper.resources | indent 12 }}
+{{- end }}
+
+    {{- with .Values.nodeSelector }}
+      nodeSelector:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+    {{- with .Values.affinity }}
+      affinity:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+    {{- with .Values.tolerations }}
+      tolerations:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+      volumes:
+        - name: config
+          configMap:
+            name: {{ template "zookeeper.fullname" . }}
+            defaultMode: 0555
+      {{- if or .Values.ssl.enabled .Values.global.useCertificate }}
+        - name: common-certificate-volume
+          persistentVolumeClaim:
+            claimName: '{{ .Values.global.dbrServiceName | default "dbr" }}-pvc'
+      {{- end }}
+
+#        {{- range .Values.secrets }}
+#        - name: {{ $.Release.Name }}-{{ .name }}
+#          secret:
+#            secretName: {{ .name }}
+#        {{- end }}
+        {{- if .Values.exporters.jmx.enabled }}
+        - name: config-jmx-exporter
+          configMap:
+            name: {{ .Release.Name }}-jmx-exporter
+        {{- end }}
+        {{- if not .Values.persistence.enabled }}
+        - name: data
+          emptyDir: {}
+        {{- end }}
+  {{- if .Values.persistence.enabled }}
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes:
+          - {{ .Values.persistence.accessMode | quote }}
+        resources:
+          requests:
+            storage: {{ .Values.persistence.size | quote }}
+        storageClassName: "{{ .Values.persistence.storageClass | default .Values.global.rwoStorage}}"
+  {{- end }}

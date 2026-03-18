@@ -1,0 +1,5 @@
+apiVersion: v2
+appVersion: "25.4"
+description: A Helm chart of content parser for Documentum Search
+name: parser
+version: "25.4"

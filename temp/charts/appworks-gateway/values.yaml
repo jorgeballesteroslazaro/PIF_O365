@@ -1,0 +1,332 @@
+# Default values for appworks-gateway.
+global:
+  imageSource: repository.opentext.net
+  imagePullPolicy: IfNotPresent
+  imageTag: 25.4.3
+  # imagePullSecrets: [ "name" : "" ]
+  ingressAnnotations:
+    kubernetes.io/tls-acme: "true"
+    kubernetes.io/ingress.allow-http: "false"
+    nginx.ingress.kubernetes.io/proxy-body-size: 10m
+    nginx.ingress.kubernetes.io/client-max-body-size: 10m
+    nginx.org/client-max-body-size: "50m"
+  ingressClassName: nginx
+  ingressEnabled: true
+  serviceType: ClusterIP
+  timezone: UTC
+  otdsPublicUrl: "http://global-otds-service:8080"
+image:
+  registry:
+  repository: otawg
+  tag:
+  awgInitContainer:
+    registry:
+    repository: otawg-init
+    tag:
+  #  appsInitContainer:
+  #    registry: repository.opentext.net
+  #    repository: apps-init
+  #    tag: 25.4.3
+  pullPolicy:
+  #  Optional-specify the name of secret created to pull private images
+#  imagePullSecrets: [ "name" : "" ]
+
+database:
+  vendor: PostgreSql # Valid values PostgreSql/Oracle/MsSqlServer
+  server:
+    host: postgres-service
+    port: 5432
+  admin: # Required only for Automatic User/Database creation for PostgreSql
+    user: postgresadminuser # Admin username - PostgreSql
+    password:        	 # Admin password - PostgreSql
+    database: postgresadmindatabase # Admin database - PostgreSql
+  appworksdb:
+    user: postgresuser # user will be created only for PostgreSql if opted for Automatic User/Database creation
+    password:
+    # database will be created only for PostgreSql if opted for Automatic User/Database creation
+    # database is not required for Oracle instead will use service
+    database: postgresdatabase
+    service: oracleSIDname # provide service/SID for oracle database instead of database name
+    # useSSL and trustDbCerts will be used incase if you are trying to connect with Amazon RDS.
+    # If both the values are true, then Appworks Gateway will take care of downloading the certificates from the AWS.
+    # If useSSL is true and trustDbCerts is false , then Administrator needs to placed that certificate inside the helm i.e. appworks-gateway\trustCertificates folder.
+  useSSL: false
+  trustDbCerts : false
+  sslMode: verify-ca # use require or verify-ca for GCP Cloud SQL database instance
+
+otds:
+  server:
+    url:
+  admin:
+    user: otdsadminusername
+    password:
+  partition:
+    new: gatewaypartition
+    customPartition: []
+  resource:
+    new: gatewayresource
+
+awg:
+  admin:
+    newadminuser: gatewayadminusername
+    newadminpassword: 		# Password should meet the OTDS Global password policy
+  externalurl: "http://ingress" # must not be localhost or 127.0.0.1
+  logging:
+    level: info # one of ["trace", "debug", "info", "warn", or "error"]
+
+  cors:
+    enabled: false
+    allowedOrigins: "*" # default is '*' which allows all origins, can be modified to specific origins separated by comma
+
+  # The settings in this file enable you to deploy AppWorks Gateway in a containerized environment.
+  # Refer to the AppWorks Gateway Installation and Administration Guide for details on updating the settings for your requirements.
+  # All settings here are optional - default values are provided below
+  # If not specified here, you can use the Appworks Gateway Admin UI to update them
+  # If specified here, you cannot use the Appworks Gateway Admin UI to update them
+  settings:
+    wantSecureCookies: true
+    doNotProxyOTDS: false
+#   cookieDomainForGeneratedOTDSCookies: ""
+    anonymousAccessEnabled: false
+    forcePasswordBasedNonOauthAuthentication: false
+    disableOTDSAuth: false
+#   otdsSSODisableByIP: ""
+#    listOfTenants: ""
+    awgDeveloperMode: false
+    mdm:
+      clientTrackingEnabled: true
+      remoteWipeTimeoutSeconds: "300"
+#     remoteWipeFailureEmailRecipients: ""
+      permitStorageOfPasswordsOnDevice: false
+      passwordOnDeviceExpirySeconds: 604800
+      permitOfflineAccessOnDevice: false
+      notifyDevicesOfOfflinePolicyChange: false
+      disableSharingAndDownloadingFiles: false
+      overrideConsumerProvidedConfig : false
+      enableBiometricFlag: false
+      enableOfflinePinRetryFlag: false
+      offlinePinRetryAttempts : 5
+    mail:
+      mailAuthenticationType: "Password" # default is 'Password' flow, can be either 'Password' or 'OAuth'
+      smtpReturnAddress: noreply@example.com
+      smtpHost: some-host
+      smtpPort: 25
+#     smtpUsername: ""
+#     smtpPassword: ""
+      smtpUseSSL: false # not required to be true in most SSL settings
+#     oauthScope: "" # Value 'Google' or 'Microsoft' - for specific mail server
+#     oauthClientId: ""
+#     oauthClientSecret: ""
+    enableAutoLogout: false # if enabled then only autoLogoutTimeInterval will be respected
+    autoLogoutTimeIntervalSeconds: 900 # Minimum value acceptable is 120 Seconds
+    enableConcurrentSessionLimit: false # if enabled then only concurrentSessionLimitAdmin and concurrentSessionLimitUser will be respected
+    concurrentSessionLimitAdmin: 3 # Value cannot be 0
+    concurrentSessionLimitUser: 2 # Value cannot be 0
+    pushToConsole: false # if enabled then only audit information will be pushed to console
+
+replicaCount: 1
+
+# Proxy Configuration
+proxy:
+  automate: false
+  filePath: proxy/Rulestemplate.json
+
+# Flag to decide whether the secrets need to be deployed from helm chart or not.
+# In case of using an external secret manager we should not deploy our secret.
+deploySecretsFromHelm: true
+
+# Flag to change FIPS mode
+fipsModeEnabled: false
+
+# provide valid timezone e.g Asia/Kolkata
+timezone:
+
+# readiness probe
+readinessProbe:
+  initialDelaySeconds: 120
+  periodSeconds: 10
+  timeoutSeconds: 60
+
+# liveness probe
+livenessProbe:
+  initialDelaySeconds: 60
+  periodSeconds: 10
+  timeoutSeconds: 60
+
+service:
+  type:
+  port: 80
+  # custom annotations that need to be assigned to Gateway service.
+  annotations: []
+
+ingress:
+  enabled:
+  annotations:
+  ingressClassName:
+  hosts:
+    - host: chart-example.local
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
+  tls: 
+    enabled: false
+    info:
+      - secretName:
+          name: otawg-tls-secret
+          create: false
+          key: #provide the .crt file value
+          cert: #provide the .key file value
+        hosts:
+          - chart-example.local
+
+resources:
+  # Change the resources as per your environment and requirements.
+  limits:
+    cpu: 2
+    memory: 3Gi
+  requests:
+    cpu: 0.5
+    memory: 3Gi
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+#In case of any custom PodLabels add the pod labels under here in key value pairs
+customPodLabels:
+  #LabelName : LabelValue
+
+#Provide the Custom Secret Name here
+secretName: otag-awg
+
+#Settings related to NewRelic APM integration
+newrelic:
+  enabled: false # to enable NewRelic APM set flag to true
+  appName: APPWORKS GATEWAY
+  licenseKey: 
+  logFileName: STDOUT #If any log file name is mentioned, the logs will be placed in tomcat logs folder
+  logLevel: info
+  proxyHost: 
+  proxyPort: 
+  proxyScheme:
+
+# ServiceAccount required for onedctm
+serviceAccount:
+  createserviceaccount: false
+  documentumserviceaccount: documentum-sa
+
+# Only to be used in OpenText cloud
+# configuration to integrate with Opentext vault directly
+## All the below values will be provided by OpenText cloud services.
+# Note: "data" is mandatory in the secrets i.e: secrets: kv/data/lab/..
+vault:
+  enabled: false # to enable integration with OpenText Managed Vault
+  type: Opentext # As of now direct integration with Opentext Vault is supported
+  host: # Host name of the vault
+  port: 443 # Port for the vault host
+  namespace: # namespace in which the vault is configured
+  secrets: # secrets path that is stored on the vault
+  authConfigPath: # k8s service account token path for which the vault has access
+  authPath: # auth path for which the vault has access
+  role: # role authorizes the service account for the given namespace
+  authType: # as “jwt” for JSON web token. This is the format that is used to authenticate the pods.
+  serviceAccount: # service account that has been created in Managed Vault
+
+
+# uncomment below and provide values when creating tenant from helm charts
+#tenants:
+#  - name: tenant-name
+#    database:
+#      vendor: PostgreSql # Valid values PostgreSql/Oracle/MsSqlServer
+#      server:
+#        host: postgres-service
+#        port: 5432
+#      admin: # Required only for Automatic User/Database creation for PostgreSql
+#        user: postgresadminuser # Admin username - PostgreSql
+#        password:             # Admin password - PostgreSql
+#        database: postgresadmindatabase # Admin database - PostgreSql
+#      appworksdb:
+#        user: postgresuser # user will be created only for PostgreSql if opted for Automatic User/Database creation
+#        password:
+#        # database will be created only for PostgreSql if opted for Automatic User/Database creation
+#        # database is not required for Oracle instead will use service
+#        database: postgresdatabase
+#        service: oracleSIDname # provide service/SID for oracle database instead of database name
+#        # useSSL and trustDbCerts will be used incase if you are trying to connect with Amazon RDS.
+#        # If both the values are true, then Appworks Gateway will take care of downloading the certificates from the AWS.
+#        # If useSSL is true and trustDbCerts is false , then Administrator needs to placed that certificate inside the helm i.e. appworks-gateway\trustCertificates folder.
+#      useSSL: false
+#      trustDbCerts: false
+#      sslMode: verify-ca # use require or verify-ca for GCP Cloud SQL database instance
+#
+#    otds:
+#      server:
+#        url:
+#      admin:
+#        user: otdsadminusername
+#        password:
+#      partition:
+#        new: gatewaypartition
+#        customPartition: [ ]
+#      resource:
+#        new: gatewayresource
+#
+#    awg:
+#      admin:
+#        newadminuser: gatewayadminusername
+#        newadminpassword:        # Password should meet the OTDS Global password policy
+#      externalurl: "http://ingress/awtenant/tenant-name" # must not be localhost or 127.0.0.1
+#      logging:
+#        level: info # one of ["trace", "debug", "info", "warn", or "error"]
+#
+#      # The settings in this file enable you to deploy AppWorks Gateway in a containerized environment.
+#      # Refer to the AppWorks Gateway Installation and Administration Guide for details on updating the settings for your requirements.
+#      # All settings here are optional - default values are provided below
+#      # If not specified here, you can use the Appworks Gateway Admin UI to update them
+#      # If specified here, you cannot use the Appworks Gateway Admin UI to update them
+#      settings:
+#        wantSecureCookies: true
+#        doNotProxyOTDS: false
+#        #   cookieDomainForGeneratedOTDSCookies: ""
+#        anonymousAccessEnabled: false
+#        forcePasswordBasedNonOauthAuthentication: false
+#        disableOTDSAuth: false
+#        #   otdsSSODisableByIP: ""
+#        awgDeveloperMode: false
+#        mdm:
+#          clientTrackingEnabled: true
+#          remoteWipeTimeoutSeconds: "300"
+#          #     remoteWipeFailureEmailRecipients: ""
+#          permitStorageOfPasswordsOnDevice: false
+#          passwordOnDeviceExpirySeconds: 604800
+#          permitOfflineAccessOnDevice: false
+#          notifyDevicesOfOfflinePolicyChange: false
+#          disableSharingAndDownloadingFiles: false
+#          overrideConsumerProvidedConfig : false
+#          enableBiometricFlag: false
+#          enableOfflinePinRetryFlag: false
+#          offlinePinRetryAttempts : "5"
+#        mail:
+#          mailAuthenticationType: "Password" # default is 'Password' flow, can be either 'Password' or 'OAuth'
+#          smtpReturnAddress: noreply@example.com
+#          smtpHost: some-host
+#          smtpPort: 25
+#          #     smtpUsername: ""
+#          #     smtpPassword: ""
+#          smtpUseSSL: false # not required to be true in most SSL settings
+#        #     oauthScope: "" # Value 'Google' or 'Microsoft' - for specific mail server
+#        #     oauthClientId: ""
+#        #     oauthClientSecret: ""
+#        enableAutoLogout: false # if enabled then only autoLogoutTimeInterval will be respected
+#        autoLogoutTimeIntervalSeconds: 900 # Minimum value acceptable is 120 Seconds
+#        enableConcurrentSessionLimit: false # if enabled then only concurrentSessionLimitAdmin and concurrentSessionLimitUser will be respected
+#        concurrentSessionLimitAdmin: 3 # Value cannot be 0
+#        concurrentSessionLimitUser: 2 # Value cannot be 0
+#        pushToConsole: false # if enabled then only audit information will be pushed to console
+#    # Proxy Configuration
+#    proxy:
+#      automate: false
+#      filePath: proxy/Rulestemplate.json
+

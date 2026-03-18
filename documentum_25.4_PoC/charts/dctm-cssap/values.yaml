@@ -1,0 +1,144 @@
+#######################################################
+# Documentum CSSAP default values.                    #
+# This is a YAML-formatted file.                      #
+# Declare variables to be passed into your templates. #
+#######################################################
+
+# Persistent Volume Claim details.
+persistentVolumeClaim:
+  pvcName: cssap-pvc
+  accessMode: ReadWriteMany
+  size: 1Gi
+  storageClass:
+  awsEFSCSIDriver: efs.csi.aws.com
+  awsEFSCSIHandle:
+custom:
+  PVCname: cssap-custom-pvc
+  size: 22Mi
+# Service details
+service:
+  name: cssap-svc
+  type: ClusterIP
+  port: 8080
+  serviceAnnotations: {}
+# snc:
+#   enabled: false
+#   secret:
+#     name: <namespace>-cssapsnc-secret
+#     volumeName: <namespace>-cssapsnc-volume
+#   pseName:
+#   psePassPhrase:
+#   pseOwnerName: CN=<common name>, OU=<organizational unit>, O=<organization>, C=<country>
+#   sap:
+#     certificateName: SNCSAP.crt
+#     certificate: |
+#       -----BEGIN CERTIFICATE-----
+#       xxx
+#       -----END CERTIFICATE-----
+
+#For secure connection with Content Server
+certificate:
+  use_certificate:
+  #Give the service name of dockbroker here
+  dbrserviceName:
+# Deployment details
+dbrpersistentVolume:
+  dbrdataPVCName:
+cssap:
+  serviceAccount:
+    createserviceaccount:
+    serviceAccountName:
+cs:
+  useCSDfcConfigMap: true
+  configMapName:
+  csSecretConfigName:
+  allowTrustedLogin: false
+  custom:
+    scriptinPVC: true
+    ##In the case of  hybrid installers approach, volumeMountName value should be custom-script-pvc and scriptPVCname value should be shared-pvc
+    volumeMountName: dcs-data-pvc
+    scriptPVCname: dcs-pg-pvc
+    PVCSubPath: initcontainercustomscripts/dcs-pg
+    sapcSubPath: initcontainercustomscripts/dcs-pg/SAPC/logs
+deployment:
+  name: hvpworker
+  appName: hvpworker
+  replicaCount: 1
+  strategyType: RollingUpdate
+  openshift: false
+# dfc:
+#   properties:
+#     - dfc.data.dir=/var/documentum
+#     - dfc.docbroker.host[0]=<DOCBROKER_POD>.<DOCBROKER_CONTAINER>.<NAMESPACE>.svc.cluster.local
+#     - dfc.docbroker.port[0]=<DFC_DOCBROKER_PORT>
+#     - dfc.bof.registry.repository=<DFC_BOFREGISTRY_REPOSITORY>
+#     - dfc.bof.registry.username=<DFC_BOFREGISTRY_USERNAME>
+#     - dfc.bof.registry.password=<DFC_BOFREGISTRY_PASSWORD>
+#     - dfc.search.ecis.enable=false
+#     - dfc.search.ecis.host=
+#     - dfc.search.ecis.port=
+#     - dfc.bof.registry.preload.enabled=false
+#     - dfc.bof.cacheconsistency.interval=60
+#     - dfc.security.ssl.truststore=/opt/cssap_config/secure/dfc.keystore
+#     - dfc.security.ssl.truststore_password=<DFC_SSL_TRUSTSTORE_PASSWORD>
+#     - dfc.security.ssl.use_existing_truststore=false
+#     - dfc.session.secure_connect_default=try_secure_first
+#     - dfc.dsis.enabled=false
+#     - dfc.dsis.daemon.url=http\://localhost\:8200/dsis
+#     - dfc.dsis.daemon.token=
+
+logging:
+  rootloggerLevel: WARN
+  appenderConsoleFilterThresholdLevel: WARN
+  appenderFilePoliciesSizeSize: 10MB
+  appenderFileStrategyMax: 10
+  appenderHvpPoliciesSizeSize: 10MB
+  appenderHvpStrategyMax: 10
+  loggerEilogLevel: INFO
+  loggerTracelogLevel: WARN
+  loggerTracelogAdditivity: true
+  loggerHvplogLevel: DEBUG
+  monitorInterval: 30
+# Vault Properties
+vault:
+  enable:
+  serviceAccountName:
+  daemonurl: http://localhost:8200/dsis
+  vault_configmap: dctm-vault-configmap
+  createPVC: false
+  PVCName: dsis-binary-pvc
+  volumeName: dsis-binary-volume
+  configMapVolName: vault-volume
+  pvcAccessModes: ReadWriteMany
+  size: 100Mi
+  storageClass: trident-nfs
+  existVolumePv:
+  # Docker images details
+  # Change docker image properties according your repository/artifactory.
+images:
+  cssap:
+    repository:
+    name:
+    tag: ""
+    pullPolicy:
+  pullSecret:
+# User provided services
+userProvidedServices:
+  newrelic:
+    enable: false
+    appName: DOCUMENTUM_CSSAP-PROD-OT2_CFCR_BP2-ECD
+    licenseKey: newrelicLicensekey
+    proxyHost:
+    proxyPort:
+    proxyScheme:
+# Specify resources.
+resources:
+  limits:
+    cpu: 400m
+    memory: 4Gi
+  requests:
+    cpu: 400m
+    memory: 4Gi
+nodeSelector: {}
+tolerations: []
+affinity: {}

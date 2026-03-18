@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: search-dfc-configmap
+data:
+  dfc.properties: |
+    {{- range $i, $docbroker := .Values.docbrokers }}
+    dfc.docbroker.host[{{ $i }}]:  {{ $docbroker.docbrokerHost }}
+    dfc.docbroker.port[{{ $i }}]:  {{ $docbroker.docbrokerPort }}
+    {{- end }}

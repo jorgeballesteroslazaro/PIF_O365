@@ -1,0 +1,6 @@
+apiVersion: v2
+appVersion: 9.5.0
+keywords:
+- solr
+name: solr
+version: 9.5.0

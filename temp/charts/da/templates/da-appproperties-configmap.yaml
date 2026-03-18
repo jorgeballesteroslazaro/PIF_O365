@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.deployment.name }}-appproperties-configmap  
+data:
+  app.properties: |
+   {{- range .Values.wdkAppXmlConfig.tagsnvalues }}
+   {{ . }}
+   {{- end }}
+   {{- if eq .Values.lmsgcustomLog.enable true }}
+   application.lmsg_customlog.enabled=true
+   application.lmsgreportloglocation={{ .Values.lmsgcustomLog.loglocation }}
+   {{ end }}
+   application.allow_install_owner={{ .Values.allowinstallowner}}
+   {{- if (empty (.Values.otds.enable | quote) | ternary .Values.global.otdsEnabled .Values.otds.enable) }}
+   application.authentication.otds_sso.enabled=true
+   application.authentication.otds_sso.repo_selection_page_required={{ .Values.otds.authentication.repoSelectionPageRequired }}
+   application.authentication.otds_sso.dm_login_ticket_timeout={{ .Values.otds.authentication.loginTicketTimeout }}
+   application.authentication.otds_sso.renew_token_after_logout={{ .Values.otds.authentication.renewtokenafterlogout}}
+   {{ end }}
+   {{- if eq .Values.otds.authentication.useDefaultDocbase true }}
+   {{- if (empty (.Values.containers.da.docbaseName | quote) | ternary .Values.global.docbase .Values.containers.da.docbaseName) }}
+   application.authentication.docbase={{ .Values.containers.da.docbaseName | default .Values.global.docbase}}
+   {{ end }}
+   {{ end }}

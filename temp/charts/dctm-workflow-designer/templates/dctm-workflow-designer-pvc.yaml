@@ -1,0 +1,20 @@
+#WFD pvc
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ .Values.prefix}}-pvc
+spec:
+  accessModes:
+    - {{ .Values.persistentVolume.pvcAccessModes }}
+  storageClassName: {{ .Values.persistentVolume.storageClass  | default .Values.global.rwoStorage }}
+{{ if .Values.persistentVolume.existVolumePv }}
+  volumeName: {{ .Values.persistentVolume.existVolumePv }}
+{{ end }}
+  resources:
+    requests:
+      storage: {{ .Values.persistentVolume.size }}
+  
+      
+      
+
+

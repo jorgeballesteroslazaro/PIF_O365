@@ -1,0 +1,864 @@
+## Consul Configmap ##
+apiVersion: v1
+data:
+  basic_config.json: |
+    {{- if and .Values.global.internalTlsEnable .Values.global.useCertificate .Values.global.createCommonTruststore }}
+    {
+    "data_dir" : "/usr/src/data",
+    "log_level": "INFO",
+    "ui":true,
+    "bootstrap":true,
+    "bind_addr":"127.0.0.1",
+    "client_addr":"0.0.0.0",
+    "server": true,
+    "ports": {
+        "https": 8501,
+        "http": -1
+    },
+    "tls": {
+        "defaults": {
+          "key_file": "/opt/dctm/certificate/common.key",
+          "cert_file": "/opt/dctm/certificate/common1.pem",
+          "ca_file": "/opt/dctm/certificate/common.crt",
+          "verify_incoming": false,
+          "verify_outgoing": false,
+          "verify_server_hostname": false
+        }
+     }
+    }
+    {{- else }}
+    {
+    "data_dir" : "/usr/src/data",
+    "log_level": "INFO",
+    "ui":true,
+    "bootstrap":true,
+    "bind_addr":"127.0.0.1",
+    "client_addr":"0.0.0.0",
+    "server": true
+    }
+    {{- end }}
+
+kind: ConfigMap
+metadata:
+  name: {{ .Values.consul.prefix }}-configmap
+  namespace: {{ .Values.namespace | default .Release.Namespace }}
+---
+{{ if eq .Values.metadata.enabled true }}
+## Metadata Service Configmap ##
+apiVersion: v1
+data:
+  database.properties: |
+    db.reconnect-attempts=10
+    jdbc.dbSchemaName={{ .Values.database.dbSchemaName  | default .Values.global.dbSchema_Name }}
+    jdbc.driverClassName={{ .Values.database.driverClassName | default .Values.global.driverClass_Name }}
+{{- if (empty (.Values.database.ssl | quote) | ternary .Values.global.db_ssl .Values.database.ssl) }}
+  {{- if eq ( .Values.database.dbSchemaName | default .Values.global.dbSchema_Name) "postgres" }}
+   {{- if and (eq .Values.database.sslrootcertRequired true) (eq .Values.database.sslcertRequired false)}}
+    jdbc.url={{ .Values.metadata.configMap.database.url }}&ssl=true&sslmode={{ .Values.database.sslmode | default .Values.global.db_ssl_mode }}&sslrootcert=/usr/src/dcc/dbrootca.crt
+  {{- else if and (eq .Values.database.sslrootcertRequired true) (eq .Values.database.sslcertRequired true) }}
+    jdbc.url={{ .Values.metadata.configMap.database.url }}&ssl=true&sslmode={{ .Values.database.sslmode | default .Values.global.db_ssl_mode }}&sslrootcert=/usr/src/dcc/dbrootca.crt&sslcert=/usr/src/dcc/dbserver.crt&sslkey=/usr/src/dcc/dbkey.der
+  {{- else if and (eq .Values.database.sslrootcertRequired false) (eq .Values.database.sslcertRequired false) }}
+    jdbc.url={{ .Values.metadata.configMap.database.url }}&ssl=true&sslmode={{ .Values.database.sslmode | default .Values.global.db_ssl_mode }}
+  {{- else if and (eq .Values.database.sslrootcertRequired false) (eq .Values.database.sslcertRequired true) }}
+    jdbc.url={{ .Values.metadata.configMap.database.url }}&ssl=true&sslmode={{ .Values.database.sslmode | default .Values.global.db_ssl_mode }}&sslcert=/usr/src/dcc/dbserver.crt&sslkey=/usr/src/dcc/dbkey.der
+  {{ end }}
+  {{ end }}
+  {{- if eq ( .Values.database.dbSchemaName | default .Values.global.dbSchema_Name) "oracle" }}
+    jdbc.url=jdbc:oracle:thin:@(description=(address=(protocol=tcps)(host={{ .Values.database.db_host | default .Values.global.db_hostname }})(port={{ .Values.database.db_port | default .Values.global.dbport  }}))(connect_data=(service_name={{ .Values.database.db_sid }})) (SECURITY=(MY_WALLET_DIRECTORY = /opt/dctm/data/oracle_wallet)))
+  {{ end }}
+{{ else }}
+    jdbc.url={{ .Values.metadata.configMap.database.url }}
+{{ end }}
+    quartz.dbDelegateClass={{ .Values.database.quartzdbDelegateClass }}
+    jdbc.username={{ .Values.database.username | default .Values.global.databaseusername }}
+    jdbc.password={{ .Values.database.password }}
+    dbcp.initialSize=20
+    dbcp.maxActive=30
+    databaseSecretKeyName={{ .Values.metadata.database.dbSecretKeyName }}
+  service-registry-location.properties: |
+    serviceregistry-fqdn = {{ .Values.prefix | default .Values.global.dccPrefix }}-{{ .Values.consul.prefix }}-service
+    app.servicePort = {{ .Values.metadata.configMap.serviceRegistry.serverPort }}
+    serviceregistry-port = {{ ternary 8501 8500 .Values.global.internalTlsEnable }}
+    httpsEnabled = {{ ternary true false .Values.global.internalTlsEnable }}
+    server-host= {{ .Values.metadata.configMap.serviceRegistry.serverHost }}
+  log4j2.xml: |
+    <?xml version="1.0" encoding="UTF-8"?>
+    <Configuration status ="debug" monitorInterval="5">
+      <Appenders>
+          <Console name="CONSOLE" target="SYSTEM_OUT">
+              <PatternLayout pattern="%-5p: [%t]: %c - %d{dd MMM yyy HH:mm:ss,SSS} - %m%n"/>
+          </Console>
+          <RollingFile name="RollingFile" fileName="//usr//src//DCC//logs//MetadataService.log" filePattern="//usr//src//DCC//logs//MetadataService%i.log">
+              <PatternLayout>
+                  <pattern>%-5p: [%t]: %c - %d{dd MMM yyy HH:mm:ss,SSS} - %m%n</pattern>
+              </PatternLayout>
+              <Policies>
+                  <SizeBasedTriggeringPolicy size="10 MB"/>
+              </Policies>
+              <DefaultRolloverStrategy max="5"/>
+          </RollingFile>
+      </Appenders>
+      <Loggers>
+          <!-- Application Loggers -->
+          <Logger name="com.opentext.dcc.metadata" level="info">
+              <AppenderRef ref="RollingFile"/>
+          </Logger>
+          <Logger name="org.apache.log4j.xml" level="info">
+              <AppenderRef ref="CONSOLE"/>
+          </Logger>
+          <Logger name="com.opentext.vaultConnector" level="info">
+              <AppenderRef ref="RollingFile"/>
+          </Logger>
+          <!-- Root Logger -->
+          <Root level="warn">
+              <AppenderRef ref="CONSOLE"/>
+          </Root>
+      </Loggers>
+    </Configuration>
+kind: ConfigMap
+metadata:
+  name: {{ .Values.metadata.prefix }}-configmap
+  namespace: {{ .Values.namespace | default .Release.Namespace }}
+{{ end }}
+---
+{{ if eq .Values.syncagent.enabled true }}
+## Syncagent configmap ##
+apiVersion: v1
+data:
+  database.properties: |
+    db.reconnect-attempts=10
+    jdbc.dbSchemaName={{ .Values.database.dbSchemaName  | default .Values.global.dbSchema_Name }}
+    jdbc.driverClassName={{ .Values.database.driverClassName | default .Values.global.driverClass_Name }}
+{{- if (empty (.Values.database.ssl | quote) | ternary .Values.global.db_ssl .Values.database.ssl) }}
+  {{- if eq ( .Values.database.dbSchemaName | default .Values.global.dbSchema_Name) "postgres" }}
+  {{- if and (eq .Values.database.sslrootcertRequired true) (eq .Values.database.sslcertRequired false)}}
+    jdbc.url={{ .Values.syncagent.configMap.database.url }}&ssl=true&sslmode={{ .Values.database.sslmode | default .Values.global.db_ssl_mode }}&sslrootcert=/usr/src/DCC/dbrootca.crt
+  {{- else if and (eq .Values.database.sslrootcertRequired true) (eq .Values.database.sslcertRequired true) }}
+    jdbc.url={{ .Values.syncagent.configMap.database.url }}&ssl=true&sslmode={{ .Values.database.sslmode | default .Values.global.db_ssl_mode }}&sslrootcert=/usr/src/DCC/dbrootca.crt&sslcert=/usr/src/DCC/dbserver.crt&sslkey=/usr/src/DCC/dbkey.der
+  {{- else if and (eq .Values.database.sslrootcertRequired false) (eq .Values.database.sslcertRequired false) }}
+    jdbc.url={{ .Values.syncagent.configMap.database.url }}&ssl=true&sslmode={{ .Values.database.sslmode | default .Values.global.db_ssl_mode }}
+  {{- else if and (eq .Values.database.sslrootcertRequired false) (eq .Values.database.sslcertRequired true) }}
+    jdbc.url={{ .Values.syncagent.configMap.database.url }}&ssl=true&sslmode={{ .Values.database.sslmode | default .Values.global.db_ssl_mode }}&sslcert=/usr/src/DCC/dbserver.crt&sslkey=/usr/src/DCC/dbkey.der
+  {{ end }}
+  {{ end }}
+  {{- if eq ( .Values.database.dbSchemaName | default .Values.global.dbSchema_Name) "oracle" }}
+    jdbc.url=jdbc:oracle:thin:@(description=(address=(protocol=tcps)(host={{ .Values.database.db_host | default .Values.global.db_hostname }})(port={{ .Values.database.db_port | default .Values.global.dbport  }}))(connect_data=(service_name={{ .Values.database.db_sid }})) (SECURITY=(MY_WALLET_DIRECTORY = /opt/dctm/data/oracle_wallet)))
+  {{ end }}
+{{ else }}
+    jdbc.url={{ .Values.syncagent.configMap.database.url }}
+{{ end }}
+    quartz.dbDelegateClass={{ .Values.database.quartzdbDelegateClass }}
+    jdbc.username={{ .Values.database.username | default .Values.global.databaseusername }}
+    jdbc.password={{ .Values.database.password }}
+    databaseSecretKeyName={{ .Values.database.dbSecretKeyName }}
+    dbcp.initialSize=20
+    dbcp.maxActive=30
+  mail-details.properties: |
+    #the details 'from','to' and 'subject' are mandatory fields if mail service is being used.
+    from={{ .Values.syncagent.configMap.mail.fromEmailId }}
+    to={{ .Values.syncagent.configMap.mail.toEmailId }}
+    bcc={{ .Values.syncagent.configMap.mail.bccEmailId }}
+    cc={{ .Values.syncagent.configMap.mail.ccEmailId }}
+    subject={{ .Values.syncagent.configMap.mail.subject }}
+  service-registry-location.properties: |
+    serviceregistry-fqdn = {{ .Values.prefix | default .Values.global.dccPrefix }}-{{ .Values.consul.prefix }}-service
+    server-port = {{ .Values.syncagent.configMap.serviceRegistry.serverPort }}
+    server-protocol = {{ ternary "https" "http" .Values.global.internalTlsEnable }}
+    server-host= {{ .Values.syncagent.configMap.serviceRegistry.serverHost }}
+    serviceregistry-port = {{ ternary 8501 8500 .Values.global.internalTlsEnable }}
+  log4j2.xml: |
+    <?xml version="1.0" encoding="UTF-8"?>
+    <Configuration status ="debug" monitorInterval="5">
+    <Appenders>
+        <Console name="CONSOLE" target="SYSTEM_OUT">
+            <PatternLayout pattern="%-5p: [%t]: %c - %d{dd MMM yyy HH:mm:ss,SSS} - %m%n"/>
+        </Console>
+        <RollingFile name="RollingFile" fileName="//usr//src//DCC//logs//syncagent.log" filePattern="//usr//src//DCC//logs//syncagent%i.log">
+            <PatternLayout>
+                <pattern>%-5p: [%t]: %c - %d{dd MMM yyy HH:mm:ss,SSS} - %m%n</pattern>
+            </PatternLayout>
+            <Policies>
+                <SizeBasedTriggeringPolicy size="10 MB"/>
+            </Policies>
+            <DefaultRolloverStrategy max="5"/>
+        </RollingFile>
+    </Appenders>
+    <Loggers>
+        <!-- Application Loggers -->
+        <Logger name="com.emc.syncplicity" level="info">
+            <AppenderRef ref="RollingFile"/>
+        </Logger>
+        <Logger name="org.apache.log4j.xml" level="info">
+            <AppenderRef ref="CONSOLE"/>
+        </Logger>
+        <Logger name="com.opentext.vaultConnector" level="info">
+            <AppenderRef ref="RollingFile"/>
+        </Logger>
+        <!-- Root Logger -->
+        <Root level="warn">
+            <AppenderRef ref="CONSOLE"/>
+        </Root>
+    </Loggers>
+    </Configuration>
+  server.xml: |
+    <?xml version="1.0" encoding="UTF-8"?>
+    <!--
+      Licensed to the Apache Software Foundation (ASF) under one or more
+      contributor license agreements.  See the NOTICE file distributed with
+      this work for additional information regarding copyright ownership.
+      The ASF licenses this file to You under the Apache License, Version 2.0
+      (the "License"); you may not use this file except in compliance with
+      the License.  You may obtain a copy of the License at
+    
+          http://www.apache.org/licenses/LICENSE-2.0
+    
+      Unless required by applicable law or agreed to in writing, software
+      distributed under the License is distributed on an "AS IS" BASIS,
+      WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+      See the License for the specific language governing permissions and
+      limitations under the License.
+    -->
+    <!-- Note:  A "Server" is not itself a "Container", so you may not
+         define subcomponents such as "Valves" at this level.
+         Documentation at /docs/config/server.html
+     -->
+    <Server port="-1" shutdown="SHUTDOWN">
+      <Listener className="org.apache.catalina.startup.VersionLoggerListener" />
+      <!-- Security listener. Documentation at /docs/config/listeners.html
+      <Listener className="org.apache.catalina.security.SecurityListener" />
+      -->
+      <!-- OpenSSL support using Tomcat Native -->
+      <Listener className="org.apache.catalina.core.AprLifecycleListener" />
+      <!-- OpenSSL support using FFM API from Java 22 -->
+      <!-- <Listener className="org.apache.catalina.core.OpenSSLLifecycleListener" /> -->
+      <!-- Prevent memory leaks due to use of particular java/javax APIs-->
+      <Listener className="org.apache.catalina.core.JreMemoryLeakPreventionListener" />
+      <Listener className="org.apache.catalina.mbeans.GlobalResourcesLifecycleListener" />
+      <Listener className="org.apache.catalina.core.ThreadLocalLeakPreventionListener" />
+    
+      <!-- Global JNDI resources
+          Documentation at /docs/jndi-resources-howto.html
+      -->
+      <GlobalNamingResources>
+        <!-- Editable user database that can also be used by
+            UserDatabaseRealm to authenticate users
+        -->
+        <Resource name="UserDatabase" auth="Container"
+                  type="org.apache.catalina.UserDatabase"
+                  description="User database that can be updated and saved"
+                  factory="org.apache.catalina.users.MemoryUserDatabaseFactory"
+                  pathname="conf/tomcat-users.xml" />
+      </GlobalNamingResources>
+    
+      <!-- A "Service" is a collection of one or more "Connectors" that share
+           a single "Container" Note:  A "Service" is not itself a "Container",
+           so you may not define subcomponents such as "Valves" at this level.
+           Documentation at /docs/config/service.html
+       -->
+      <Service name="Catalina">
+    
+        <!--The connectors can use a shared executor, you can define one or more named thread pools-->
+        <!--
+        <Executor name="tomcatThreadPool" namePrefix="catalina-exec-"
+            maxThreads="150" minSpareThreads="4"/>
+        -->
+    
+    
+        <!-- A "Connector" represents an endpoint by which requests are received
+            and responses are returned. Documentation at :
+            HTTP Connector: /docs/config/http.html
+            AJP  Connector: /docs/config/ajp.html
+            Define a non-SSL/TLS HTTP/1.1 Connector on port 8080
+        -->
+        <Connector port="8080" protocol="HTTP/1.1"
+                  connectionTimeout="20000"
+                  redirectPort="8443" />
+        <!-- A "Connector" using the shared thread pool-->
+        <!--
+        <Connector executor="tomcatThreadPool"
+                  port="8080" protocol="HTTP/1.1"
+                  connectionTimeout="20000"
+                  redirectPort="8443" />
+        -->
+        <!-- Define an SSL/TLS HTTP/1.1 Connector on port 8443 with HTTP/2 -->
+        <!-- {{- if (eq .Values.global.internalTlsEnable true) }}
+        <Connector port="{{- template "dctm-dcc.syncagentservicePortNumber" . }}" protocol="org.apache.coyote.http11.Http11NioProtocol"
+                  maxThreads="150" SSLEnabled="true">
+          <UpgradeProtocol className="org.apache.coyote.http2.Http2Protocol" />
+          <SSLHostConfig>
+            <Certificate certificateKeystoreFile="/opt/dctm/certificate/commom-keystore.p12"
+                        type="RSA" certificateKeystorePassword="COMMON_KEYSTOREPASSWORD"/>
+          </SSLHostConfig>
+        </Connector>
+        {{- end }}-->
+    
+        {{- if (eq .Values.global.internalTlsEnable true) }}
+        <Connector port="{{- template "dctm-dcc.syncagentservicePortNumber" . }}" protocol="org.apache.coyote.http11.Http11NioProtocol"
+                  maxThreads="150" SSLEnabled="true"
+                                 scheme="https"
+                                 secure="true"
+                                 sslProtocol="TLSv1.3">
+          <SSLHostConfig>
+            <Certificate certificateKeystoreFile="/opt/dctm/certificate/common-keystore.p12"
+                        certificateKeystorePassword="COMMON_KEYSTOREPASSWORD"/>
+          </SSLHostConfig>
+        </Connector>
+        {{- end }}
+    
+    
+        <!--<Connector port="{{- template "dctm-dcc.syncagentservicePortNumber" . }}" protocol="org.apache.coyote.http11.Http11NioProtocol"-->
+    
+        <!-- Define an AJP 1.3 Connector on port 8009 -->
+        <!--
+        <Connector protocol="AJP/1.3"
+                   address="::1"
+                   port="8009"
+                   redirectPort="8443" />
+        -->
+    
+        <!-- An Engine represents the entry point (within Catalina) that processes
+             every request.  The Engine implementation for Tomcat stand alone
+             analyzes the HTTP headers included with the request, and passes them
+             on to the appropriate Host (virtual host).
+             Documentation at /docs/config/engine.html -->
+    
+        <!-- You should set jvmRoute to support load-balancing via AJP ie :
+        <Engine name="Catalina" defaultHost="localhost" jvmRoute="jvm1">
+        -->
+        <Engine name="Catalina" defaultHost="localhost">
+    
+          <!--For clustering, please take a look at documentation at:
+              /docs/cluster-howto.html  (simple how to)
+              /docs/config/cluster.html (reference documentation) -->
+          <!--
+          <Cluster className="org.apache.catalina.ha.tcp.SimpleTcpCluster"/>
+          -->
+    
+          <!-- Use the LockOutRealm to prevent attempts to guess user passwords
+              via a brute-force attack -->
+          <Realm className="org.apache.catalina.realm.LockOutRealm">
+            <!-- This Realm uses the UserDatabase configured in the global JNDI
+                resources under the key "UserDatabase".  Any edits
+                that are performed against this UserDatabase are immediately
+                available for use by the Realm.  -->
+            <Realm className="org.apache.catalina.realm.UserDatabaseRealm"
+                  resourceName="UserDatabase"/>
+          </Realm>
+    
+          <Host name="localhost"  appBase="webapps"
+                unpackWARs="true" autoDeploy="true">
+    
+            <!-- SingleSignOn valve, share authentication between web applications
+                Documentation at: /docs/config/valve.html -->
+            <!--
+            <Valve className="org.apache.catalina.authenticator.SingleSignOn" />
+            -->
+    
+            <!-- Access log processes all example.
+                Documentation at: /docs/config/valve.html
+                Note: The pattern used is equivalent to using pattern="common" -->
+            <Valve className="org.apache.catalina.valves.AccessLogValve" directory="logs"
+                  prefix="localhost_access_log" suffix=".txt"
+                  pattern="%h %l %u %t &quot;%r&quot; %s %b" />
+
+          </Host>
+        </Engine>
+      </Service>
+    </Server>
+
+{{- if eq (default .Values.global.proxy.enabled .Values.syncagent.configMap.proxy.enabled) true  }}
+  {{- if (empty (.Values.syncagent.newrelic.enabled | quote) | ternary .Values.global.newrelic .Values.syncagent.newrelic.enabled) }}
+  catalina_opts: -javaagent:/opt/newrelic/newrelic.jar -Dhttp.proxyHost={{ .Values.syncagent.configMap.proxy.proxyHost | default .Values.global.proxy.host }} -Dhttp.proxyPort={{ .Values.syncagent.configMap.proxy.proxyPort | default .Values.global.proxy.port }} -Dhttp.nonProxyHosts="{{ .Values.syncagent.configMap.proxy.noProxyHosts | default (include "formatNoProxy" . ) }}|{{ .Values.prefix | default .Values.global.dccPrefix }}-{{ .Values.consul.prefix }}-service" -Dhttps.proxyHost={{ .Values.syncagent.configMap.proxy.proxyHost | default .Values.global.proxy.host }} -Dhttps.proxyPort={{ .Values.syncagent.configMap.proxy.proxyPort | default .Values.global.proxy.port }} -Dhttps.nonProxyHosts="{{ .Values.syncagent.configMap.proxy.noProxyHosts | default (include "formatNoProxy" . ) }}|{{ .Values.prefix | default .Values.global.dccPrefix }}-{{ .Values.consul.prefix }}-service"
+  {{ else }}
+  catalina_opts: -Dhttp.proxyHost={{ .Values.syncagent.configMap.proxy.proxyHost | default .Values.global.proxy.host }} -Dhttp.proxyPort={{ .Values.syncagent.configMap.proxy.proxyPort | default .Values.global.proxy.port }} -Dhttp.nonProxyHosts="{{ .Values.syncagent.configMap.proxy.noProxyHosts | default (include "formatNoProxy" . ) }}|{{ .Values.prefix | default .Values.global.dccPrefix }}-{{ .Values.consul.prefix }}-service" -Dhttps.proxyHost={{ .Values.syncagent.configMap.proxy.proxyHost | default .Values.global.proxy.host }} -Dhttps.proxyPort={{ .Values.syncagent.configMap.proxy.proxyPort | default .Values.global.proxy.port }} -Dhttps.nonProxyHosts="{{ .Values.syncagent.configMap.proxy.noProxyHosts | default (include "formatNoProxy" . ) }}|{{ .Values.prefix | default .Values.global.dccPrefix }}-{{ .Values.consul.prefix }}-service" -Dlog4j.configurationFile=file:/opt/tomcat/webapps/syncagent/WEB-INF/classes/log4j/log4j2.xml
+  {{ end }}
+  httpsProxy: "http://{{ .Values.syncagent.configMap.proxy.proxyHost | default .Values.global.proxy.host }}:{{ .Values.syncagent.configMap.proxy.proxyPort | default .Values.global.proxy.port }}"
+  httpProxy: "http://{{ .Values.syncagent.configMap.proxy.proxyHost | default .Values.global.proxy.host }}:{{ .Values.syncagent.configMap.proxy.proxyPort | default .Values.global.proxy.port }}"
+  noProxy: "{{ .Values.syncagent.configMap.proxy.noProxyHosts | default (include "formatNoProxy" . ) }}|{{ .Values.prefix | default .Values.global.dccPrefix }}-{{ .Values.consul.prefix }}-service|localhost,localhost,127.0.0.1"
+{{ end }}                                                                                                                         
+kind: ConfigMap
+metadata:
+  name: {{ .Values.syncagent.prefix }}-configmap
+  namespace: {{ .Values.namespace | default .Release.Namespace }}
+{{ end }}
+---
+{{ if eq .Values.syncnshareManual.enabled true }}
+## Syncnshare manual ##
+apiVersion: v1
+data:
+  database.properties: |
+    db.reconnect-attempts=10
+    jdbc.dbSchemaName={{ .Values.database.dbSchemaName  | default .Values.global.dbSchema_Name }}
+    jdbc.driverClassName={{ .Values.database.driverClassName | default .Values.global.driverClass_Name }}
+{{- if (empty (.Values.database.ssl | quote) | ternary .Values.global.db_ssl .Values.database.ssl) }}
+  {{- if eq ( .Values.database.dbSchemaName | default .Values.global.dbSchema_Name) "postgres" }}
+  {{- if and (eq .Values.database.sslrootcertRequired true) (eq .Values.database.sslcertRequired false)}}
+    jdbc.url={{ .Values.syncnshareManual.configMap.database.url }}&ssl=true&sslmode={{ .Values.database.sslmode | default .Values.global.db_ssl_mode }}&sslrootcert=/usr/src/DCC/dbrootca.crt
+  {{- else if and (eq .Values.database.sslrootcertRequired true) (eq .Values.database.sslcertRequired true) }}
+    jdbc.url={{ .Values.syncnshareManual.configMap.database.url }}&ssl=true&sslmode={{ .Values.database.sslmode | default .Values.global.db_ssl_mode }}&sslrootcert=/usr/src/DCC/dbrootca.crt&sslcert=/usr/src/DCC/dbserver.crt&sslkey=/usr/src/DCC/dbkey.der
+  {{- else if and (eq .Values.database.sslrootcertRequired false) (eq .Values.database.sslcertRequired false) }}
+    jdbc.url={{ .Values.syncnshareManual.configMap.database.url }}&ssl=true&sslmode={{ .Values.database.sslmode | default .Values.global.db_ssl_mode }}
+  {{- else if and (eq .Values.database.sslrootcertRequired false) (eq .Values.database.sslcertRequired true) }}
+    jdbc.url={{ .Values.syncnshareManual.configMap.database.url }}&ssl=true&sslmode={{ .Values.database.sslmode | default .Values.global.db_ssl_mode }}&sslcert=/usr/src/DCC/dbserver.crt&sslkey=/usr/src/DCC/dbkey.der
+  {{ end }}
+  {{ end }}
+  {{- if eq ( .Values.database.dbSchemaName | default .Values.global.dbSchema_Name) "oracle" }}
+    jdbc.url=jdbc:oracle:thin:@(description=(address=(protocol=tcps)(host={{ .Values.database.db_host | default .Values.global.db_hostname }})(port={{ .Values.database.db_port | default .Values.global.dbport }}))(connect_data=(service_name={{ .Values.database.db_sid }})) (SECURITY=(MY_WALLET_DIRECTORY = /opt/dctm/data/oracle_wallet)))
+  {{ end }}
+  {{ else }}
+    jdbc.url={{ .Values.syncnshareManual.configMap.database.url }}
+  {{ end }}
+    quartz.dbDelegateClass={{ .Values.database.quartzdbDelegateClass }}
+    jdbc.username={{ .Values.database.username | default .Values.global.databaseusername }}
+    jdbc.password={{ .Values.database.password }}
+    databaseSecretKeyName={{ .Values.syncnshareManual.configMap.database.dbSecretKeyName }}
+    dbcp.initialSize=20
+    dbcp.maxActive=30
+  notification-service.properties: |
+    hostname=localhost
+    port=10029
+  service-registry-location.properties: |
+    serviceregistry-fqdn = {{ .Values.prefix | default .Values.global.dccPrefix }}-{{ .Values.consul.prefix }}-service
+    server-port = {{ .Values.syncnshareManual.configMap.serviceRegistry.serverPort }}
+    server-protocol = {{ ternary "https" "http" .Values.global.internalTlsEnable }}
+    server-host= {{ .Values.syncnshareManual.configMap.serviceRegistry.serverHost }}
+    serviceregistry-port = {{ ternary 8501 8500 .Values.global.internalTlsEnable }}
+  setup.properties: |
+    sourceRepoName={{ .Values.syncnshareManual.configMap.setup.sourceRepoName | default .Values.global.docbase }}
+    sourceRepoUser={{ .Values.syncnshareManual.configMap.setup.sourceRepoUser }}
+    sourceRepoPassword={{ .Values.syncnshareManual.configMap.setup.sourceRepoPassword }}
+    sourceRepoUrl={{ .Values.syncnshareManual.configMap.setup.sourceRepoUrl }}
+    targetRepoUrl={{ .Values.syncnshareManual.configMap.setup.targetRepoUrl }}
+    targetRepoClientId={{ .Values.syncnshareManual.configMap.setup.targetRepoClientId }}
+    targetRepoClientSecret={{ .Values.syncnshareManual.configMap.setup.targetRepoClientSecret }}
+    sourceRepoSecretKeyName={{ .Values.syncnshareManual.configMap.setup.sourceRepoVaultSecretName }}
+    targetRepoSecretKeyName={{ .Values.syncnshareManual.configMap.setup.targetRepoVaultSecretName }}
+  log4j2.xml: |
+    <?xml version="1.0" encoding="UTF-8"?>
+    <Configuration status ="debug" monitorInterval="5">
+    <Appenders>
+        <Console name="CONSOLE" target="SYSTEM_OUT">
+            <PatternLayout pattern="%-5p: [%t]: %c - %d{dd MMM yyy HH:mm:ss,SSS} - %m%n"/>
+        </Console>
+        <RollingFile name="RollingFile" fileName="//usr//src//DCC//logs//syncagent-manual.log" filePattern="//usr//src//DCC//logs//syncagent-manual%i.log">
+            <PatternLayout>
+                <pattern>%-5p: [%t]: %c - %d{dd MMM yyy HH:mm:ss,SSS} - %m%n</pattern>
+            </PatternLayout>
+            <Policies>
+                <SizeBasedTriggeringPolicy size="10 MB"/>
+            </Policies>
+            <DefaultRolloverStrategy max="5"/>
+        </RollingFile>
+    </Appenders>
+    <Loggers>
+        <!-- Application Loggers -->
+        <Logger name="com.emc.syncplicity" level="info">
+            <AppenderRef ref="RollingFile"/>
+        </Logger>
+        <Logger name="org.apache.log4j.xml" level="info">
+            <AppenderRef ref="CONSOLE"/>
+        </Logger>
+        <Logger name="com.opentext.vaultConnector" level="info">
+            <AppenderRef ref="RollingFile"/>
+        </Logger>
+        <!-- Root Logger -->
+        <Root level="warn">
+            <AppenderRef ref="CONSOLE"/>
+        </Root>
+    </Loggers>
+    </Configuration>
+  server.xml: |
+    <?xml version="1.0" encoding="UTF-8"?>
+        <!--
+          Licensed to the Apache Software Foundation (ASF) under one or more
+          contributor license agreements.  See the NOTICE file distributed with
+          this work for additional information regarding copyright ownership.
+          The ASF licenses this file to You under the Apache License, Version 2.0
+          (the "License"); you may not use this file except in compliance with
+          the License.  You may obtain a copy of the License at
+    
+              http://www.apache.org/licenses/LICENSE-2.0
+    
+          Unless required by applicable law or agreed to in writing, software
+          distributed under the License is distributed on an "AS IS" BASIS,
+          WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+          See the License for the specific language governing permissions and
+          limitations under the License.
+        -->
+        <!-- Note:  A "Server" is not itself a "Container", so you may not
+             define subcomponents such as "Valves" at this level.
+             Documentation at /docs/config/server.html
+         -->
+        <Server port="-1" shutdown="SHUTDOWN">
+          <Listener className="org.apache.catalina.startup.VersionLoggerListener" />
+          <!-- Security listener. Documentation at /docs/config/listeners.html
+          <Listener className="org.apache.catalina.security.SecurityListener" />
+          -->
+          <!-- OpenSSL support using Tomcat Native -->
+          <Listener className="org.apache.catalina.core.AprLifecycleListener" />
+          <!-- OpenSSL support using FFM API from Java 22 -->
+          <!-- <Listener className="org.apache.catalina.core.OpenSSLLifecycleListener" /> -->
+          <!-- Prevent memory leaks due to use of particular java/javax APIs-->
+          <Listener className="org.apache.catalina.core.JreMemoryLeakPreventionListener" />
+          <Listener className="org.apache.catalina.mbeans.GlobalResourcesLifecycleListener" />
+          <Listener className="org.apache.catalina.core.ThreadLocalLeakPreventionListener" />
+    
+          <!-- Global JNDI resources
+               Documentation at /docs/jndi-resources-howto.html
+          -->
+          <GlobalNamingResources>
+            <!-- Editable user database that can also be used by
+                 UserDatabaseRealm to authenticate users
+            -->
+            <Resource name="UserDatabase" auth="Container"
+                      type="org.apache.catalina.UserDatabase"
+                      description="User database that can be updated and saved"
+                      factory="org.apache.catalina.users.MemoryUserDatabaseFactory"
+                      pathname="conf/tomcat-users.xml" />
+          </GlobalNamingResources>
+    
+          <!-- A "Service" is a collection of one or more "Connectors" that share
+               a single "Container" Note:  A "Service" is not itself a "Container",
+               so you may not define subcomponents such as "Valves" at this level.
+               Documentation at /docs/config/service.html
+           -->
+          <Service name="Catalina">
+    
+            <!--The connectors can use a shared executor, you can define one or more named thread pools-->
+            <!--
+            <Executor name="tomcatThreadPool" namePrefix="catalina-exec-"
+                maxThreads="150" minSpareThreads="4"/>
+            -->
+    
+    
+            <!-- A "Connector" represents an endpoint by which requests are received
+                 and responses are returned. Documentation at :
+                 HTTP Connector: /docs/config/http.html
+                 AJP  Connector: /docs/config/ajp.html
+                 Define a non-SSL/TLS HTTP/1.1 Connector on port 8080
+            -->
+            <Connector port="8080" protocol="HTTP/1.1"
+                       connectionTimeout="20000"
+                       redirectPort="8443" />
+            <!-- A "Connector" using the shared thread pool-->
+            <!--
+            <Connector executor="tomcatThreadPool"
+                       port="8080" protocol="HTTP/1.1"
+                       connectionTimeout="20000"
+                       redirectPort="8443" />
+            -->
+            <!-- Define an SSL/TLS HTTP/1.1 Connector on port 8443 with HTTP/2
+                 This connector uses the NIO implementation. The default
+                 SSLImplementation will depend on the presence of the APR/native
+                 library and the useOpenSSL attribute of the AprLifecycleListener.
+                 Either JSSE or OpenSSL style configuration may be used regardless of
+                 the SSLImplementation selected. JSSE style configuration is used below.
+            -->
+            <!--
+            <Connector port="8443" protocol="org.apache.coyote.http11.Http11NioProtocol"
+                       maxThreads="150" SSLEnabled="true">
+                <UpgradeProtocol className="org.apache.coyote.http2.Http2Protocol" />
+                <SSLHostConfig>
+                    <Certificate certificateKeystoreFile="conf/localhost-rsa.jks"
+                                 certificateKeystorePassword="Password@1234567890" type="RSA" />
+                </SSLHostConfig>
+            </Connector>
+            -->
+            <!-- Define an SSL/TLS HTTP/1.1 Connector on port 8443 with HTTP/2 -->
+            {{- if (eq .Values.global.internalTlsEnable true) }}
+            <Connector port="{{- template "dctm-dcc.servicePortNumber" . }}" protocol="org.apache.coyote.http11.Http11NioProtocol"
+                  maxThreads="150" SSLEnabled="true">
+              <UpgradeProtocol className="org.apache.coyote.http2.Http2Protocol" />
+              <SSLHostConfig>
+                <Certificate certificateKeystoreFile="/opt/dctm/certificate/commom-keystore.p12"
+                        type="RSA" certificateKeystorePassword="COMMON_KEYSTOREPASSWORD"/>
+              </SSLHostConfig>
+            </Connector>
+            {{- end }}-->
+    
+            <!-- Define an SSL/TLS HTTP/1.1 Connector on port 8443 with HTTP/2 -->
+            {{- if (eq .Values.global.internalTlsEnable true) }}
+            <Connector port="{{- template "dctm-dcc.manualservicePortNumber" . }}" protocol="org.apache.coyote.http11.Http11NioProtocol"
+                  maxThreads="150" SSLEnabled="true"
+                                 scheme="https"
+                                 secure="true"
+                                 sslProtocol="TLSv1.3">
+              <SSLHostConfig>
+                <Certificate certificateKeystoreFile="/opt/dctm/certificate/common-keystore.p12"
+                         certificateKeystorePassword="COMMON_KEYSTOREPASSWORD"/>
+              </SSLHostConfig>
+            </Connector>
+            {{- end }}
+    
+            <!-- Define an AJP 1.3 Connector on port 8009 -->
+            <!--
+            <Connector protocol="AJP/1.3"
+                       address="::1"
+                       port="8009"
+                       redirectPort="8443" />
+            -->
+    
+            <!-- An Engine represents the entry point (within Catalina) that processes
+                 every request.  The Engine implementation for Tomcat stand alone
+                 analyzes the HTTP headers included with the request, and passes them
+                 on to the appropriate Host (virtual host).
+                 Documentation at /docs/config/engine.html -->
+    
+            <!-- You should set jvmRoute to support load-balancing via AJP ie :
+            <Engine name="Catalina" defaultHost="localhost" jvmRoute="jvm1">
+            -->
+            <Engine name="Catalina" defaultHost="localhost">
+    
+              <!--For clustering, please take a look at documentation at:
+                  /docs/cluster-howto.html  (simple how to)
+                  /docs/config/cluster.html (reference documentation) -->
+              <!--
+              <Cluster className="org.apache.catalina.ha.tcp.SimpleTcpCluster"/>
+              -->
+    
+              <!-- Use the LockOutRealm to prevent attempts to guess user passwords
+                   via a brute-force attack -->
+              <Realm className="org.apache.catalina.realm.LockOutRealm">
+                <!-- This Realm uses the UserDatabase configured in the global JNDI
+                     resources under the key "UserDatabase".  Any edits
+                     that are performed against this UserDatabase are immediately
+                     available for use by the Realm.  -->
+                <Realm className="org.apache.catalina.realm.UserDatabaseRealm"
+                       resourceName="UserDatabase"/>
+              </Realm>
+    
+              <Host name="localhost"  appBase="webapps"
+                    unpackWARs="true" autoDeploy="true">
+    
+                <!-- SingleSignOn valve, share authentication between web applications
+                     Documentation at: /docs/config/valve.html -->
+                <!--
+                <Valve className="org.apache.catalina.authenticator.SingleSignOn" />
+                -->
+    
+                <!-- Access log processes all example.
+                     Documentation at: /docs/config/valve.html
+                     Note: The pattern used is equivalent to using pattern="common" -->
+                <Valve className="org.apache.catalina.valves.AccessLogValve" directory="logs"
+                       prefix="localhost_access_log" suffix=".txt"
+                       pattern="%h %l %u %t &quot;%r&quot; %s %b" />
+    
+              </Host>
+            </Engine>
+          </Service>
+        </Server>
+
+  java.config: |
+    jdk.tls.ephemeralDHKeySize=2048
+    jdk.certpath.disabledAlgorithms=MD2, MD5, DSA, RSA keySize < 1024
+    jdk.tls.disabledAlgorithms=DH keySize < 2048, SSLv2, SSLv3, TLSv1, TLSv1.1, DHE_DSS, RSA_EXPORT, DHE_DSS_EXPORT, DHE_RSA_EXPORT, DH_DSS_EXPORT, DH_RSA_EXPORT, ECDH_anon, DH_RSA, DH_DSS, ECDH, 3DES_EDE_CBC, DES_CBC, RC4_40, RC4_128, DES40_CBC, RC2, HmacMD5
+    jdk.tls.legacyAlgorithms=
+  {{- if eq (default .Values.global.proxy.enabled .Values.syncnshareManual.configMap.proxy.enabled) true  }}
+  {{- if eq (empty (.Values.syncnshareManual.newrelic.enabled | quote) | ternary .Values.global.newrelic .Values.syncnshareManual.newrelic.enabled) true }}
+  catalina_opts: -javaagent:/opt/newrelic/newrelic.jar -Dhttp.proxyHost={{ .Values.syncnshareManual.configMap.proxy.proxyHost | default .Values.global.proxy.host }} -Dhttp.proxyPort={{ .Values.syncnshareManual.configMap.proxy.proxyPort | default .Values.global.proxy.port }} -Dhttp.nonProxyHosts="{{ .Values.syncnshareManual.configMap.proxy.noProxyHosts | default (include "formatNoProxy" . ) }}|{{ .Values.prefix | default .Values.global.dccPrefix }}-{{ .Values.consul.prefix }}-service" -Dhttps.proxyHost={{ .Values.syncnshareManual.configMap.proxy.proxyHost | default .Values.global.proxy.host }} -Dhttps.proxyPort={{ .Values.syncnshareManual.configMap.proxy.proxyPort | default .Values.global.proxy.port }} -Dhttps.nonProxyHosts="{{ .Values.syncnshareManual.configMap.proxy.noProxyHosts | default (include "formatNoProxy" . ) }}|{{ .Values.prefix | default .Values.global.dccPrefix }}-{{ .Values.consul.prefix }}-service"
+  {{ else }}
+  catalina_opts: -Dhttp.proxyHost={{ .Values.syncnshareManual.configMap.proxy.proxyHost | default .Values.global.proxy.host }} -Dhttp.proxyPort={{ .Values.syncnshareManual.configMap.proxy.proxyPort | default .Values.global.proxy.port }} -Dhttp.nonProxyHosts="{{ .Values.syncnshareManual.configMap.proxy.noProxyHosts | default (include "formatNoProxy" . ) }}|{{ .Values.prefix | default .Values.global.dccPrefix }}-{{ .Values.consul.prefix }}-service" -Dhttps.proxyHost={{ .Values.syncnshareManual.configMap.proxy.proxyHost | default .Values.global.proxy.host }} -Dhttps.proxyPort={{ .Values.syncnshareManual.configMap.proxy.proxyPort | default .Values.global.proxy.port }} -Dhttps.nonProxyHosts="{{ .Values.syncnshareManual.configMap.proxy.noProxyHosts | default (include "formatNoProxy" . ) }}|{{ .Values.prefix | default .Values.global.dccPrefix }}-{{ .Values.consul.prefix }}-service" -Dlog4j.configurationFile=file:/opt/tomcat/webapps/syncnshare-manual/WEB-INF/classes/log4j/log4j2.xml
+  {{ end }}
+  httpsProxy: "http://{{ .Values.syncnshareManual.configMap.proxy.proxyHost | default .Values.global.proxy.host }}:{{ .Values.syncnshareManual.configMap.proxy.proxyPort | default .Values.global.proxy.port }}"
+  httpProxy: "http://{{ .Values.syncnshareManual.configMap.proxy.proxyHost | default .Values.global.proxy.host }}:{{ .Values.syncnshareManual.configMap.proxy.proxyPort | default .Values.global.proxy.port}}"
+  noProxy: "{{ .Values.syncnshareManual.configMap.proxy.noProxyHosts | default (include "formatNoProxy" . ) }}|{{ .Values.prefix | default .Values.global.dccPrefix }}-{{ .Values.consul.prefix }}-service|localhost,localhost,127.0.0.1"
+{{ end }}                                                                                                                                       
+kind: ConfigMap
+metadata:
+  name: {{ .Values.syncnshareManual.prefix }}-configmap
+  namespace: {{ .Values.namespace | default .Release.Namespace }}
+{{ end }}
+---
+{{ if eq .Values.coreNotification.enabled true }}
+## Core Notification configmap ##
+apiVersion: v1
+data:
+  database.properties: |
+    db.reconnect-attempts=10
+    jdbc.dbSchemaName={{ .Values.database.dbSchemaName  | default .Values.global.dbSchema_Name }}
+    jdbc.driverClassName={{ .Values.database.driverClassName | default .Values.global.driverClass_Name }}
+{{- if (empty (.Values.database.ssl | quote) | ternary .Values.global.db_ssl .Values.database.ssl) }}
+  {{- if eq ( .Values.database.dbSchemaName | default .Values.global.dbSchema_Name) "postgres" }}
+   {{- if and (eq .Values.database.sslrootcertRequired true) (eq .Values.database.sslcertRequired false)}}
+    jdbc.url={{ .Values.coreNotification.configMap.database.url }}&ssl=true&sslmode={{ .Values.database.sslmode | default .Values.global.db_ssl_mode }}&sslrootcert=/usr/src/dcc/dbrootca.crt
+  {{- else if and (eq .Values.database.sslrootcertRequired true) (eq .Values.database.sslcertRequired true) }}
+    jdbc.url={{ .Values.coreNotification.configMap.database.url }}&ssl=true&sslmode={{ .Values.database.sslmode | default .Values.global.db_ssl_mode }}&sslrootcert=/usr/src/dcc/dbrootca.crt&sslcert=/usr/src/dcc/dbserver.crt&sslkey=/usr/src/dcc/dbkey.der
+  {{- else if and (eq .Values.database.sslrootcertRequired false) (eq .Values.database.sslcertRequired false) }}
+    jdbc.url={{ .Values.coreNotification.configMap.database.url }}&ssl=true&sslmode={{ .Values.database.sslmode | default .Values.global.db_ssl_mode }}
+  {{- else if and (eq .Values.database.sslrootcertRequired false) (eq .Values.database.sslcertRequired true) }}
+    jdbc.url={{ .Values.coreNotification.configMap.database.url }}&ssl=true&sslmode={{ .Values.database.sslmode | default .Values.global.db_ssl_mode }}&sslcert=/usr/src/dcc/dbserver.crt&sslkey=/usr/src/dcc/dbkey.der
+  {{ end }}
+  {{ end }}
+  {{- if eq ( .Values.database.dbSchemaName | default .Values.global.dbSchema_Name) "oracle" }}
+    jdbc.url=jdbc:oracle:thin:@(description=(address=(protocol=tcps)(host={{ .Values.database.db_host | default .Values.global.db_hostname }})(port={{ .Values.database.db_port | default .Values.global.dbport  }}))(connect_data=(service_name={{ .Values.database.db_sid }})) (SECURITY=(MY_WALLET_DIRECTORY = /opt/dctm/data/oracle_wallet)))
+  {{ end }}
+{{ else }}
+    jdbc.url={{ .Values.coreNotification.configMap.database.url }}
+{{ end }}
+    quartz.dbDelegateClass={{ .Values.database.quartzdbDelegateClass }}
+    jdbc.username={{ .Values.database.username | default .Values.global.databaseusername }}
+    jdbc.password={{ .Values.database.password }}
+    dbcp.initialSize=20
+    dbcp.maxActive=30
+    databaseSecretKeyName={{ .Values.coreNotification.database.dbSecretKeyName }}
+  service-registry-location.properties: |
+    app.servicePort = {{ .Values.coreNotification.configMap.serviceRegistry.serverPort }}
+    httpsEnabled = {{ ternary true false .Values.global.internalTlsEnable }}
+    serviceregistry-port = {{ ternary 8501 8500 .Values.global.internalTlsEnable }}
+    server-host= {{ .Values.coreNotification.configMap.serviceRegistry.serverHost }}
+  ExtApi.config: |
+    dcc_api_user={{ .Values.coreNotification.configMap.extApiconfig.dccapiuser }}
+    dcc_api_credential={{ .Values.coreNotification.configMap.extApiconfig.dccapipassword }}
+    httpsEnabled = {{ ternary true false .Values.global.internalTlsEnable }}
+    serviceregistry-port = {{ ternary 8501 8500 .Values.global.internalTlsEnable }}
+    server-host= {{ .Values.coreNotification.configMap.serviceRegistry.serverHost }}
+    {{ if eq .Values.syncnshareManual.enabled true }}
+    dcc-manual-service ={{ .Values.coreNotification.configMap.extApiconfig.dccmanualFQDN }}
+    {{ else }}
+    #dcc-manual-service ={{ .Values.coreNotification.configMap.extApiconfig.dccmanualFQDN }}
+    {{ end }}
+    {{ if eq .Values.syncagent.enabled true }}
+    dcc-robot-service ={{ .Values.coreNotification.configMap.extApiconfig.dccroboticFQDN }}
+    {{ else }}
+    #dcc-robot-service ={{ .Values.coreNotification.configMap.extApiconfig.dccroboticFQDN }}
+    {{ end }}
+    serviceregistry ={{ .Values.prefix | default .Values.global.dccPrefix }}-{{ .Values.consul.prefix }}-service
+    core_notification_api_path = /api/v3/notifications
+    schedule_interval = 60
+    max_notification_limit = 100
+  log4j2.xml: |
+    <?xml version="1.0" encoding="UTF-8"?>
+    <Configuration status ="debug" monitorInterval="5">
+      <Appenders>
+          <Console name="CONSOLE" target="SYSTEM_OUT">
+              <PatternLayout pattern="%-5p: [%t]: %c - %d{dd MMM yyy HH:mm:ss,SSS} - %m%n"/>
+          </Console>
+          <RollingFile name="RollingFile" fileName="//usr//src//DCC//logs//CoreNotificationService.log" filePattern="//usr//src//DCC//logs//CoreNotificationService%i.log">
+              <PatternLayout>
+                  <pattern>%-5p: [%t]: %c - %d{dd MMM yyy HH:mm:ss,SSS} - %m%n</pattern>
+              </PatternLayout>
+              <Policies>
+                  <SizeBasedTriggeringPolicy size="10 MB"/>
+              </Policies>
+              <DefaultRolloverStrategy max="5"/>
+          </RollingFile>
+      </Appenders>
+      <Loggers>
+          <!-- Application Loggers -->
+          <Logger name="com.opentext.dcc" level="info">
+              <AppenderRef ref="RollingFile"/>
+          </Logger>
+          <Logger name="org.apache.log4j.xml" level="info">
+              <AppenderRef ref="CONSOLE"/>
+          </Logger>
+          <Logger name="com.opentext.vaultConnector" level="info">
+              <AppenderRef ref="RollingFile"/>
+          </Logger>
+          <!-- Root Logger -->
+          <Root level="warn">
+              <AppenderRef ref="CONSOLE"/>
+          </Root>
+      </Loggers>
+    </Configuration>
+kind: ConfigMap
+metadata:
+  name: {{ .Values.coreNotification.prefix }}-configmap
+  namespace: {{ .Values.namespace | default .Release.Namespace }}
+{{ end }}
+---
+{{ if eq .Values.mailService.enabled true }}
+## mail service ##
+apiVersion: v1
+data:
+  mailservice.properties: |
+    #Configuration for smtp mail server.
+    #Provide the host , port , usermail and password it it is ssl based.
+    #Without ssl, provide the server host and port details.
+    smtpmailhost={{ .Values.mailService.configMap.mailconfig.smtpmailhost }}
+    smtpmailport={{ .Values.mailService.configMap.mailconfig.smtpmailport }}
+    mailPasswordSecretKeyName={{ .Values.mailService.configMap.mailconfig.mailPasswordVaultSecretName }}
+    usermail={{ .Values.mailService.configMap.mailconfig.usermail }}
+    mailpassword={{ .Values.mailService.configMap.mailconfig.mailpassword }}
+    starttls={{ .Values.mailService.configMap.mailconfig.starttls }}
+    authenticationType={{ .Values.mailService.configMap.mailconfig.authenticationType }}
+    # Below details are applicable for microsoft exchange oAuth changes
+    # AuthenticationType type will change to oAuth
+    serviceProvider={{ .Values.mailService.configMap.mailconfig.serviceProvider }}
+    tenantId={{ .Values.mailService.configMap.mailconfig.tenantId }}
+    clientId={{ .Values.mailService.configMap.mailconfig.clientId }}
+    clientSecret={{ .Values.mailService.configMap.mailconfig.clientSecret }}
+    tokenUrl={{ .Values.mailService.configMap.mailconfig.tokenUrl }}
+    graphApiUrl={{ .Values.mailService.configMap.mailconfig.graphApiUrl }}
+  service-registry-location.properties: |
+    serviceregistry-fqdn = {{ .Values.prefix | default .Values.global.dccPrefix }}-{{ .Values.consul.prefix }}-service
+    app.servicePort = {{ .Values.mailService.configMap.serviceRegistry.serverPort }}
+    httpsEnabled = {{ ternary true false .Values.global.internalTlsEnable }}
+    serviceregistry-port = {{ ternary 8501 8500 .Values.global.internalTlsEnable }}
+    server-host= {{ .Values.mailService.configMap.serviceRegistry.serverHost }}
+  log4j2.xml: |
+    <?xml version="1.0" encoding="UTF-8"?>
+    <Configuration status ="debug" monitorInterval="5">
+      <Appenders>
+          <Console name="CONSOLE" target="SYSTEM_OUT">
+              <PatternLayout pattern="%-5p: [%t]: %c - %d{dd MMM yyy HH:mm:ss,SSS} - %m%n"/>
+          </Console>
+          <RollingFile name="RollingFile" fileName="//usr//src//DCC//logs//MailService.log" filePattern="//usr//src//DCC//logs//MailService%i.log">
+              <PatternLayout>
+                  <pattern>%-5p: [%t]: %c - %d{dd MMM yyy HH:mm:ss,SSS} - %m%n</pattern>
+              </PatternLayout>
+              <Policies>
+                  <SizeBasedTriggeringPolicy size="10 MB"/>
+              </Policies>
+              <DefaultRolloverStrategy max="5"/>
+          </RollingFile>
+      </Appenders>
+      <Loggers>
+          <!-- Application Loggers -->
+          <Logger name="com.opentext.dcc.mailservice" level="debug">
+              <AppenderRef ref="RollingFile"/>
+          </Logger>
+          <Logger name="org.apache.log4j.xml" level="debug">
+              <AppenderRef ref="CONSOLE"/>
+          </Logger>
+          <Logger name="com.opentext.vaultConnector" level="info">
+              <AppenderRef ref="RollingFile"/>
+          </Logger>
+          <!-- Root Logger -->
+          <Root level="warn">
+              <AppenderRef ref="CONSOLE"/>
+          </Root>
+      </Loggers>
+    </Configuration>
+ 
+kind: ConfigMap
+metadata:
+  name: {{ .Values.mailService.prefix }}-configmap
+  namespace: {{ .Values.namespace | default .Release.Namespace }}
+{{ end }}
+
+---
+{{- if (empty (.Values.database.ssl | quote) | ternary .Values.global.db_ssl .Values.database.ssl) }}
+{{- if eq ( .Values.database.dbSchemaName | default .Values.global.dbSchema_Name) "oracle" }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.database.dbSchemaName  | default .Values.global.dbSchema_Name }}-configmap
+  namespace: {{ .Values.namespace | default .Release.Namespace }}
+data:
+  tnsnames.ora: |
+    {{ .Values.database.db_sid }} =
+     (DESCRIPTION =
+       (ADDRESS = (PROTOCOL = TCPS)(HOST = {{ .Values.database.db_host | default .Values.global.db_hostname }} )(PORT = {{ .Values.database.db_port | default .Values.global.dbport  }}))
+       (CONNECT_DATA =
+          (SERVER = DEDICATED)
+          (SERVICE_NAME = {{ .Values.database.db_sid }})
+      )
+      (SECURITY =
+       (MY_WALLET_DIRECTORY = /opt/dctm/data/oracle_wallet)   
+       (SSL_VERSION = 1.2)
+       (SSL_CLIENT_AUTHENTICATION = FALSE)
+      )
+    )
+
+{{- end }}
+{{- end }}

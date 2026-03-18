@@ -1,0 +1,258 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:  
+  name: {{ .Values.deployment.name }}-alproperties-configmap
+data:
+  al.properties: |
+    # This file contains a full al.properties file description.
+    |
+    # ------------------------------------------------------------------------------
+    # General Parsing Rules:
+    # ------------------------------------------------------------------------------
+    # 1) Lines starting with a "#" denote a comment.
+    #
+    # 2) What are Keys and Values?
+    #    Keys are the name given to the left side of an expression, the value
+    #    is the right side.  For example:
+    #
+    #    log.properties = WEB-INF/log4j.properties
+    #
+    #    "log.properties" is the key.
+    #    "WEB-INF/log4j.properties" is the value.
+    # ------------------------------------------------------------------------------
+    |
+    # Key:  log.properties
+    # Value:  path can be a full path or relative to the deployment dir
+    #
+    # Location of the log4j configuration file, which determines what messages
+    # are logged by the archivelink server and where the logs are stored.
+    #
+    log.properties=WEB-INF/log4j2.properties
+    |
+    # Key:  docbases.keyfile
+    # Value:  path can be a full path or relative to the deployment dir
+    #
+    # Location of the key file used for password encryption.
+    # If desired, use the dm_crypto_create tool (included in Documentum Content
+    # Server) to generate your own key file, using the default passphrase.
+    #
+    docbases.keyfile=WEB-INF/archivelink.key
+    |
+    # Key:  docbases.signatureCheck
+    # Value:  on/off
+    #
+    # If signatureCheck is "off" --
+    #   Requests with and without secKeys are accepted.
+    #   The secKey (if present) is not checked, and neither are the s-mandatory
+    #   parameters.  In oac0, the "No signature" flag may be turned on or off.
+    #
+    # If signatureCheck is "on" --
+    #   Only requests with valid secKeys and all corresponding s-mandatory
+    #   parameters are accepted.  This implies that in oac0 the "No signature" flag
+    #   has to be off.
+    #
+    docbases.signatureCheck={{ .Values.alproperties.signatureCheck }}
+    |
+    # Key:  docbases.numberOfConnections
+    # Value:  a positive integer
+    #
+    # Determines how many Docbase sessions per DocBase are to be created and
+    # reused by the archivelink connection pool.  When a user disconnects from
+    # a session, the session is held in the pool to be used the next time
+    # the user or a different user requests a connection to the Docbase.
+    #
+    docbases.numberOfConnections={{ .Values.alproperties.docbasesNumberOfConnections }}
+    |
+    # Key:  docbases.connection.timeout
+    # Value:  a positive integer
+    #
+    # Specifies the length of time in decaseconds to wait before the session
+    # request timesout and the request is failed.
+    #
+    docbases.connection.timeout={{ .Values.alproperties.docbasesConnectionsTimeout }}
+    |
+    # Key:  docbases.connection.recycle.interval
+    # Value:  a positive integer
+    #
+    # Controls how many times a Docbase session can be reused.
+    # The limit prevents a single session process from becoming too big.
+    # When a session is closed, the reused file cache under
+    # 'archiving.tempDir' pertaining to the session is deleted.
+    #
+    docbases.connection.recycle.interval={{ .Values.alproperties.docbasesConnectionRecycleInterval }}
+    |
+    # Key:  archiving.tempDir
+    # Value:  a full path
+    #
+    # Defines the directory where the archivelink server caches files.
+    # Refer to the related key 'docbases.connection.recycle.interval'.
+    # Please make sure to use forward slash for windows.
+    # At Jconsole make sure to use forward slash for windows.
+    #
+    archiving.tempDir=/var/archivelink
+    |
+    # Key:  archiving.contenttype.default
+    # Value:  Any valid Documentum format name, e.g. empty or html
+    #
+    # This property does not normally need to be set.
+    # Depending on the SAP version, the expected DCTM full_format for
+    # empty documents is html or empty.
+    #
+    #archiving.contenttype.default=empty
+    |
+    # Key:  archiving.info.useLocalDate
+    # Value:  true, false
+    # Default: false
+    #
+    # This property does not normally need to be set.
+    # By default, the creation and modification dates of documents are
+    # reported in UTC to the SAP server. Some SAP tests expect the date
+    # portion of document "info" to be in the timezone of the SAP server.
+    # Set this switch to true in case the date date should be reported
+    # as in the local timezone of the archivelink servlet.
+    #
+    #archiving.info.useLocalDate=false
+    |
+    # Key:  archiving.inmemory.maxSize
+    # Value:  Size in KB, for effective processing this would depend upon the
+    #         available System memory
+    # Default: 0
+    #
+    # Specifies the maximum file size that would be processed in-memory,
+    # by the archiving server without any corresponding DISK I/O.
+    #
+    archiving.inmemory.maxSize={{ .Values.alproperties.archivingInMemoryMaxSize }}
+    |
+    # Key: archiving.fileOpen.confirmation
+    # Value: true, false
+    # Default: false
+    #
+    # This property when set to "true" enables display of a File Download window
+    # having options like 'Open', 'Save', 'Cancel' when a document is being
+    # retrieved.
+    #
+    # When set to "false", no confirmation dialog opens and the document
+    # is opened with the default application based on its mime type.
+    #
+    archiving.fileOpen.confirmation={{ .Values.alproperties.archivingFileOpenConfirmation }}
+    |
+    # Key: archiving.compId.decode
+    # Value: true, false
+    # Default: false
+    #
+    # This property when set to "true", would decode the value of compId sent by
+    # SAP. This is needed as SAP sends the value of compid in the encoded form at
+    # times.
+    #
+    # When set to "false", the value of compId as sent by SAP is used.
+    #
+    archiving.compId.decode={{ .Values.alproperties.archivingCompIdDecode }}
+    |
+    # Key: archiving.acceleratedDownload
+    # Value: true/false
+    # Default: true
+    #
+    # The value set here activates/deactivates the new, improved implementaion
+    # of Byte Stream reading. When set to "true", the new implementation is activated.
+    # This would lead to performance enhancement.
+    # Note: This property should be set to "true" only when AS SAP runs on DFC 5.3 and
+    # above. For pre 5.3 DFC, this value should be set to "false" and the new implementation
+    # is not activated.
+    archiving.acceleratedDownload={{ .Values.alproperties.archvingAcceleratedDownload }}
+    |
+    # Key: archiving.statisticsCollection.Enabled
+    # Value: true/false
+    # Default: false
+    #
+    # The value set here enables/disables collection of Process Statistics. On setting this
+    # property to "true", Process Statistics for every incoming request is collected. Since
+    # this consumes memory, when the number of requests being processed is too large and the
+    # log level is set to DEBUG, an OutofMemory might occur. Set this property to "false"
+    # to disable collection of Process Statistics.
+    archiving.statisticsCollection.Enabled={{ .Values.alproperties.archivingStatistcsCollectionEnabled }}
+    |
+    # Key: archiving.enableACS
+    # Value: true/false
+    # Default: true
+    #
+    # The value set here enables/disables content transfer via ACS or BOCS. On setting this
+    # property to "true", content transfer of archived/linked documents, will be handled via optimal BOCS server
+    # or ACS server based on the configuration in Global Repository.
+    archiving.enableACS={{ .Values.alproperties.archivingEnableACS }}
+    # Key: archiving.NetworkLocation
+    # Value: String
+    # Default: ""
+    #
+    # The name of network location configured in Global Repository, AS SAP transfers contents through the BOCS server
+    # associated to this network location. if not set, GR config is taken.
+    #
+    #archiving.NetworkLocation=BOCSLoc1
+    #Key: archiving.use.configFile=false #Value: String #Only for 6.5 and above. Default:false
+    #Indicates whether to use docbases.properties file to load repository configs
+    #archiving.use.configFile=true
+    |
+    # Key: archiving.enabled
+    # Value: true/false
+    # Default: true
+    #
+    # The value set here enables/disables achiving. On setting this
+    # property to "true", archiving will happened.
+    archiving.enabled={{ .Values.alproperties.archivingEnabled }}
+    |
+    # Key:  archivegetbytes.enabled
+    # Value: true/false
+    # Default: false
+    #
+    # The value set here enables/disables archivegetbytes.enabled. On setting this
+    # property to "true , archivegetbytes feature is enabled
+    archivegetbytes.enabled={{ .Values.alproperties.archiveGetBytesEnabled }}
+    |
+    # Key: archiving.enable.long_compId.retrieval
+    # Value: true/false
+    # Default: false
+    #
+    # This value needs to be turned on when archived documents with long compId
+    # are being retrieved. (dmr_content.set_file exceeds 255 characters and its
+    # value gets truncated.
+    archiving.enable.long_compId.retrieval={{ .Values.alproperties.archivingEnableLongCompIdRetrieval }}
+    |
+    # Key: archiving.use.custom.formats
+    # Value: any expected custom format string separated by commas if user wants more than one format
+    # Default: null
+    #
+    # eg: archiving.use.custom.formats=crtext,jpeg-preview
+    # This value needs used if any mime type has more than one format name and ASSAP not picking the right format name at runtime.
+    # You can define one or many formats for different mime-types use comma as separator
+    # value gets truncated.
+    archiving.use.custom.formats={{ .Values.alproperties.archivingUseCustomFormats }}
+    |
+    # Key: archiving.use.file.extension
+    # Value: true/false
+    # Default: false
+    #
+    # This value needs to be turned on while archiving documents with file extension
+    # validation.
+    archiving.use.file.extension={{ .Values.alproperties.archivingUseFileExtension }}
+    archiving.use.file.extension.HTTPParameter.name={{ .Values.alproperties.archivingUseFileExtensionHttpParamName }}
+    |
+    # Key: archiving.read.docs.nocompid.data
+    # Value: true/false
+    # Default: false
+    #
+    # This value needs to be turned on only for accessing old documents if and only if compId 'data' is missing.
+    archiving.read.docs.nocompid.data={{ .Values.alproperties.archivingReadDocsNoCompIdData }}
+    |
+    # Key: archiving.read.docs.53SP2
+    # Value: true/false
+    # Default: false
+    #
+    # This value needs to be turned off if 5.3SP2 version of ASSAP archived documents are present in the system.
+    archiving.read.docs.53SP2.assap901={{ .Values.alproperties.archivingReadDocs53SP2ASSAP901 }}
+    |
+    # Key: archiving.use.formats.caching
+    # Value: true/false
+    # Default: true
+    #
+    # Set this property to false if you do not want to depend on the caching mechanism of formats and have ASSAP query the formats for each request
+    # Set it to true to utilize the cache for comparatively faster retrieval.
+    archiving.use.formats.caching={{ .Values.alproperties.archivingUseFormatsCaching }}

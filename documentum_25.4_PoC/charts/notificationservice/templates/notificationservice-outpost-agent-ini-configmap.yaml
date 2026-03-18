@@ -1,0 +1,17 @@
+{{- if and (eq .Values.configMap.extApiconfig.oesNSEnabled true) (eq .Values.global.proxy.enabled true) }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: oesconnector-outpost-agent-ini
+  {{- template "configMap.labels" . }}
+data:
+  outpost-agent.ini: |-
+    -Xms64m
+    -Xmx256m
+    -XX:+UseG1GC
+    -Dhttp.proxyHost={{ .Values.proxyHost | default .Values.global.proxy.host }}
+    -Dhttp.proxyPort={{ .Values.proxyPort | default .Values.global.proxy.port }}
+    -Dhttps.proxyHost={{ .Values.proxyHost | default .Values.global.proxy.host }}
+    -Dhttps.proxyPort={{ .Values.proxyPort | default .Values.global.proxy.port }}
+    -Dhttp.nonProxyHosts={{ .Values.noProxyHosts | default (include "formatNoProxy" . ) }}
+{{end}}

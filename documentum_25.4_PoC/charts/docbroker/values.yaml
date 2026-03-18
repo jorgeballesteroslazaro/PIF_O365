@@ -1,0 +1,149 @@
+# Default values for docbroker.chart.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+#Leave below value as empty. Use yaml files under platforms folder.
+platform:
+
+###User Name/ID
+serviceName:
+serviceAccount:
+      createserviceaccount: false
+      serviceAccountName:
+serviceAnnotations: {}
+useInitContainers: false
+extraInitContainers:
+### Docker Images ###  
+images:
+  repository :
+  contentserver :
+    name : ot-dctm-server
+    tag : 24.4
+  pullPolicy :
+  pullSecrets:
+
+
+### CS Secret ###
+secret:
+  name:
+  
+openshift:
+  enable:
+  
+### Dockbroker ###
+docbroker:
+  replicaCount: 2
+  installerUI : silent
+  #connectMode can be native, secure or dual
+  connectMode:
+  liveness:
+    enable: true
+    #For the first time docbroker may take 10 minutes to complete the initialization, give enough time
+    initialDelaySeconds: 600
+    #Time interval between liveness probes
+    periodSeconds: 180
+    #The number of consecutive liveness probe failures alowed before the container restarts
+    failureThreshold: 3
+  #Change value of this parameter to a different numeric value than previous value, if there are changes only in cs-secrets so that pod gets recreated during upgrade
+  secretsChange:
+  enableLogStreaming:
+
+#External Docbroker
+# Use the command "kubectl exec -ti tcp-port-availability-donotdelete-0 /bin/bash /execute.sh" to find available ports to be configured for nativeExtPort and sslExtPort
+ExtDocbroker:
+  enable:  
+  extNativeNodePort: 
+  extSSLNodePort: 
+  createExtService: true
+  useELB: false
+  enableLiveness: false
+  useLBAnnotations: false
+  LBAnnotations:
+  
+graylog:
+  server: graylog-proxy-bp.otxlab.net
+  port: 9000
+
+fluentd_service:
+  enable:
+  # Name and tag of should not be changed as they specify fluentd image details
+  image:
+  PullPolicy:
+  restartPolicy: Always
+  ##Values for TCPPort and RESTPort should be same as give for fluentdTCPPort and fluentdRESTPort in fluentdConf section
+  TCPPort:
+  RESTPort:
+  UDPPort:
+  DFCLogLevel:
+  graylogEnabled:
+  liveness:
+    enable: true
+### Ports ###
+ports:
+  docbrokerPort: 1489
+  docbrokrSSLport: 1490
+  extNativePort: 1491
+  extSSLPort: 1492
+
+certificate:
+  use_certificate:
+  aekname: aek_name
+  aeklocation:
+
+vault:
+  enable:
+  vault_configmap: dctm-vault-configmap 
+  dsisCreatePVC:
+  PVCName: dsis-binary-pvc
+  pvcAccessModes: ReadWriteMany
+  size: 100Mi
+  storageClass:
+  existVolumePv:
+  
+kms:
+  url:
+  masterkey_id: <KMS_MASTERKEY_ID>
+  
+### Persistent Volume ###
+persistentVolume:
+  vctName: dbr-vct
+  accessModes: ReadWriteOnce
+  size: 1Gi
+  storageClass:
+  dbrdataPVCName: certdbr-data-pvc
+  pvcAccessModes: ReadWriteMany
+### Below parameter if there is already existing volume to hook up ###
+  existVolumePv:
+### Below parameter is used when there are different storage classes for vct and PVC ###
+  pvcStorageClass:
+  pvcStorageSize: 1Gi
+  awsEFS: false
+  awsEFSCSIDriver: efs.csi.aws.com
+  awsEFSCSIHandle: 
+  awsEFSCSIClaimPolicy: 
+  logVctAccessModes: ReadWriteOnce
+  logVctSize: 2Gi
+  logVctStorageClass:
+  
+### newrelic agent configuration. ###
+newrelic:
+  enable:
+  proxy_host:
+  proxy_port:
+  proxy_protocol:
+  c_app_name : DBR_documentum-PROD-OT2_CFCR_LI3-EIM-<sname>  
+
+ ### resources ###
+resources:
+  limits:
+    cpu: 1000m
+    memory: 2Gi
+  requests:
+    cpu: 100m
+    memory: 200Mi
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}

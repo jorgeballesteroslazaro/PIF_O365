@@ -1,0 +1,179 @@
+#xDA Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.prefix }}
+  labels:
+    app: {{ .Values.prefix }}
+spec:
+  selector:
+    matchLabels:
+      app: {{ .Values.prefix }}
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.prefix }}          
+    spec:
+{{- if (empty (.Values.serviceAccount.serviceAccountName | quote) | ternary .Values.global.documentumserviceaccount .Values.serviceAccount.serviceAccountName) }}
+      serviceAccountName: {{ .Values.serviceAccount.serviceAccountName | default .Values.global.documentumserviceaccount }}
+{{- end }}
+{{- if .Values.cis.ip }}
+      hostAliases:
+      - ip: {{ .Values.cis.ip | quote }}
+        hostnames:
+        - {{ .Values.cis.hostname | quote }}
+{{- end }}
+{{- if (empty (.Values.image.pullSecrets  | quote) | ternary .Values.global.pullSecretName .Values.image.pullSecrets) }}
+      imagePullSecrets:
+      - name: {{ .Values.image.pullSecrets | default .Values.global.pullSecretName }}
+{{ end }} 
+      containers:            
+       - name: {{ .Values.prefix }}
+         image: {{ .Values.image.repository | default .Values.global.repository }}/{{ .Values.image.name }}:{{ .Values.image.tag }}
+         imagePullPolicy: {{ .Values.image.pullPolicy | default .Values.global.pullPolicyType }}
+         
+         resources:
+{{ toYaml .Values.resources | indent 12 }}       
+         env:
+         - name: KUBERNETES
+           value: "true"
+         - name: SSL_ENABLED
+           value: {{ .Values.global.internalTlsEnable | quote }}
+         - name: xDA_Protocol
+           value: {{ eq .Values.global.internalTlsEnable true | ternary "https" "http" }}
+         - name: xDA_Admin_Port
+           value: {{ .Values.adminConsoleServicePort | quote }}
+                   
+         - name: xDACLI_UserName
+           value: {{ .Values.xdacli.username }}
+         - name: xDACLI_Password
+           value: {{ required "A valid .Values.xdacli.password entry required!" .Values.xdacli.password }}
+         #- name: xDACLI_EnvironmentName
+          # value: {{ .Values.xdacli.environmentName }}
+         - name: xDACLI_EnvironmentMode
+           value: {{ .Values.xdacli.environmentMode }}
+           
+{{- if (empty (.Values.newrelic.enable | quote) | ternary .Values.global.newrelic .Values.newrelic.enable) }}
+         - name: NEWRELIC_ENABLE
+           value: {{ (empty (.Values.newrelic.enable | quote) | ternary .Values.global.newrelic .Values.newrelic.enable) | quote }}
+         - name: NEWRELIC_APP_NAME
+           value: {{ .Values.newrelic.app_name }}.{{ .Release.Namespace }}
+         - name: NEWRELIC_PROXY_HOST
+           value: {{ .Values.newrelic.proxy_host  | default .Values.global.newrelicProxyHost }}
+         - name: NEWRELIC_PROXY_PORT
+           value: {{ (.Values.newrelic.proxy_port | quote) | default (.Values.global.newrelicProxyPort | quote) }}
+         - name: NEWRELIC_LICENSE_KEY
+           valueFrom:
+             secretKeyRef:
+               name: {{ .Values.secret.name | default .Values.global.csSecrets }}
+               key: {{ .Values.newrelic.licenseKeyName }}
+{{- end }}
+         - name: DSIS_STATUS_CHECK_RETRY_COUNT
+           value: {{ .Values.vault.statusCheckRetryCount | quote  }}
+         - name: DSIS_STATUS_CHECK_TIME_INTERVAL
+           value: {{ .Values.vault.statusCheckTimeInterval | quote  }}
+         - name: VAULT_TIMEOUT
+           value: {{ .Values.vault.vault_timeout | quote }}           
+         - name: VAULT_ENABLED
+           value: {{ (empty (.Values.vault.enable | quote) | ternary .Values.global.isVaultEnabled .Values.vault.enable) | quote }}
+         - name: DSIS_BIN_ZIP_PVC_PATH
+           valueFrom:
+             configMapKeyRef:
+               name: {{ .Values.prefix }}-xda-config
+               key: DSIS_BIN_ZIP_PVC_PATH
+         - name: DSIS_APP_PROPERTIES_FILE_PVC_PATH
+           valueFrom:
+             configMapKeyRef:
+               name: {{ .Values.prefix }}-xda-config
+               key: DSIS_APP_PROPERTIES_FILE_PVC_PATH      
+         ports:
+         - containerPort: 7000
+           name: xdaport
+         livenessProbe:
+           httpGet:
+             path: /xda
+             port: xdaport         
+             scheme: {{ eq .Values.global.internalTlsEnable true | ternary "HTTPS" "HTTP" }}         
+
+           initialDelaySeconds: 180
+           periodSeconds: 300
+           failureThreshold: 2
+           successThreshold: 1
+           timeoutSeconds: 60
+         readinessProbe:
+           httpGet:
+             path: /xda
+             port: xdaport          
+             scheme: {{ eq .Values.global.internalTlsEnable true | ternary "HTTPS" "HTTP" }}            
+ 
+           initialDelaySeconds: 180
+           periodSeconds: 300
+           failureThreshold: 2
+           successThreshold: 1
+           timeoutSeconds: 60           
+         volumeMounts: 
+         - mountPath: /opt/xda-tools/config
+           name: {{ .Values.prefix }}-tools-volume         
+         - mountPath: /opt/xDA/catalog
+           name: {{ .Values.prefix }}
+           subPath: xDA/{{ .Values.prefix }}/catalog
+         - mountPath: /opt/xDA/config
+           name: {{ .Values.prefix }}-config-volume
+         - mountPath: /opt/xDA/logs
+           name: {{ .Values.prefix }}
+           subPath: xDA/{{ .Values.prefix }}/logs
+
+{{- if (empty (.Values.docbaseConnection.use_certificate | quote) | ternary .Values.global.useCertificate .Values.docbaseConnection.use_certificate) }}
+         - mountPath: /opt/dctm/certificate
+           name: {{ .Values.dbrpersistentVolume.dbrdataPVCName | default .Values.global.dbrdataPVCName }}
+           subPath: certificate/{{ .Values.dbrpersistentVolume.dbrdataPVCName | default .Values.global.dbrdataPVCName }}
+{{ end }}
+{{- if (empty (.Values.vault.enable | quote) | ternary .Values.global.isVaultEnabled .Values.vault.enable) }}
+         - mountPath: {{ .Values.vault.vault_config_mount_path }}
+           name: vault-volume
+{{- end }}
+{{- if (empty (.Values.vault.enable | quote) | ternary .Values.global.isVaultEnabled .Values.vault.enable) }}
+         - mountPath: {{ .Values.vault.binary_volume_mount_path }}
+           name: dsis-binary-volume
+{{- end }}          
+      volumes:        
+        - name: {{ .Values.prefix }}-tools-volume
+          configMap:
+            name: {{ .Values.prefix }}-xda-config
+            items:
+              - key: xda-properties
+                path: xda.properties
+              - key: environment-config
+                path: environment.yml
+{{- if (empty (.Values.vault.enable | quote) | ternary .Values.global.isVaultEnabled .Values.vault.enable) }}
+        - name: vault-volume
+          configMap:
+            name: {{ .Values.vault.vault_configmap }}
+{{- end }}
+        - name: {{ .Values.prefix }}
+          persistentVolumeClaim:
+            claimName: {{ .Values.prefix}}-pvc
+        - name: {{ .Values.prefix }}-config-volume
+          configMap:
+            name: {{ .Values.prefix }}-xda-config
+            items:
+              - key: dfc-properties-config
+                path: dfc.properties
+              - key: xda-config-properties
+                path: xda-config.properties
+              - key: log4j-properties-config
+                path: log4j2.properties     
+                
+             
+{{- if (empty (.Values.docbaseConnection.use_certificate | quote) | ternary .Values.global.useCertificate .Values.docbaseConnection.use_certificate) }}
+        - name: {{ .Values.dbrpersistentVolume.dbrdataPVCName | default .Values.global.dbrdataPVCName }}
+          persistentVolumeClaim:
+            claimName: {{ .Values.docbaseConnection.docbroker | default .Values.global.dbrServiceName }}-pvc
+{{- end }} 
+{{- if (empty (.Values.vault.enable | quote) | ternary .Values.global.isVaultEnabled .Values.vault.enable) }}
+        - name: dsis-binary-volume
+          persistentVolumeClaim:
+            claimName: {{ .Values.vault.PVCName }}
+{{- end }}        

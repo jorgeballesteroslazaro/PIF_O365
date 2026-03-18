@@ -1,0 +1,15 @@
+{{- if (or (empty (.Values.extension.useCommonPVC | quote)) (eq .Values.extension.useCommonPVC false)) }}
+{{- if (eq .Values.global.tomcatbase_usecommonpvc false) }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+    name: {{ .Values.extension.pvcName | default .Values.global.tomcatbase_commonpvcname}}-da
+spec:
+  accessModes:
+    - {{ .Values.extension.PVCAccessMode }}
+  storageClassName: {{ .Values.extension.PVCStorageClass | default .Values.global.rwmStorage  }}
+  resources:
+    requests:
+      storage: {{ .Values.extension.PVCSize }}
+  {{ end }}      
+{{ end }}

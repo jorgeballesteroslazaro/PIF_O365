@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ao-configmap
+data:
+  ingress_domain: {{ .Values.configuration.ingressDomain | default (include "documentum.publicIngress" .) }}
+  d2classic_webapp_name: {{ .Values.configuration.d2classicWebappName | default .Values.global.d2classicWebappName | quote }}
+  brava_server_url: {{ .Values.configuration.bravaServerURL | quote }}
+
+  # SE Connector Configurations
+  xchange_enable: {{ .Values.aoc.enabled | quote }}
+ 
+  # xECM Configurations
+  xecm_configured: {{ .Values.xecm.enabled | quote }}
+
+  # otiv Configurations
+  brava_enable: {{ .Values.brava.enabled | quote }}

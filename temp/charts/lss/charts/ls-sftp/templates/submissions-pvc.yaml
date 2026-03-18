@@ -1,0 +1,21 @@
+{{- if (empty (.Values.persistentVolume.submissions.createPVC | quote) | ternary .Values.global.createLSSPVC  .Values.persistentVolume.submissions.createPVC) }} 
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ .Values.persistentVolume.submissions.pvcName }}
+  namespace: {{ .Values.namespace | default .Release.Namespace }}
+spec:
+  accessModes:
+    - {{ .Values.persistentVolume.submissions.accessModes }}
+{{ if eq .Values.platform "aws" }}
+  storageClassName: {{ .Values.persistentVolume.submissions.storageClass | default .Values.global.rwmStorage }}-sftp
+{{ else }}
+  storageClassName: {{ .Values.persistentVolume.submissions.storageClass | default .Values.global.rwmStorage }}
+{{ end }}
+{{ if .Values.persistentVolume.submissions.pvName }}
+  volumeName: {{ .Values.persistentVolume.submissions.pvName }}
+{{ end }}
+  resources:
+    requests:
+      storage: {{ .Values.persistentVolume.submissions.size }}
+{{- end }}

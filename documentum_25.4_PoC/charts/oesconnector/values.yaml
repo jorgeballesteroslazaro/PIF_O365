@@ -1,0 +1,248 @@
+# Default values for ccsmartview.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+### Environment ###
+env:
+  tomcatJVMArgs: ""
+  webappName: oes-connector
+
+## serviceAnnotations define custom annotations that need to be assigned to ccsmartview service.
+## For example:
+##  cloud.google.com/backend-config: '{"ports": {"80": "abcd-ccsmartview-backend"}}'
+##  cloud.google.com/neg: '{"ingress": true}'
+serviceAnnotations: {}
+  
+### Tomcat ###  
+# catalinaHome: This attribute value is set to the path for catalina home
+# connectionTimeoutInMilliseconds: This  attribute value is set to the max number of milliseconds this Connector will wait, after accepting a connection, for the request URI line to be presented
+# maxHttpHeaderSize: This  attribute value is set to the max size of the request and response HTTP header, specified in bytest
+# secure: This attribute value is set to true if you wish to have calls to request.isSecure() to return true for requests received by tomcat Connector. Default value is false
+# logfilerotation: This attribute value is set to the ENV TOMCAT_LOG_FILE_ROTATION for tomcat server for logging
+# logfilesize: This attribute value is set to the max size of the tomcat server log file
+tomcat:
+  catalinaHome: /opt/tomcat
+  connectionTimeoutInMilliseconds:
+  maxHttpHeaderSize:  
+  secure: false
+  logfilerotation: 
+  logfilesize:
+    
+  
+certificate:
+  use_certificate: 
+  dbrserviceName: 
+
+dbrpersistentVolume:
+  dbrdataPVCName: 
+  
+
+###No of Pods###
+
+
+fsGroup: 1000
+    ### Image Details ###
+    # repository: This needs to be set with the docker image repository
+    # name: This attribute value is used to set the tomcat base image name
+    # tag: This attribute value is set to the  tomcat base image tag
+    # pullPolicy: This attribute value is set to the image pull policy. Can be set of one of the value IfNotPresent/Always/Never
+    # pullSecrets: This attribute value is set to the  image pull credentials using secret
+images:
+  repository : 
+  name : 
+  tag :
+  pullPolicy: 
+  pullSecrets:
+
+
+
+extraInitContainers: 
+
+    ### Graylog Enabled by default, set to false if logs mount to PVC ###
+    # PVCStorageClass: storage class to be used to create PVC
+    # PVCSize: This attribute is used to set the PVC size
+    # pvcName: This attribute value is set to the name by which PVC needs to be created
+    # PVCAccessMode: This is default to ReadWriteMany
+graylog:
+  enable:
+  pvcName: 
+  PVCAccessMode: ReadWriteMany
+  PVCStorageClass: 
+  PVCSize: 4Gi
+  
+
+### CCSmartview service type
+serviceType: 
+servicePort:
+### CCSmartview Extension image ###
+  # createPVC: This flag is set to true to create our own pvc
+  # PVCStorageClass: storage class to be used to create PVC
+  # PVCSize: This attribute is used to set the PVC size
+  # pvcName: This attribute value is set to the name by which PVC needs to be created
+extension:  
+  createPVC: 
+  PVCAccessMode: ReadWriteMany
+  PVCStorageClass:
+  PVCSize: 4Gi
+  pvcName:
+
+resources: {}
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  # limits:
+  #  cpu: 100m
+  #  memory: 128Mi
+  # requests:
+  #  cpu: 100m
+  #  memory: 128Mi
+
+nodeSelector:
+
+
+
+###############################################################
+#  BEGIN parameter value definitions for CC smartview configuration files
+###############################################################
+
+
+
+
+   
+
+#############################################################
+#  END parameter value definitions for CC smartview configuration files
+#############################################################
+
+### New Relic Configuration ###
+    # enable: This attribute needs to be set as true if newrelic agents has to push the details to newrelic server.
+    # app_name: This attribute can be set with the any name for your product. 
+    # proxy_host: This attribute needs to be set with proxy server hostname.
+    # proxy_port: This attribute needs to be set with proxy server port.
+
+    
+secret:
+  csConfigName:
+
+    ### Kubernetes Service Account Configurations ###  
+    # createserviceaccount: This flag needs to be set to true if the service account needs to be created by smartview
+    # serviceAccountName:  This is the attribute thats needs to be set with service account name
+serviceAccount:
+  createserviceaccount: 
+  serviceAccountName: 
+
+customConfigurations:
+  custom:
+  locale: 
+    
+
+ 
+  
+
+prefix: oes
+enabled: true
+proxyHost:
+proxyPort:
+noProxyHosts:
+
+dbSchemaInit:
+  enabled: true
+  dbname: 
+
+    ### OTDS, MS Graph, REST, Log level and Proxy Configurations ###  
+    # mstenantid: The Azure App tenant id which is obtained during the App registration in Azure
+    # msclientid: The Azure App client id which is obtained during the App registration in Azure
+    # mssecret: The Azure App secret which is obtained during the App registration in Azure
+    # d2resturl: This is the attribute to set the D2 REST Url
+    # otdsserverurl: This is the attribute to set the OTDS server url
+    # otdsclientid: This is the attribute to set the client Id regsitered in OTDS server
+    # proxyhost: This is the attribute to set the proxy host
+    # proxyport: This is the attribute to set the proxy port
+    # notification_processing_child_threads_max_count: This is the attribute to set the number of child threads that needs to be created
+    # service_port: This is the attribute to set the Notification service port
+    # schedule_interval: This is the attribute to set the interval at which notification service needs to run delta query
+configMap:
+  setupConfig:       
+    notificationserviceHost: 
+    notificationservicePort: 
+    logLevel:
+
+    ### Database Configurations ###  
+    #  url: Give  jdbc_url, e.g., "jdbc:postgresql://mydatabaseserver:5432/notificDB" 
+    # for oracle SSL: url=jdbc:oracle:thin:@(description=(address=(protocol=tcps)(host=<hostname/ip>)(port=2484))(connect_data=(service_name=<service name>)) (SECURITY=(MY_WALLET_DIRECTORY = <Path of wallet directory>)))
+    # for oracle non-SSL: url=jdbc:oracle:thin:@//<host>:1521/<service name>
+    # for postgres SSL: url=jdbc:postgresql://<db_hostname>:<db_port>/<db_name>?ssl=true&sslmode=verify-ca
+    # for postgres non-SSL: url=jdbc:postgresql://<host>:5432/<db_name>
+    # dbSchemaName: his is your jdbc dbSchemaName eg- "public"
+    # driverClassName: For postgres it would be "org.postgresql.Driver" and for oracle it is "oracle.jdbc.driver.OracleDriver
+    # username: This is  jdbc username e.g- "jdbcusername
+    # password: This is  jdbc encrypted db password. Password encryption can done by running the command file encrypt_your_password, once password is encrypted it has to be updated here.  If VaultEnabled is set to true, password field should be kept blank.
+    # dbunencryptedpassword: This is  jdbc unencrypted db password. If VaultEnabled is set to true, dbunencryptedpassword field should be kept blank
+    # db_type: This is the database type used. This can be postgres/oracle
+    # db_host: This is the hostname of the database server e.g- "mydomain.teams.net
+    # db_port: This is the port of the database server e.g- "mydomain.teams.net
+    # db_ssl: This is the flag to set if the database server connection needs to be SSL (true/false)
+    # db_sslmode: This is the attribute to set if the database server connection mode in case of postgres database server
+    # db_ssl_rootcert: This is the attribute to set the postgres server certificate(cert file)
+    # db_servicename: This is the attribute to set the database name when oracle non ssl and net service name when oracle ssl database server is used
+    # db_p12filename: This is the attribute to set the oracle server(ssl configured) wallet p12 filename 
+    # db_ssofilename: This is the attribute to set the oracle server(ssl configured) wallet sso filename 
+  database:
+    url: 
+    dbSchemaName: 
+    driverClassName: 
+    username: 
+    password: 
+    dbunencryptedpassword:
+    db_type: 
+    db_host: 
+    db_port: 
+    db_ssl:
+    db_sslmode:
+    db_ssl_rootcert:
+    db_servicename:
+    db_p12filename: 
+    db_ssofilename:
+
+    ### Vault Configurations ###  
+    # This enabled attribute needs to be set to true if the passwords are fetch from vault
+  vault:
+    enabled: 
+
+    ### No of Pods ###    
+
+
+    ### Image Details ###
+extensionImage:
+  repository:
+  name: 
+  tag: 
+  pullPolicy: 
+
+
+resources:
+  limits:
+    cpu: 
+    memory: 
+  requests:
+    cpu: 
+    memory: 
+    # if k8s version is < 1.19  default initial delay is set to 300 seconds and 60 seconds if k8s version is >= 1.19
+    # Increase the initialDelaySeconds and add the value below if default value is not enough
+readinessProbe:
+  initialDelaySeconds: 
+    # if k8s version is < 1.19  default initial delay is set to 300 seconds and 60 seconds if k8s version is >= 1.19
+    # Increase the initialDelaySeconds and add the value below if default value is not enough
+livenessProbe:
+  initialDelaySeconds:
+startupProbe:
+  initialDelaySeconds:
+newrelic:    
+  enabled: 
+  app_name: 
+  license_key:
+  proxy_enable: 
+  proxy_host: 
+  proxy_port: 
+  

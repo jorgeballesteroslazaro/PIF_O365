@@ -1,0 +1,70 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:  
+  name: rqm-logging-configmap
+  namespace: {{ .Values.namespace | default .Release.Namespace}}
+data:
+  log4j2.properties: |
+    rootLogger.level={{ .Values.logging.rootLoggerLevel }}
+    rootLogger.appenderRefs=A1,F1
+    rootLogger.appenderRef.A1.ref=STDOUT
+    rootLogger.appenderRef.F1.ref=File
+    monitorInterval=60
+    #------------------- RPS Logging --------------------------
+    appender.rpsAppender.type=RollingFile
+    appender.rpsAppender.name=rpsAppender
+    appender.rpsAppender.fileName=/opt/d2extension/RQMlogs/logs/{{ .Values.logging.rps.rpsFilename }}
+    appender.rpsAppender.filePattern=${filename}.%d{yyyy-MM-dd}
+    appender.rpsAppender.layout.type=PatternLayout
+    appender.rpsAppender.layout.pattern=%d{ABSOLUTE} %5p [%t] %c - %m%n
+    appender.rpsAppender.filter.threshold.type=ThresholdFilter
+    appender.rpsAppender.filter.threshold.level={{ .Values.logging.rps.rpsThresholdLevel }}
+    appender.rpsAppender.policies.type=Policies
+    appender.rpsAppender.policies.time.type=TimeBasedTriggeringPolicy
+    appender.rpsAppender.policies.time.interval=1
+    appender.rpsAppender.policies.time.modulate=true
+    appender.rpsAppender.policies.size.type=SizeBasedTriggeringPolicy
+    appender.rpsAppender.policies.size.size={{ .Values.logging.rps.rpsLogFileSize }}
+    appender.rpsAppender.strategy.type=DefaultRolloverStrategy
+    appender.rpsAppender.strategy.max={{ .Values.logging.rps.rpsMaxLogFiles }}
+    logger.rpsAppender.name=com.documentum.rpm
+    logger.rpsAppender.level={{ .Values.logging.rps.rpsThresholdLevel }}
+    logger.rpsAppender.additivity=false
+    logger.rpsAppender.appenderRef.rpsAppender.ref=rpsAppender
+    #------------------- WORKORDER Logging --------------------------
+    appender.RPSWorkOrderAppender.name=RPSWorkOrderAppender
+    appender.RPSWorkOrderAppender.type=RollingFile
+    appender.RPSWorkOrderAppender.fileName=/opt/d2extension/RQMlogs/logs/{{ .Values.logging.workorder.workorderFilename }}
+    appender.RPSWorkOrderAppender.filePattern=${filename}.%d{yyyy-MM-dd}
+    appender.RPSWorkOrderAppender.layout.type=PatternLayout
+    appender.RPSWorkOrderAppender.layout.pattern=%d{ABSOLUTE} %5p [%t] %c - %m%n
+    appender.RPSWorkOrderAppender.filter.threshold.type=ThresholdFilter
+    appender.RPSWorkOrderAppender.filter.threshold.level={{ .Values.logging.workorder.workorderThresholdLevel }}
+    appender.RPSWorkOrderAppender.policies.type=Policies
+    appender.RPSWorkOrderAppender.policies.time.type=TimeBasedTriggeringPolicy
+    appender.RPSWorkOrderAppender.policies.time.interval=1
+    appender.RPSWorkOrderAppender.policies.time.modulate=true
+    appender.RPSWorkOrderAppender.policies.size.type=SizeBasedTriggeringPolicy
+    appender.RPSWorkOrderAppender.policies.size.size={{ .Values.logging.workorder.workorderLogFileSize }}
+    appender.RPSWorkOrderAppender.strategy.type=DefaultRolloverStrategy
+    appender.RPSWorkOrderAppender.strategy.max={{ .Values.logging.workorder.workorderMaxLogFiles }}
+    logger.RPSWorkOrderAppender.name=com.documentum.workorder
+    logger.RPSWorkOrderAppender.level={{ .Values.logging.workorder.workorderThresholdLevel }}
+    logger.RPSWorkOrderAppender.additivity=false
+    logger.RPSWorkOrderAppender.appenderRef.RPSWorkOrderAppender.ref=RPSWorkOrderAppender
+    #--------------------------------------------------------
+    # File Logger Configuration
+    appender.F1.type=RollingFile
+    appender.F1.name=File
+    appender.F1.fileName=/opt/d2extension/RQMlogs/logs/log4j.log
+    appender.F1.filePattern=/opt/d2extension/RQMlogs/log4j.%d{yyyy-MM-dd}-%i
+    appender.F1.layout.type=PatternLayout
+    appender.F1.layout.pattern=%d{ABSOLUTE} %5p [%t] %c - %m%n
+    appender.F1.policies.type=Policies
+    appender.F1.policies.time.type=TimeBasedTriggeringPolicy
+    appender.F1.policies.time.interval=1
+    appender.F1.policies.time.modulate=true
+    appender.F1.policies.size.type=SizeBasedTriggeringPolicy
+    appender.F1.policies.size.size=10MB
+    appender.F1.strategy.type=DefaultRolloverStrategy
+    appender.F1.strategy.max=5

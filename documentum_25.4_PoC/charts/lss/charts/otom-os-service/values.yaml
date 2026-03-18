@@ -1,0 +1,366 @@
+################################################################################################
+#                                                                                              #
+#                                   This is a YAML-formatted file.                             #
+#                               Helm Chart for Output Server environment.                      #
+#                          Declare the variables to be passed to the templates.                #
+################################################################################################
+
+###################################### G L O B A L S ###########################################
+    global:
+    
+      # Enter namespace
+      # namespace can be used to deploy to a namespace 
+      # other than default namespace
+      # Example: "om"
+      namespace: "default"
+      
+      # Enter pull policy for the image
+      # Example: "Always"
+      imagePullPolicy: "Always"
+
+      # Enter pull secrets for the image
+      # Example: "otprivateregistry"
+      imagePullSecrets: "otprivateregistry"
+      
+      # Enter the storage class
+      # Example: "trident-nfs"
+      storageclass: ""
+      
+      # Enter 1 to enable encryption or 0 to disable encryption
+      # Example: "0"
+      rpcsslenabled: "0"
+      
+###################################### G L O B A L S   E N D S ################################# 
+
+###################################### I N G R E S S ###########################################
+
+    #Ingress settings allow you to connect to the deployment with HTTPS
+    ingress:
+    
+      #Enter ingress host details
+      #ingress settings allow you to connect to the deployment with HTTPS
+      #and a Fully Qualified Domain Name (FQDN) (DNS entry).
+      # Example: "om.shared.cfcr-lab.bp-paas.otxlab.net"
+      ingressdomain: ""
+      class: nginx 
+      
+      #Enter SSL certifcate and Policy details, if Ingress.Class is ALB#
+      sslcertificate: ""
+      sslpolicy: 
+      
+      #Enter http port number
+      #Example: "4000"
+      oshttpport: "4000"
+      
+      #Enter tcp port number
+      #Example: "5000"
+      ostcpport: "5000"    
+      
+###################################### I N G R E S S   E N D S #################################
+
+###################################### S E C R E T M A N A G E R    P A R A M E T E R S #########################
+    #Enter the below mentioned variables used to retrieve secret
+    secretmanager:
+
+      #Enter to enable/disable secret manager.
+      #To set secret manager feature enabled then Vault setup is pre-requisite with Output server secrets added already and ready with below values.
+      #Example: "0" or "1"
+      #secret_manager_enabled:"0" to disable
+      #secret_manager_enabled:"1" to enable
+      secret_manager_enabled: "0"
+
+      #Enter Following parameters if secret_manager_enabled set to 1
+      
+      #Enter Secret Manager URL path
+      #Example: "http://otds-dev.om.shared.cfcr-lab.bp-paas.otxlab.net:8200"
+      secret_manager_url: ""
+
+      #Enter Secret Manager API PATH
+      #Example: "/v1/opentext/OTOM/OTOS" 
+      secret_manager_api_path: "" 
+      
+###################################### S E C R E T M A N A G E R    P A R A M E T E R S  E N D S #########################
+    
+###################################### O T D S    P A R A M E T E R S ######################### 
+
+    #Enter the below mentioned variables used for Licensing
+    otdsparameters:     
+    
+      ######################################################################
+      #      O T D S   M A N D A T O R Y   P A R A M E T E R S             # 
+      ######################################################################
+      
+      #Enter OTDS URL path
+      #Example: "http://otds-dev.om.shared.cfcr-lab.bp-paas.otxlab.net:80"
+      url: ""  
+      
+      #Enter OTDS Username, Mandatory when "automate_otds" is set to '2' and secret_manager_enabled set to '0'
+      #Example: "admin"
+      username: ""
+
+      #################################### A U T O M A T E   O T D S  ##########################
+      #                                                                                        #
+      # This section helps to automate the OTDS configuration without login into OTDS Web    #
+      # Interface                                                                              #
+      ##########################################################################################
+   
+      #Enter automate_otds
+      #Example: "0" or "1" or "2"
+      #Automate OTDS 2: All the parameters are auto created
+      #Automate OTDS 1: OAuth client must be created manually already and other parameters creation are automated
+      #Automate OTDS 0: All the parameters must be created manually
+      automate_otds: "2"
+
+      #Enter OTDS Protocol
+      #Example: "http"
+      protocol: "http"      
+      
+      #Enter OTDS Resource
+      #Example: "os"
+      resource: "osres"
+      
+      #Enter OTOS Admin User when secret_manager_enabled is set to "0"
+      #Example: "otos"
+      admin_user: "admin"
+      
+      #Enter OTDS Partition
+      #Example: "OTOS"
+      partition: "par"
+      
+      #Enter OTDS User Group
+      #Example: "OTOS"
+      group: "grp"
+
+      ######################### A U T O M A T E   O T D S   E N D ##############################      
+      ####################################################################
+      #                                                                  #
+      # This section is required only if Automate OTDS is EQUAL to 0     #
+      #                                                                  #
+      ####################################################################
+      
+      #Enter OTDS License ID
+      #Example: "cn=OTOM_WD_LIC¹25b89619-46d2-4f17-8cf6-9e66d95550b0,ou=Licenses,dc=identity,dc=opentext,dc=net"      
+      licenseid: ""    
+      
+      ######################################################################
+      #                                                                    #
+      # This section is required only if automate_otds is EQUAL to 0 or 1 #
+      #                                                                    #
+      ######################################################################
+      #Enter OTDS OAUTH CLIENT ID, Mandatory when "automate_otds" is set to '0' or 1 and secret_manager_enabled is set to "0"
+      #Example: "id"
+      client_id: ""
+
+###################################### O T D S    P A R A M E T E R S   E N D ##################
+
+###################################### D A T A B A S E    P A R A M E T E R S ##################
+
+    #Enter the name for below mentioned Output Server database parameters
+    osdatabaseparameters: 
+    
+      # Enter the Database
+      # 1.PostgreSQL  2.MYSQL  3.ORACLE
+      # Example: "1"
+      DATABASETYPE: "1"      
+      
+      #Enter database server host name
+      #Example: "ospostgres" or "172.68.90.10"
+      DATABASE_SERVER_HOSTNAME: "" 
+    
+      #Enter the database name for the new database
+      #Example: "otom11"
+      ALTER_DATABASE_NAME: ""
+      
+      #Enter the database username for the new database when secret_manager_enabled is set to "0"
+      #Example: "otom10"
+      DATABASE_SERVER_USER: ""
+      
+      #Enter Login Database port
+      #Example: "5432 PostgreSQL / 3306 MYSQL / 1521 ORACLE"
+      LOGIN_DB_PORT: "5432"
+
+      #Enter the Database Name Prefix, required for PostgreSQL Database only
+      #Example: "otom"
+      # DATABASE_NAME_PREFIX Variable is required only if DATABASETYPE is EQUAL to 1, for PostgreSQL
+      DATABASE_NAME_PREFIX: "otom"
+      
+      #Enter the Database Connection identifier type, required for ORACLE Database only
+      #Example: "SID"  or "TNS"
+      # DB_CONNECT_IDENTIFIER Variable is required only if DATABASETYPE is EQUAL to 3, for ORACLE
+      DB_CONNECT_IDENTIFIER: "SID"
+
+      #Enter the Database Service Name, required for ORACLE Database only
+      #Example: "ORCLCDB" for SID or "ORCLPDB" for TNS
+      DB_SERVICE_NAME: "ORCLCDB"
+      
+      ####################### A U T O M A T E   D A T A B A S E  ###############################
+      #                                                                                        #
+      #        This section helps to automate the Database configuration Interface             #
+      #                                                                                        #
+      ##########################################################################################      
+
+      #Enter Automate DATABASE
+      #Example: "1" or "0"    
+      AUTOMATE_DATABASE: "1"
+
+      #Enter Login Database Name
+      #Example: "postgres"
+      LOGIN_DATABASE: ""
+      
+      #Enter Login Database User when secret_manager_enabled is set to "0"
+      #Example: "postgres"
+      LOGIN_DB_USER: ""
+      
+###################################### D A T A B A S E    P A R A M E T E R S   E N D ##########
+
+###################################### S E C R E T S ###########################################
+
+    #Enter the password for below mentioned components
+    #Example shown here for password is base64 encoded
+    secrets:
+    
+      ####################### SECRET MANAGER #########################
+      #Enter Secret Manager Login Token, Mandatory when "secret_manager_enabled" is set to '1'
+      #Example: "b3Rkcw=="
+      secret_manager_login_token: ""
+      
+      ####################### OTDS SECRETS #########################   
+      
+      #Enter OTDS Password, Mandatory when "automate_otds" is set to '2' and secret_manager_enabled is set to '0'
+      #Example: "b3Rkcw=="  
+      OTDS_PASSWORD: ""
+      
+      #####################################################################
+      #                                                                   #
+      # OTOS_ADMINUSER_PWD Variable is required only if Automate DATABASE #
+      # is EQUAL to 1 or 2 and secret_manager_enabled is set to '0'       #
+      #####################################################################      
+      
+      #Enter OTOS Admin User Password
+      #Example: "b3Rkcw=="  
+      OTOS_ADMINUSER_PWD: "" 
+      
+      ###############################################################  
+      
+      ####################### DATABASE SECRETS ###################### 
+      
+      ##############################################################################
+      #                                                                  	   #
+      # OS_DATABASE_SERVER_PASSWORD Variable is required only if Automate DATABASE #
+      # is EQUAL to 1 and secret_manager_enabled is set to '0'          	   #
+      ##############################################################################
+      #Enter Output Server Database Password to be created
+      #Example: "b3RvbTEw"
+      OS_DATABASE_SERVER_PASSWORD: ""
+         
+      ####################################################################
+      #                                                                  #
+      # LOGIN_DB_PASSWORD Variable is required only if Automate DATABASE #
+      # is EQUAL to 1 and secret_manager_enabled is set to '0'           #
+      #################################################################### 
+      #Enter Output Server Database Password to Login
+      #Example: "b3RvbTEw"
+      LOGIN_DB_PASSWORD: ""
+      
+      ############################################################### 
+       
+      #####################################################################
+      #                                                                   #
+      # This section is required only if Automate OTDS is EQUAL to 0 or 1 # 
+      # and secret_manager_enabled is set to '0'			  #
+      #                                                                   #
+      #####################################################################
+      
+      #Enter OTDS OAUTH CLIENT SECRET
+      #Example: "b3Rkcw=="  
+      OTDS_OAUTH_CLIENT_SECRET: ""
+      
+      ############################################################### 
+
+###################################### S E C R E T S   E N D ################################### 
+
+###################################### O U T P U T   S E R V E R    P A R A M E T E R S ########
+
+    #Enter the values for below mentioned environment variables
+    envvariables:
+    
+      #######################################################################   
+      #         OSPRIMARY Container Environment Variables                   #
+      #######################################################################
+      
+      osprimary:
+       
+       #STRICT_RESOURCE_CHECK makes sure the deployment fails in case there is not enough memory for OTOS web servers
+       #If STRICT_RESOURCE_CHECK is set to 0 the deployment will continue but the performance of node will be impacted
+       #There is also a increased chance for the pod to crash
+       #If there is only one instance of each web server type STRICT_RESOURCE_CHECK is disabled
+       STRICT_RESOURCE_CHECK: "1"
+       JVM_MAX_HEAP: "512"
+       JVM_MIN_HEAP: "128"
+       #WEB_SERVER_COUNT is global count which defines the number of instances of each web server
+       #Individual web server count can be given which will overwrite the global WEB_SERVER_COUNT for that particular server
+       WEB_SERVER_COUNT: "1"
+       
+       #WSGW_COUNT: "1"
+       #ODMAN_COUNT: "1"
+       #RESTGW_COUNT: "1"
+       #SASVC_COUNT: "1"
+       #SAWEB_COUNT: "1"
+       #SAOXPD_COUNT: "1"
+       #IPP_COUNT: "1"
+       #SARICOH_COUNT: "1"
+       #SAKYOCERA_COUNT: "1"
+       #SAPSCPSGW_COUNT: "1"
+       #SAPSCPS_COUNT: "1"
+       #DAZEL_PORTS will enable server to start in particular range
+       #Example: "20000-20200"
+       DAZEL_PORTS: "20000-20200"
+       SERVICES_PORT_RANGE: "9000-9100" 
+
+      #######################################################################   
+      #         OSSCALE Container Environment Variables                     #
+      #######################################################################
+      
+      osscale:
+      
+        #DAZEL_PORTS will enable the server to start in a particular range.
+        #Example: "20000-20020"   
+        #Enter the count of dlm server
+        #Example: "2"    
+        DLM_SERVER_COUNT: "2"
+        
+        #Enter the name of dlm servers
+        #Server names must be separated by ";"
+        #Example: "dlm1;dlm2"
+        DLM_SERVER_NAMES: "dlm1;dlm2"
+        
+        #Enter the count of dsm server
+        #Example: "2"
+        DSM_SERVER_COUNT: "2"
+        
+        #Enter the name of dsm servers
+        #Server names must be separated by ";"
+        #Example: "dsm1;dsm2"
+        DSM_SERVER_NAMES: "dsm1;dsm2"
+        
+        #DAZEL_PORTS enables the server to start in a particular range.
+        #Example: "20000-20500"
+        DAZEL_PORTS: "20000-20500"
+
+      ########################################################################   
+      #         OSCLIENT Container Environment Variables                     #
+      ########################################################################
+      
+      osclient:
+      
+        #DAZEL_PORTS enables the server to start in a particular range.
+        #Only if EPOD server are avaiable
+        #Example: "20000-20500"
+        DAZEL_PORTS: "20000-20500"
+        
+        #DAZEL_CLIENT_PORTS enables the server to start in a particular range.
+        #Example: "30000-302000"
+        DAZEL_CLIENT_PORTS: ""
+        
+        
+##########################O U T P U T   S E R V E R    P A R A M E T E R S   E N D #############

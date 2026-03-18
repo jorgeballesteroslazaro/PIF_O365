@@ -1,0 +1,67 @@
+{{- if eq .Values.services.pvc "true" }}
+{{- if eq .Values.services.pv "true" }}
+
+{{- if eq .Values.services.osprimary "true" }}
+---
+
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: {{ .Values.global.storageclass }}-osprimary
+provisioner: kubernetes.io/no-provisioner
+volumeBindingMode: Immediate
+
+---
+
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: {{ .Release.Name }}-{{ .Values.global.namespace }}-{{ .Values.components.osprimary }}-nfs-pv
+  namespace: {{ .Values.global.namespace }}
+spec:
+  capacity:
+    storage: {{ .Values.storage.osprimary }}
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: {{ .Values.pvdetails.persistentVolumeReclaimPolicy }}
+  storageClassName: {{ .Values.global.storageclass }}-osprimary
+  nfs:
+    path: {{ .Values.pvdetails.osprimarypath }}
+    server: {{ .Values.pvdetails.nfsserver }}
+
+{{- end }}
+
+{{- if eq .Values.services.osscale "true" }}
+---
+
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: {{ .Values.global.storageclass }}-osscale
+provisioner: kubernetes.io/no-provisioner
+volumeBindingMode: Immediate
+
+---
+
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: {{ .Release.Name }}-{{ .Values.global.namespace }}-{{ .Values.components.osscale }}-nfs-pv
+  namespace: {{ .Values.global.namespace }}
+spec:
+  capacity:
+    storage: {{ .Values.storage.osscale }}
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: {{ .Values.pvdetails.persistentVolumeReclaimPolicy }}
+  storageClassName: {{ .Values.global.storageclass }}-osscale
+  nfs:
+    path: {{ .Values.pvdetails.osscalepath }}
+    server: {{ .Values.pvdetails.nfsserver }}
+
+{{- end }}
+
+{{- end }}
+{{- end }}

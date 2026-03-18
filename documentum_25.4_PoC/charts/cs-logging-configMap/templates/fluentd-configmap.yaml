@@ -1,0 +1,101 @@
+{{- if or (eq .Values.fluentdConf.enable true | quote ) (eq .Values.global.fluentd true | quote) (eq .Values.fluentdConf.graylogEnabled true | quote) (eq .Values.global.grayLogEnable true | quote) }}
+# Create the configmap when fluentd is enabled
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.configMap.fluentd_configMap_name }}
+data:
+  fluentd.conf: |
+{{- if or (eq .Values.fluentdConf.graylogEnabled true) (eq .Values.global.grayLogEnable true) }}   
+    <source>
+        @type tail
+        path /fluentd-pod-logs/**/*
+        pos_file /fluentd-setup/log.pos
+        tag graylog2
+        format none
+    </source>
+    <filter graylog2>
+        @type record_transformer
+        <record>
+            business_unit {{ .Values.fluentdConf.businessUnit | default .Values.global.businessUnit }} #mandatory static fields as per graylog standards Business Unit
+            datacenter {{ .Values.fluentdConf.datacenter | default .Values.global.datacenter }} #data center. e.g. lit, wok, all, etc
+            environment {{ .Values.fluentdConf.environment | default .Values.global.environment }} #qa, prod, dev etc
+            PRODUCT_NAME dctm_server
+            namespace "#{ENV['NAMESPACE_NAME']}"
+            hostname "#{ENV['POD_NAME']}"
+        </record>
+    </filter>
+    <match graylog2.**>
+        @type gelf
+        host {{ .Values.fluentdConf.graylogServer | default .Values.global.graylogServer }}
+        port {{ .Values.fluentdConf.graylogTCPPort | default .Values.global.graylogTCPPort }}
+        <buffer>
+            flush_interval 60s #Default is 60s, which is the interval at which Fluentd will flush the buffer.
+            chunk_limit_size 4m #Default is 8m, which determines the maximum size of a buffer chunk.But agreed at 4m with GS team
+            queue_limit_length 256 # Default is 256, which is the maximum number of chunks in the queue.
+            retry_forever true  #Ensures Fluentd will keep retrying to send data indefinitely.
+            retry_type exponential_backoff #Default is exponential_backoff, which increases the wait time between retries.
+            retry_wait 1s #Default is 1s, which is the initial wait time between retries.
+            retry_max_interval 300s # Default is 300s, which is the maximum wait time between retries.
+            overflow_action drop_oldest_chunk #Drop the oldest chunk when buffer is full
+        </buffer>
+    </match>
+{{ end }}
+{{- if or (eq .Values.fluentdConf.enable true) (eq .Values.global.fluentd true) }}
+    <source>
+        @type forward
+        @id input_forward
+        port {{ .Values.fluentdConf.TCPPort | default .Values.global.fluentdTcpPort }}
+        bind 0.0.0.0
+    </source>
+    <source>
+        @type http
+        @id input_http
+        port {{ .Values.fluentdConf.RESTPort | default .Values.global.fluentdRestPort }}
+    </source>
+    <source>
+        @type debug_agent
+        @id input_debug_agent
+        bind 127.0.0.1
+        port 24230
+    </source>
+    <source>
+        @type udp
+        tag DCTMEventHub.events # required
+        port {{ .Values.fluentdConf.UDPPort | default .Values.global.fluentdUdpPort }}
+        bind 0.0.0.0
+        <parse>
+            @type json
+        </parse>
+    </source>
+    <match *.**>
+        @type kafka2
+        sasl_over_ssl false
+        use_event_time true
+{{- if eq .Values.fluentdConf.bufferingMode "FILEBUFFER" }}
+        <buffer {{ .Values.fluentdConf.kafkaTopic | default .Values.global.kafka_topic_name }}>
+            @type file
+            path /var/log/td-agent/buffer/td
+            flush_interval {{ .Values.fluentdConf.flushInterval | default "3s" }}
+            flush_thread_count 8
+        </buffer>
+{{ else }}
+        <buffer {{ .Values.fluentdConf.kafkaTopic | default .Values.global.kafka_topic_name }}>
+            @type memory
+            flush_thread_count 8
+        </buffer>
+{{- end }}
+        <format>
+            @type json
+        </format>
+        brokers {{ .Values.fluentdConf.kafkaBrokerList | default .Values.global.kafkaBrokerList }}
+        scram_mechanism sha512
+        username {{ .Values.fluentdConf.kafkaUser | default .Values.global.kafka_admin_user_name }}
+        password {{ .Values.fluentdConf.kafkaUsrPasswd }}
+        topic_key {{ .Values.fluentdConf.kafkaTopic | default .Values.global.kafka_topic_name }}
+        topic {{ .Values.fluentdConf.kafkaTopic | default .Values.global.kafka_topic_name }}
+        required_acks -1
+        compression_codec {{ .Values.fluentdConf.compressionMode | default "nil" }}
+    </match>
+{{- end }}
+{{- end }}

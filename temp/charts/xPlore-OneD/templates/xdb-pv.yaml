@@ -1,0 +1,19 @@
+{{- if eq .Values.XDBbackup.enable true }}
+{{- if .Values.persistentVolume.awsEFS }}
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: {{ .Values.XDBbackup.PVCClaimName }}
+spec:
+  capacity:
+    storage: {{ .Values.XDBbackup.PVSize }}
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: {{ .Values.persistentVolume.storageClass | default .Values.global.rwmStorage}}
+  csi:
+    driver: {{ .Values.persistentVolume.awsEFSCSIDriver }}
+    volumeHandle: {{ .Values.persistentVolume.awsEFSCSIHandle }}
+{{- end }}
+{{- end }}

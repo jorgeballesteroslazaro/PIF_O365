@@ -1,0 +1,217 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.serviceName }}
+spec:
+  strategy:
+   type: {{ .Values.strategyType}}
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "dctm-cmis.custom-labels" . | indent 6 }}
+  template:
+    metadata:
+        labels:
+          {{- include "dctm-cmis.custom-labels" . | indent 10 }}
+    spec:
+      serviceAccountName: {{ .Values.serviceAccount.serviceAccountName | default .Values.global.documentumserviceaccount}}
+      initContainers:
+          - name: {{ .Values.cmisInitContainers.name }}
+            image: {{ .Values.cmisInitContainers.image.repository | default .Values.global.repository }}/{{ .Values.cmisInitContainers.image.name }}:{{ .Values.cmisInitContainers.image.tag }}
+            imagePullPolicy: {{ .Values.cmisInitContainers.image.pullPolicy | default .Values.global.pullPolicyType }}
+
+            volumeMounts:
+              {{- if (empty (.Values.cmis.useCommonPVC | quote) | ternary .Values.global.tomcatbase_usecommonpvc .Values.cmis.useCommonPVC) }}
+              - name: common-volume
+              {{- else }}
+              - name: {{ .Values.serviceName }}-pvc
+              {{- end }}
+                mountPath: /home/dmadmin/dctmcmisextension
+                subPath: dctmcmisextension
+
+{{- if or .Values.imagePullSecrets .Values.global.pullSecretName}}
+      imagePullSecrets:
+        - name: {{ .Values.imagePullSecrets | default .Values.global.pullSecretName }}
+{{ end }}
+      containers:
+          - name: {{ .Values.cmisMainContainer.containerName }}
+            image: {{ .Values.cmisMainContainer.image.repository | default .Values.global.repository }}/{{ .Values.cmisMainContainer.image.name | default .Values.global.appserverImageName }}:{{ .Values.cmisMainContainer.image.tag | default .Values.global.appserverImageTag }}
+            imagePullPolicy: {{ .Values.cmisMainContainer.image.pullPolicy | default .Values.global.pullPolicyType }}
+            command: ['bin/sh', '-c', 'mkdir -p /home/dmadmin/cmisextnscriptfolder/;chmod 755 /home/dmadmin/cmisextnscriptfolder/;cp /home/dmadmin/dctmcmisextension/extensionstartup.sh /home/dmadmin/cmisextnscriptfolder/;chmod +x /home/dmadmin/cmisextnscriptfolder/extensionstartup.sh;/home/dmadmin/cmisextnscriptfolder/extensionstartup.sh {{ .Values.java.javaOptions }}']
+            env:
+              {{- if (empty (.Values.newrelic.enabled | quote) | ternary .Values.global.newrelic .Values.newrelic.enabled) }}
+              - name: NEW_RELIC_AGENT_ENABLED
+                value: {{ (empty (.Values.newrelic.enabled | quote) | ternary .Values.global.newrelic .Values.newrelic.enabled) | quote }}
+              {{- if (empty (.Values.newrelic.proxy_host | quote)) | ternary .Values.global.newrelicProxyHost .Values.newrelic.proxy_host }}
+              - name: NEW_RELIC_PROXY_HOST
+                value: {{ .Values.newrelic.proxy_host | default .Values.global.newrelicProxyHost}}
+              {{- end }}
+              {{- if (empty (.Values.newrelic.proxy_port | quote)) | ternary .Values.global.newrelicProxyPort .Values.newrelic.proxy_port }}
+              - name: NEW_RELIC_PROXY_PORT
+                value: {{ .Values.newrelic.proxy_port | default .Values.global.newrelicProxyPort | quote }}
+              {{- end }}
+              - name: NEW_RELIC_PROXY_SCHEME
+                value: {{ .Values.newrelic.proxy_protocol | default .Values.global.newrelicProxyProtocol | quote }}
+              - name: NEW_RELIC_LICENSE_KEY
+                valueFrom:
+                  secretKeyRef:
+                    name: {{ .Values.content_server.secretName | default .Values.global.csSecrets }}
+                    key: {{ .Values.newrelic.licenseKeyName }}
+              - name: NEW_RELIC_APP_NAME
+                value: {{ quote .Values.newrelic.app_name }}
+              - name: NEW_RELIC_FILE
+                value: {{ .Values.extraConfigMountPath }}/{{ .Values.newrelic.configurationFile }}
+              {{- if (.Values.newrelic.addNodeNamePrefix) }}
+              - name: NODE_NAME
+                valueFrom:
+                  fieldRef:
+                    fieldPath: spec.nodeName
+              {{- end }}
+              {{- end }}
+              {{- if (empty (.Values.vault.enable | quote) | ternary .Values.global.isVaultEnabled .Values.vault.enable) }}
+              - name: DFC_DSIS_ENABLED
+                value: {{ (empty (.Values.vault.enable | quote) | ternary .Values.global.isVaultEnabled .Values.vault.enable) | quote }}
+              {{- end }}
+              {{ if (empty (.Values.docbroker.useCertificate | quote) | ternary .Values.global.useCertificate .Values.docbroker.useCertificate) }}
+              - name: DFC_SSL_TRUSTSTORE_PASSWORD
+                valueFrom:
+                  secretKeyRef:
+                    name: {{ .Values.content_server.secretName | default .Values.global.csSecrets }}
+                    key: csCertTrustPassword
+              {{ end }}
+              - name: BOF_REGISTRY_USER_PASSWORD
+                valueFrom:
+                  secretKeyRef:
+                    name: {{ .Values.content_server.secretName | default .Values.global.csSecrets }}
+                    key: globalRegistryPassword
+              - name: KUBERNETES
+                value: "true"
+              - name: SINGLE_HELM_ENABLED
+                value: {{ .Values.single_helm.enable | quote }}
+              - name: ACS_HOST
+                value: {{ .Values.acsService.serviceName | default .Values.global.jmsServiceName | quote }}
+              - name: ACS_PORT
+                value: {{ .Values.acsService.servicePort | default .Values.global.jmsPort | quote }}
+              - name: INTERNAL_TLS_ENABLED
+                value: {{ .Values.internalTlsEnable | default .Values.global.internalTlsEnable | default false | quote }}
+              - name: INGRESS_KEYSTORE_PASSWORD
+                valueFrom:
+                  secretKeyRef:
+                    name: {{ .Values.content_server.secretName | default .Values.global.csSecrets }}
+                    key: ingress.keystorepassword
+              {{ if eq .Values.log4j.formatMsgNoLookups true }}
+              - name: LOG4J_FORMAT_MSG_NO_LOOKUPS
+                value: "true"
+              {{ end }}
+            volumeMounts:
+              - name: cmis-config-volume
+                mountPath: /home/dmadmin/config
+              {{- if (empty (.Values.newrelic.enabled | quote) | ternary .Values.global.newrelic .Values.newrelic.enabled) }}
+              - name: ext-conf-volume
+                mountPath: {{ .Values.extraConfigMountPath }}
+              {{- end}}
+              - name: cmis-logs-volume
+                mountPath: /opt/tomcat/logs
+              {{- if (empty (.Values.docbroker.useCertificate | quote) | ternary .Values.global.useCertificate .Values.docbroker.useCertificate) }}
+              - name: dbr-cert-volume
+                mountPath: /home/dmadmin/dbr-cert
+                subPath: {{ .Values.docbroker.pvcCertSubPath }}
+              {{- end }}
+              - name: cmis-appserver-xml-volume
+                mountPath: /opt/tomcat/ConfigXMLs
+              - name: cmis-dfc-properties-volume
+                mountPath: /opt/tomcat/webapps/dctm-cmis/WEB-INF/classes/dfc.properties
+                subPath: dfc.properties
+              {{- if (empty (.Values.vault.enable | quote) | ternary .Values.global.isVaultEnabled .Values.vault.enable) }}
+              - name: vault-volume
+                mountPath: {{ .Values.vault.vault_config_mount_path }}
+              - name: dsis-binary-volume
+                mountPath: {{ .Values.vault.binary_volume_mount_path }}
+              {{- end }}
+              {{- if (empty (.Values.cmis.useCommonPVC | quote) | ternary .Values.global.tomcatbase_usecommonpvc .Values.cmis.useCommonPVC) }}
+              - name: common-volume
+              {{- else }}
+              - name: {{ .Values.serviceName }}-pvc
+              {{- end }}
+                mountPath: /home/dmadmin/dctmcmisextension
+                subPath: dctmcmisextension
+            resources:
+              requests:
+                memory: {{ .Values.resources.requests.memory | quote }}
+                cpu: {{ .Values.resources.requests.cpu | quote }}
+              limits:
+                memory: {{ .Values.resources.limits.memory | quote }}
+                cpu: {{ .Values.resources.limits.cpu | quote }}
+            readinessProbe:
+              httpGet:
+                scheme: {{ eq .Values.global.internalTlsEnable true | ternary "HTTPS" "HTTP" }}
+                path: /dctm-cmis/main
+                port: {{ eq .Values.global.internalTlsEnable true | ternary .Values.httpsPort .Values.httpPort }}
+              initialDelaySeconds: 40
+              periodSeconds: 15
+              timeoutSeconds: 10
+            {{- if (.Values.livenessProbe.enabled) }}
+            livenessProbe:
+              httpGet:
+                scheme: {{ or (eq .Values.global.internalTlsEnable true) (eq .Values.livenessProbe.scheme "HTTPS") | ternary "HTTPS" "HTTP" }}
+                path: {{ .Values.livenessProbe.probeUrl }}
+                port: {{ or (eq .Values.global.internalTlsEnable true) (eq .Values.livenessProbe.scheme "HTTPS") | ternary .Values.httpsPort .Values.httpPort }}
+              initialDelaySeconds: {{ .Values.livenessProbe.initialDelaySeconds }}
+              periodSeconds: {{ .Values.livenessProbe.periodSeconds }}
+              timeoutSeconds: 10
+            {{- end }}
+      volumes:
+        - name: cmis-logs-volume
+          persistentVolumeClaim:
+            claimName: {{ .Values.serviceName }}-logs-pvc
+        - name: cmis-config-volume
+          projected:
+            sources:
+            - configMap:
+                name: {{ .Values.serviceName }}-configmap
+            - configMap:
+                name: {{ .Values.serviceName }}-configmap-cmis-runtime
+            - configMap:
+                name: {{ .Values.serviceName }}-logging-configmap
+            - configMap:
+                name: {{ .Values.existingConfigMap | default .Values.global.dbrConfigmapName}}
+        {{- if (empty (.Values.vault.enable | quote) | ternary .Values.global.isVaultEnabled .Values.vault.enable) }}
+        - name: dsis-binary-volume
+          persistentVolumeClaim:
+            claimName: {{ .Values.vault.PVCName }}
+        - name: vault-volume
+          configMap:
+            name: {{ .Values.vault.vaultConfigmap }}
+            items:
+              - key: vault
+                path: application.properties
+        {{- end }}
+        {{- if (empty (.Values.cmis.useCommonPVC | quote) | ternary .Values.global.tomcatbase_usecommonpvc .Values.cmis.useCommonPVC) }}
+        - name: common-volume
+          persistentVolumeClaim:
+            claimName: {{ .Values.cmis.commonPVCname | default .Values.global.tomcatbase_commonpvcname }}
+        {{- else }}
+        - name: {{ .Values.serviceName }}-pvc
+          persistentVolumeClaim:
+            claimName: {{ .Values.cmis.pvcName }}
+        {{- end }}
+        {{- if (empty (.Values.docbroker.useCertificate | quote) | ternary .Values.global.useCertificate .Values.docbroker.useCertificate) }}
+        - name: dbr-cert-volume
+          persistentVolumeClaim:
+            claimName: {{ .Values.docbroker.dbrServiceName | default .Values.global.dbrServiceName }}-pvc
+        {{- end }}
+        {{if (empty (.Values.newrelic.enabled | quote) | ternary .Values.global.newrelic .Values.newrelic.enabled) }}
+        - name: ext-conf-volume
+          configMap:
+            name: {{ .Values.serviceName }}-configmap-ext
+        {{- end }}
+        - name: cmis-dfc-properties-volume
+          projected:
+            sources:
+            - configMap:
+                name: {{ .Values.serviceName }}-configmap-dfc
+        - name: cmis-appserver-xml-volume
+          projected:
+            sources:
+            - configMap:
+                name: {{ .Values.serviceName }}-configmap-server-xml

@@ -1,0 +1,62 @@
+replicaCount: 1
+image:
+  repository: artifactory.otxlab.net/bpdockerhub
+  name: activemq-artemis
+  tag: 2.41.0
+  pullPolicy: IfNotPresent
+JAVA_ARGS: -XX:AutoBoxCacheMax=20000 -XX:+PrintClassHistogram -XX:+UseG1GC -XX:+UseStringDeduplication -Dhawtio.disableProxy=true -Dhawtio.realm=activemq -Dhawtio.offline=true -Dhawtio.rolePrincipalClasses=org.apache.activemq.artemis.spi.core.security.jaas.RolePrincipal -Dhawtio.http.strictTransportSecurity=max-age=31536000;includeSubDomains;preload -Djolokia.policyLocation=file:/var/lib/artemis-instance/./etc/jolokia-access.xml -Dlog4j2.disableJmx=true
+adminUser:
+  username: artemis
+  password: artemis
+service:
+  name: amq
+  broker:
+    ports:
+      internal:
+        amqp: 5672
+        openwire: 61616
+      external:
+        amqp: 5672
+        openwire: 61616
+    type: ClusterIP
+  webConsole:
+    ports:
+      internal:
+        webConsole: 8161
+      external:
+        webConsole: 8161
+    type: ClusterIP
+serviceAccount:
+  createserviceaccount: true
+  serviceAccountName:
+readinessProbe:
+  initialDelaySeconds: 60
+  periodSeconds: 20
+  timeoutSeconds: 10
+  failureThreshold: 6
+livenessProbe:
+  initialDelaySeconds: 130
+  periodSeconds: 20
+  timeoutSeconds: 10
+  failureThreshold: 1
+persistence:
+  accessModes: ReadWriteMany
+  storageClass:
+  size: 1Gi
+pullSecrets:
+ssl:
+  enabled: false                            # Set to false to disable TLS
+  acceptorPort: 61617                      # Broker TLS port
+  consolePort: 8161                        # HTTPS Console port
+  certificateMountPath: /opt/dctm/certificate
+  keystorePasswordKey: KEYSTORE_PASSWORD
+  truststorePasswordKey: TRUSTSTORE_PASSWORD
+  keystorePassword: changeit
+  truststorePassword: changeit
+  keyStore:
+  trustStore:
+
+
+
+
+

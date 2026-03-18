@@ -1,0 +1,289 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.deployment.name }}
+  labels:
+    app: {{ .Values.deployment.appName }}
+spec:
+  strategy:
+    type: {{ .Values.deployment.strategyType }}
+  replicas: {{ .Values.deployment.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Values.deployment.appName }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.deployment.appName }}
+    spec:
+    {{- if or .Values.imagePullSecrets .Values.global.pullSecretName }}
+      imagePullSecrets:
+        - name: {{ .Values.imagePullSecrets | default .Values.global.pullSecretName }}
+    {{ end }}
+      serviceAccountName: {{ .Values.serviceAccount.serviceAccountName | default .Values.global.documentumserviceaccount }}
+      containers:
+      - name: {{ .Values.containers.dtrbase.name }}
+        image: {{ .Values.images.dtrbase.repository | default .Values.global.repository  }}/{{ .Values.images.dtrbase.name }}:{{ .Values.images.dtrbase.tag }}
+        imagePullPolicy: {{ .Values.images.dtrbase.pullPolicy | default .Values.global.pullPolicyType }}
+        env:
+        - name: DTR_EXT_CONF
+          value: "{{ .Values.containers.dtrbase.externalFolderPath }}"
+        - name: KUBERNETES
+          value: "{{ .Values.containers.dtrbase.kubernetes }}"
+        - name: DOCBASE_PASSWORD
+          valueFrom:
+            secretKeyRef:              
+              name: {{ .Values.cs.csSecretConfigName | default .Values.global.csSecrets}}
+              key: globalRegistryPassword
+        - name: DTR_KUBERNETES_INSTALL
+          value: {{ quote .Values.containers.dtrbase.dtrKubernetesInstall }}
+        - name: DAR_INSTALL_REPO
+          value: {{ quote .Values.containers.dtrbase.darInstallRepo | default .Values.global.docbase }}
+        - name: DAR_INSTALL_USER
+          valueFrom:
+            secretKeyRef:              
+              name: {{ .Values.cs.csSecretConfigName | default .Values.global.csSecrets }}
+              key: installOwner
+        - name: DAR_INSTALL_PASS
+          valueFrom:
+            secretKeyRef:              
+              name: {{ .Values.cs.csSecretConfigName | default .Values.global.csSecrets}}
+              key: globalRegistryPassword
+        - name: CS_INSTALL_UN
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.cs.csSecretConfigName | default .Values.global.csSecrets}}
+              key: installOwner
+        - name: CS_INSTALL_PW
+          valueFrom:
+            secretKeyRef:
+               name: {{ .Values.cs.csSecretConfigName | default .Values.global.csSecrets}}
+               key: installOwnerPassword       
+        - name: DOCBROKERS_COUNT
+          value: {{ .Values.docbroker.replicaCount | quote }}
+        - name: DOCBROKER_PORT
+          value: {{ .Values.docbroker.port | quote | default .Values.global.dbr_port | quote }}          
+        - name: DOCBROKER_SERVICE_NAME
+          value: {{ .Values.docbroker.serviceName | default .Values.global.dbrServiceName }}
+        - name: DOCBROKER_CLUSTER_SPACE
+          value: {{ .Values.env.domain | default (include "documentum.envDomain" .) }}
+        - name: METHOD_SVR_HOST                                                                
+          value: {{ .Values.methodsvr.containerName }}-jms-service
+        - name: METHOD_SVR_PORT
+          value: {{ .Values.global.jmsPort | quote }}
+        - name: NUM_ROW_THRESHHOLD
+          value: {{ quote .Values.containers.dtrbase.rowNumThreshholdForJob }}
+        - name: EXEC_QUERY_BATCH
+          value: {{ quote .Values.containers.dtrbase.execQueryByBatch }}          
+        - name: DRUSER
+          value: dctmreports
+        - name: DRPASS
+          valueFrom:
+            secretKeyRef:
+               name: {{ .Values.cs.csSecretConfigName | default .Values.global.csSecrets}}
+               key: drServiceAccountPassword
+        - name: DR_USER_EMAIL
+          value: {{ quote .Values.containers.dtrbase.drServiceUserEmailID }}
+        - name: DCTM_REPORTS_JOB_CONF
+          value: "<![CDATA[http://{{ .Values.containers.dtrbase.ingressHost }}/dtr/GenerateReport?1=1]]>"
+        - name: DR_Core_DefaultStyleFile
+          value: {{ quote .Values.containers.dtrbase.drCoreDefaultStyleFile }}
+        - name: DR_Core_ServerTimeout
+          value: {{ quote .Values.containers.dtrbase.drCoreServerTimeout }}
+        - name: DR_Core_smtp_port
+          value: {{ quote .Values.containers.dtrbase.drCoreSmtpPort }}
+        - name: DR_Core_smtp_auth_required
+          value: {{ quote .Values.containers.dtrbase.drCoreSmtpAuthRequired }}
+        - name: DR_Core_mail_subject
+          value: {{ quote .Values.containers.dtrbase.drCoreMailSubject }}
+        - name: DR_Core_max_attachment_size
+          value: {{ quote .Values.containers.dtrbase.drCoreMaxAttachmentSize }}
+        - name: DR_Core_attach_as_zip
+          value: {{ quote .Values.containers.dtrbase.drCoreAttachAsZip }}
+        - name: DR_Core_smtp_user
+          value: {{ quote .Values.containers.dtrbase.drCoreSmtpUser }}
+        - name: DR_Core_URLTimeout
+          value: {{ quote .Values.containers.dtrbase.drCoreUrlTimeout }}
+        - name: DR_Core_smtp_starttls_enable
+          value: {{ quote .Values.containers.dtrbase.drCoreSmtpStarttlsEnable }}
+        - name: DR_Core_smtp_host
+          value: {{ quote .Values.containers.dtrbase.drCoreSmtpHost }}
+        - name: DR_Core_from_address
+          value: {{ quote .Values.containers.dtrbase.drCoreFromAddress }}            
+        - name: DR_Core_smtp_password
+          value: {{ quote .Values.containers.dtrbase.drCoreSmtpPassword }}
+        {{- if (eq .Values.global.internalTlsEnable true) }}
+        - name: DR_Core_ReportServlet
+          value: "https://{{ .Values.containers.dtrbase.ingressHost }}/DCTM-Reports"
+        {{ else }}
+        - name: DR_Core_ReportServlet
+          value: {{ quote .Values.containers.dtrbase.drCoreReportServlet }}
+        {{ end }}
+        - name: DR_Core_AllowPlainTextParamsInReportURL
+          value: {{ quote .Values.containers.dtrbase.drCoreAllowPlainTextParamsInReportUrl }}  
+        - name: DR_Core_EnableSessionValidationWithClientIP
+          value: {{ quote  .Values.containers.dtrbase.drCoreEnableSessionValidationWithClientIp }}
+        - name: DR_Core_ReportCacheTimeout
+          value: {{ quote .Values.containers.dtrbase.drCoreReportCacheTimeout }}       
+        # newrelic env parameters
+        {{- if (empty (.Values.newrelic.enable | quote) | ternary .Values.global.newrelic .Values.newrelic.enable) }}
+        - name: NEW_RELIC_AGENT_ENABLED
+          value: {{ (empty (.Values.newrelic.enable | quote) | ternary .Values.global.newrelic .Values.newrelic.enable) | quote}}
+        - name: NEW_RELIC_APP_NAME
+          value: {{ quote .Values.newrelic.appName }}        
+        - name: NEW_RELIC_LICENSE_KEY
+          valueFrom:
+            secretKeyRef:              
+              name: {{ .Values.cs.csSecretConfigName | default .Values.global.csSecrets}}
+              key: newrelicLicensekey
+        {{- if (empty (.Values.newrelic.proxyHost | quote) | ternary .Values.global.newrelicProxyHost .Values.newrelic.proxyHost) }}
+        - name: NEW_RELIC_PROXY_HOST
+          value: {{ (.Values.newrelic.proxyHost | quote) | default .Values.global.newrelicProxyHost  | quote}}
+        {{ end }}
+        {{- if (empty (.Values.newrelic.proxyPort | quote) | ternary .Values.global.newrelicProxyPort .Values.newrelic.proxyPort) }}
+        - name: NEW_RELIC_PROXY_PORT
+          value:  {{ (.Values.newrelic.proxyPort | quote) | default .Values.global.newrelicProxyPort | quote}}
+        {{ end }}        
+        {{- if (empty (.Values.newrelic.proxyScheme | quote) | ternary .Values.global.newrelicProxyProtocol .Values.newrelic.proxyScheme) }}
+        - name: NEW_RELIC_PROXY_SCHEME
+          value:  {{ (.Values.newrelic.proxyScheme | quote) | default .Values.global.newrelicProxyProtocol | quote}}
+        {{ end }}
+        {{ end }}
+        {{- if (empty (.Values.vault.enable | quote) | ternary .Values.global.isVaultEnabled .Values.vault.enable)}}
+        - name: DFC_DSIS_ENABLED
+          value: {{ (empty (.Values.vault.enable | quote) | ternary .Values.global.isVaultEnabled .Values.vault.enable) | quote}}
+        {{- end }}
+        - name: ALLOW_TRUSTED_LOGIN
+          value: {{ quote .Values.cs.allowTrustedLogin }}
+        {{- if (empty (.Values.certificate.useCertificate | quote) | ternary .Values.global.useCertificate .Values.certificate.useCertificate) }}        
+        - name: INTERNAL_TLS_ENABLED
+          value: {{.Values.internalTlsEnable | default .Values.global.internalTlsEnable | default false | quote }}
+        - name: INGRESS_KEYSTORE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.cs.secretName | default .Values.global.csSecrets }}
+              key: ingress.keystorepassword          
+        - name: USE_CERTIFICATE
+          value: {{ (empty (.Values.certificate.useCertificate | quote) | ternary .Values.global.useCertificate .Values.certificate.useCertificate) | quote}}
+        - name: DFC_SSL_TRUSTSTORE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.cs.csSecretConfigName | default .Values.global.csSecrets }}
+              key: csCertTrustPassword          
+        - name: TRUST_STORE_PASSWORD        
+          valueFrom: 
+            secretKeyRef:
+              name: {{ .Values.cs.csSecretConfigName | default .Values.global.csSecrets }}
+              key: dbrCertpassword
+        {{ end }}        
+        volumeMounts:         
+        - name: nfs-data
+          mountPath: {{ .Values.containers.dtrbase.externalFolderPath }}
+          subPath: dtrbase          
+        - name: dfc-config-map
+          mountPath: {{ .Values.containers.dtrbase.externalFolderPath }}/dfc.properties
+          subPath: dfc.properties
+        - name: logging-config-map
+          mountPath: {{ .Values.containers.dtrbase.externalFolderPath }}/log4j2
+        - name: nfs-data
+          mountPath: /opt/dtr_build/volumes/kubeDmMethod
+          subPath: {{ .Values.persistentVolumeClaim.PVCSubPath }}
+        {{- if (eq .Values.global.internalTlsEnable true) }}
+        - name: dtrbase-server-xml-configmap
+          mountPath: {{ .Values.containers.dtrbase.externalFolderPath }}/server_tls.xml
+          subPath: server_tls.xml
+        {{ else }}
+        - name: dtrbase-server-xml-configmap
+          mountPath: {{ .Values.containers.dtrbase.externalFolderPath }}/server.xml
+          subPath: server.xml
+        {{ end }}
+        {{- if (empty (.Values.fluentd.graylogEnabled | quote) | ternary .Values.global.grayLogEnable .Values.fluentd.graylogEnabled) }}
+        - name: shared-logs  
+          mountPath: /opt/dtr_build/logs
+        - name: shared-logs  
+          mountPath: /opt/dtr_build/logs/DCTMReportsCoreLogs
+        {{ end }}
+        {{- if (empty (.Values.certificate.useCertificate | quote) | ternary .Values.global.useCertificate .Values.certificate.useCertificate)}}
+        - name: {{ .Values.certificate.dbrDataPVCName  | default .Values.global.dbrDataPVCName }}
+          mountPath: /opt/dctm/certificate
+          subPath: certificate/{{ .Values.certificate.dbrDataPVCName | default .Values.global.dbrDataPVCName }}
+        {{ end }}
+        {{- if (empty (.Values.vault.enable | quote) | ternary .Values.global.isVaultEnabled .Values.vault.enable)}}
+        - mountPath: {{ .Values.vault.vault_config_mountPath }}
+          name: vault-volume
+        - mountPath: {{ .Values.vault.vault_binary_mountPath }}
+          name: dsis-binary-volume
+        {{- end }}
+        resources:
+          requests:
+             memory: {{ .Values.resources.requests.memory | quote  }}
+             cpu: {{ .Values.resources.requests.cpu | quote  }}
+          limits:
+             memory: {{ .Values.resources.limits.memory | quote  }}
+             cpu: {{ .Values.resources.limits.cpu | quote  }}
+        ports:
+        - containerPort: 8080
+        readinessProbe:
+          httpGet:
+            scheme: {{ (eq (.Values.global.internalTlsEnable | default false) true) | ternary "HTTPS" "HTTP" }}
+            path: {{ ternary "/DCTM-Reports/servlet/dctmreportsgetrepositories" .Values.containers.dtrbase.healthPath (eq (.Values.global.internalTlsEnable | default false) true) }}
+            port: {{ (eq (.Values.global.internalTlsEnable | default false) true) | ternary (.Values.service.dtrBasePorthttps | default 8443) (.Values.service.dtrCorePort | default 5001) }}
+          initialDelaySeconds: 180
+          periodSeconds: 600
+          failureThreshold: 2
+          successThreshold: 1
+          timeoutSeconds: 240
+        livenessProbe:
+          httpGet:
+            scheme: {{ (eq (.Values.global.internalTlsEnable | default false) true) | ternary "HTTPS" "HTTP" }}          
+            path: {{ ternary "/dtr" .Values.containers.dtrbase.healthPath (eq (.Values.global.internalTlsEnable | default false) true) }}
+            port: {{ (eq (.Values.global.internalTlsEnable | default false) true) | ternary (.Values.service.dtrCorePorthttps | default 5002) (.Values.service.dtrCorePort | default 5001) }}
+          initialDelaySeconds: 180
+          periodSeconds: 600
+          failureThreshold: 2
+          successThreshold: 1
+          timeoutSeconds: 240
+      volumes:
+      {{- if (empty (.Values.fluentd.graylogEnabled | quote) | ternary .Values.global.grayLogEnable .Values.fluentd.graylogEnabled) }}
+      - name: shared-logs
+        emptyDir: {}
+      - name: {{ .Values.fluentd.servicedataPVCName }}-logs
+        emptyDir: {}
+      {{ end }}
+      - name: dfc-config-map
+      {{- if eq .Values.cs.useCSDfcConfigMap true }}
+        configMap:
+          name: {{ .Values.cs.configMapName}}
+      {{ else }}
+        configMap:
+          name: {{ .Values.deployment.name}}-dfcproperties-configmap
+      {{ end }}
+      - name: logging-config-map
+        configMap:
+          name: {{ .Values.deployment.name }}-logging-configmap
+          items:
+            - key: log4j2.properties
+              path: log4j2.properties
+      - name: dtrbase-server-xml-configmap
+        configMap:
+          name: {{ .Values.deployment.name }}-server-xml-configmap
+      - name: nfs-data
+        persistentVolumeClaim:
+          claimName: {{ .Values.persistentVolumeClaim.pvcName }}
+        {{- if (empty (.Values.certificate.useCertificate | quote) | ternary .Values.global.useCertificate .Values.certificate.useCertificate) }}
+      - name: {{ .Values.certificate.dbrDataPVCName | default .Values.global.dbrDataPVCName }}
+        persistentVolumeClaim:
+          claimName: {{ .Values.certificate.dbrServiceName | default .Values.global.dbrServiceName }}-pvc
+      {{ end }}
+        {{- if (empty (.Values.vault.enable | quote) | ternary .Values.global.isVaultEnabled .Values.vault.enable)}}
+      - name: dsis-binary-volume
+        persistentVolumeClaim:
+          claimName: {{ .Values.vault.PVCName }}
+      - name: vault-volume
+        configMap:
+          name: {{ .Values.vault.vaultConfigmap }}
+          items:
+            - key: vault
+              path: application.properties
+     {{- end }}      
+      restartPolicy: Always

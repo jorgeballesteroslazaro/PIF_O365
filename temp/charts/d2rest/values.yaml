@@ -1,0 +1,306 @@
+# Default values for d2rest.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+namespace: 
+### Environment ###
+env:
+  tomcatJVMArgs: ""
+  webappName: 
+  domain: 
+## serviceAnnotations define custom annotations that need to be assigned to d2rest service.
+## For example:
+##  cloud.google.com/backend-config: '{"ports": {"80": "abcd-d2rest-backend"}}'
+##  cloud.google.com/neg: '{"ingress": true}'
+serviceAnnotations: {}
+
+serviceAccount: 
+  createserviceaccount: true
+  serviceAccountName: 
+
+### Tomcat ###  
+tomcat:
+  catalinaHome: /opt/tomcat
+  connectionTimeoutInMilliseconds:   #Time that the server will wait for an incoming connection to be established before terminating the request in tomcat server
+  maxHttpHeaderSize:   #Max HTTP header size
+  logfilerotation: 7  #Log files are rotated "logfilerotation" times before being removed 
+  logfilesize: 5M  #Log files are rotated only if they grow bigger then "logfilesize" bytes
+  logrotateFrequency: 1d  #Log files are rotated every "logrotateFrequency". Ex., 10m, 10h, 10d
+  maxThreads:  # Max number of threads in the pool
+  keepAliveTimeout:  # Keep-alive timeout in milliseconds
+  acceptCount:  #Max queued connections in the pool in tomcat
+
+### Docbroker ###
+docbroker:
+  count: 2
+  serviceName: 
+  port: 
+
+cs:
+  custom:
+    scriptinPVC: true
+    ##In the case of  hybrid installers approach, volumeMountName value should be custom-script-pvc and scriptPVCname value should be shared-pvc
+    volumeMountName: dcs-data-pvc
+    scriptPVCname: dcs-pg-pvc
+    PVCSubPath: initcontainercustomscripts/dcs-pg
+    
+methodsvr:
+  containerName: dcs-pg
+
+session:
+  allowTrustedLogin: 
+  
+removeDocumentation: 
+  
+### Docbase ###
+docbase:
+  name: 
+# if k8s version is < 1.19  default initial delay is set to 250 seconds and 60 seconds if k8s version is >= 1.19
+# Increase the initialDelaySeconds and add the value below if default value is not enough
+readinessProbe:
+  enable: true
+  initialDelaySeconds: 
+# if k8s version is < 1.19  default initial delay is set to 250 seconds and 60 seconds if k8s version is >= 1.19
+# Increase the initialDelaySeconds and add the value below if default value is not enough
+livenessProbe:
+  enable: true
+  initialDelaySeconds: 
+
+startupProbe:
+  enable: true
+  initialDelaySeconds: 180  
+
+replicaCount: 2
+
+fsGroup: 
+runAsNonRoot: true
+runAsUser: 1000
+
+images:
+  repository : 
+  name : 
+  tag : 
+  pullPolicy: 
+  pullSecrets:
+
+extensionImage:
+  repository: 
+  name : ot-dctm-client-rest
+  tag : 25.4
+  pullPolicy: 
+
+extraInitContainers: []
+### Secret ###
+secret:
+  csConfigName: 
+
+### extra Environment Variables ###
+extraEnv:
+
+nameOverride: ""
+fullnameOverride: ""
+
+### Persistent Volume ###
+persistentVolume:
+  vctAccessModes: ReadWriteOnce
+  storageClass: 
+  size: 1Gi
+
+certificate:
+  use_certificate: 
+  dbrserviceName: 
+
+dbrpersistentVolume:
+  dbrdataPVCName: 
+
+### Graylog Enabled by default, set to false if logs mount to PVC ###
+graylog:
+  enable: 
+  volumeClaimTemplate:
+    logVctAccessModes: ReadWriteOnce
+    logVctSize: 2Gi
+    logVctStorageClass: 
+
+serviceType: 
+
+### Port for d2rest Service ###
+servicePort: 
+
+### D2Rest Extension image ###
+extension:  
+  createPVC: true
+  PVCAccessMode: ReadWriteMany
+  PVCStorageClass: 
+  PVCSize: 4Gi
+  pvcName: 
+  #Update the below parameters in case of Static Provisioning in AWS
+  staticPVName:
+  reclaimPolicy:
+  awsEFSCSIDriver: efs.csi.aws.com
+  awsEFSCSIHandle:
+
+### Custom Configuration ###
+customConfigurations:
+  custom: false
+  hook_approach: false
+  createPVC: false
+  scriptPVCname: d2custom-shared-pvc
+  persistentVolume:
+    awsEFS: false
+    awsEFSCSIDriver: efs.csi.aws.com
+    awsEFSCSIHandle:
+    existVolumePv:
+    reclaimPolicy: Retain
+    storageClass: 
+    size: 2Gi
+
+locale: 
+
+
+
+resources:
+  limits:
+    cpu: 100m
+    memory: 128Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+###############################################################
+#  BEGIN parameter value definitions for D2 REST configuration files
+###############################################################
+
+# directory in chart holding any .properties config file "coda" files.
+# These files are appended to the corresponding default .properties config
+# file in the resulting config map definition.  This provides a convenient
+# way for solutions built on top of D2 to override settings in D2FS.properties,
+# settings.properties etc.
+configFileOverrideFilesDir: configFileOverrideFiles
+
+# parameters used to compose d2rest-logback-xml config map
+logback:
+   file: 
+   - /opt/tomcat/logs/
+   - d2-rest
+   - /rest-api-logback.log
+   fileNamePattern: 
+   - /opt/tomcat/logs/
+   - d2-rest
+   - /rest-api-logback-%d{yyyy-MM-dd}-%i.log.zip 
+   logLevel: info  
+   
+   logback_xml: |-
+
+# parameters used to compose d2rest-log4j-properties config map
+log4j:
+   file: 
+   - /opt/tomcat/logs/
+   - d2-rest
+   - /rest-api-log4j.log
+   logLevel: WARN
+   
+   log4j2_properties: |-
+
+restApiRuntime:   
+   # supported values for auth mode are basic-ct, oauth2, ct-oauth2, ct-otds_token, otds_token, otds_ticket-otds_token, ct-otds_ticket-otds_token, otds_password, ct-otds_password
+   authMode: ct-otds_token
+   # supported values for dql access mode are all, group, admin
+   dqlAccessMode:
+   OTDS:
+      enable: 
+      authSvc:       
+      clientId: 
+      appName: OpenText™ Documentum™ Content Management CE 25.4
+   #The "ContentConnect" attribute earlier is now replaced as "AllowCors"
+   AllowCors:
+      enable: false
+      #the restAllowedOrigins value should be in the format- https://<Ingress URL>
+      restAllowedOrigins: 
+      #By default these allowed headers are given when Cors is enabled - DOCUMENTUM-CUSTOM-UNAUTH-SCHEME, OT-DCTM-PRODUCT-CODE, Authorization, Content-Type, Accept, X-CLIENT-LOCATION, X-CLIENT-APPLICATION-NAME. If you want to add some additional headers please add under restAllowedHeaders.
+      restAllowedHeaders:
+      #By default these exposed headers are given when Cors is enabled - Accept-Ranges, Content-Encoding,Content-Length, Content-Range, Authorization, Content-Disposition. If you want to add some additional headers please add under restExposedHeaders.
+      restExposedHeaders:
+      
+   CSRF:
+      enable: true
+   # Description: timeout value for Client session token timeout for dctm client rest as per FEDRAMP Policy
+   clientSessionTokenTimeout: 
+
+   # Description :Crypto salt for client token encryption and decryption
+   # For a multi-node deployment of REST servers, this property MUST be consistently set across all REST servers. For a
+   # single-node deployment of REST servers, this property is optional. The value CAN be any ascII characters. We recommend
+   # that you specify a text no less than 8 characters.  
+   cryptoKeySalt: 
+
+   rest_api_runtime_properties: |-   
+# parameters used to compose d2rest-settings-properties config map
+settings:   
+   # "connection.remote.url" setting in "settings.properties"
+   # When using Ingress to expose webapp service inside the cluster to the outside user, 
+   # the ingress is behaving like the reverse proxy. The connectionRemoteUrl should be the 
+   # set to the URL of the Ingress resource that the outside user uses to access the 
+   # webapp inside the cluster.
+   connectionRemoteUrlProtocol: 
+   connectionRemoteUrl: 
+
+   settings_properties: |-   
+
+msgraphConfig:
+    enable: false
+    clientid: ""
+    clientsecret: ""
+    tenantid: ""
+    scope: Mail.read offline_access
+    proxy_host: 
+    proxy_port: 
+    
+D2FS:
+  LoadOnStartup:   
+  
+  D2FS_properties: |-
+    
+    
+#############################################################
+#  END parameter value definitions for D2 REST configuration files
+#############################################################      
+
+### New Relic Configuration ###
+
+newrelic:
+  enable: 
+  app_name: DOCUMENTUM_D2REST-PROD-OT2_CFCR_BP2-ECD
+  proxy_host: 
+  proxy_port: 
+  
+configMap:
+  vault_configmap_name: dctm-vault-configmap
+ 
+vault:
+  enable: 
+  vault_configmap: dctm-vault-configmap
+  createPVC: false
+  PVCName: dsis-binary-pvc
+  pvcAccessModes: ReadWriteMany
+  size: 100Mi
+  storageClass: 
+  existVolumePv:   
+  statusCheckRetryCount: 20
+  statusCheckTimeInterval: 1  
+  
+MIPTrusted: 
+  enable: false
+
+dfc_properties: |-
+
+ESAPI_properties: |-
+
+trust_properties: |-
+
+validation_properties: |-
+
+web_xml: |-

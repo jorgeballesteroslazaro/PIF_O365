@@ -1,0 +1,98 @@
+# Default values for jupiter.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+# Kubernetes service type
+service:
+  name: ds-coresearch
+  port: 8081
+  targetPort: 8081
+spec:
+  selector:
+    app.kubernetes.io/name: jupiter
+# Number of jupiter instances to run
+replicaCount: 1
+# Jupiter image settings
+image:
+  repository: 
+  name: ot-coresearch-api
+  tag: 23.4.0000.0179
+  pullPolicy:
+
+ssl:
+  enabled: false
+  certificateMountPath: /opt/dctm/certificate
+  keystoreFile:
+  keystorePassword:
+  keyAlias: commontls
+  keyStoreType: pkcs12
+  sslPort: 8081
+artemis:
+  protocol: SSL         #Values allowed: NONE/SSL
+  truststoreFile:       #amq truststore location.
+  truststorePassword:   #amq truststore password.
+zookeeper:
+  tlsProtocol:             #Set the protocol to be used during TLS negotiation. Default: TLSv1.2
+  clientConnectionSocket:  #Set it to org.apache.zookeeper.ClientCnxnSocketNetty  for secure connection.
+  trustStoreFile:      #Set the truststore location for zookeeper.
+  trustStorePassword:      #Set the truststore password for zookeeper.
+solr:
+  checkUrl: http://solr-headless:8983/solr/admin/info/system
+  trustStoreFile:   #Solr truststore location
+  trustStorePassword:   #Solr truststore password
+
+jdk:
+  tlsClientProtocols: 'TLSv1.3'
+# Extra environment variables - allows yaml definitions
+env:
+  SOLR_ZK_ROOT: /solr/001
+  SOLR_ZK_USERNAME: solr
+  SOLR_AUTH_USERNAME: solr
+  ZK_ROOT: /searchsvc/v2
+  ZK_USERNAME: admin
+  SEARCHSVC_INSTANCE_NAME: local
+  INDEXING_TOPIC_PARTITIONS: 8
+  SOLR_CLIENT_READ_TIMEOUT: 600000
+  ACTIVE_PROFILE: default,secretNative,activemq
+
+serviceAccount:
+  createserviceaccount: true
+  serviceAccountName: 
+newrelic:
+  enable:
+  app_name: DCTM_CORE_SEARCH_APP
+secrets:
+  cs:
+    name:
+
+probe:
+  timeoutSeconds: 10
+startupProbe:
+  initialDelaySeconds: 60
+  periodSeconds: 30
+# Jupiter pod liveness
+livenessProbe:
+  initialDelaySeconds: 60
+  periodSeconds: 30
+# Jupiter pod readiness
+readinessProbe:
+  initialDelaySeconds: 120
+  periodSeconds: 30
+# Resource limits for the exporter 
+resources:
+  requests:
+    cpu: 200m
+    memory: 512Mi
+  limits:
+    cpu: 1000m
+    memory: 1Gi
+
+# Annotations to apply to the exporter pod
+podAnnotations: {}
+
+nodeSelector: {}
+
+# Tolerations for pod assignment
+tolerations: []
+
+# Affinity group rules or the Jupiter pods
+affinity: {}

@@ -1,0 +1,878 @@
+# Rule
+# - FileName|Attribute|dependsOn(vault,GCP,AWS,Azure,OtherAttribute): input,toggle,textarea,password,select(option1,option2,...)|label|M,O|col-2,col-3,col-4,col-6,col-12
+
+global:
+  row1:
+    - values|global.rwoStorage: input|RWO Storage Class|M|col-6
+    - values|global.rwmStorage: input|RWM Storage Class|M|col-6
+  row2:
+    - values|global.docbase: input|Repository Name|M|col-3
+    - passwords|cs-secrets.docbase.password: password|Repository Password|M|col-3
+    - passwords_vault|cs-secrets.docbase.password|dependsOn(vault): password(secret)|Repository Secret Key|M|col-3
+    - values|global.installOwnerUsername: input|Installation Owner User Name|M|col-3
+    - passwords|installOwnerPassword: password|Installation Owner User Password|M|col-3
+    - passwords_vault|installOwnerPassword|dependsOn(vault): password(secret)|Installation Owner User Secret Key|M|col-3
+  row3:
+    - values|global.globalRegistryUsername: input|Global Registry User Name|M|col-4
+    - passwords|globalRegistryPassword: password|Global Registry Password|M|col-4
+    - passwords_vault|globalRegistryPassword|dependsOn(vault): password(secret)|Global Registry Secret Key|M|col-4
+    - passwords|trustStorePassword: password|Trust Store Password|M|col-4
+    - passwords_vault|trustStorePassword|dependsOn(vault): password(secret)|Trust Store Secret Key|M|col-4
+  row4:
+    - values|global.ingressProtocol: select(https,http)|Ingress Protocol|M|col-3
+    - values|global.hostShortName: input|Host Short Name|M|col-3
+    - values|global.ingressDomain: input|Ingress Domain|M|col-3
+    - values|global.ingressUrl: input|Ingress URL|M|col-3
+  row5:
+    - values|global.multiIngress: toggle|Multiple Ingress|O|col-12
+  row6:
+    - values|global.publicHostShortName|dependsOn(global.multiIngress): input|Public Ingress Host Short Name|M|col-6
+    - values|global.publicIngressDomain|dependsOn(global.multiIngress): input|Public Ingress Domain|M|col-6
+  row7:
+    - values|global.vpnHostShortName|dependsOn(global.multiIngress): input|VPN Ingress Host Short Name|M|col-6
+    - values|global.vpnIngressDomain|dependsOn(global.multiIngress): input|VPN Ingress Domain|M|col-6
+  row8:
+    - values|global.db_hostname: input|Database Host Name|O|col-4
+    - values|global.databaseusername: input|Database User Name|M|col-4
+    - passwords_vault|databaseAdminPassword|dependsOn(vault): password(secret)|Database Admin User Secret Key|M|col-4
+    - passwords|databaseAdminPassword: password|Database Admin User Password|M|col-4
+  row9:
+    - values|global.dbport: input(number)|Database Port Number|O|col-3
+    - values|global.dbtype: select(postgres,oracle)|Database Type|M|col-3
+    - values|global.dbSchema_Name: input|Database Schema Name|M|col-3
+    - values|global.db_service: input|Database Service Name|O|col-3
+  row10:
+    - values|global.driverClass_Name: select(org.postgresql.Driver,oracle.jdbc.driver.OracleDriver)|Driver Class Name|M|col-12
+  row11:
+    - values|global.isCSORCLdb: toggle|DCM Server on Oracle Database|O|col-6
+    - values|global.db_ssl: toggle|Database SSL|O|col-3
+    - values|global.db_ssl_mode|dependsOn(global.db_ssl): select(prefer,require,verify-ca,verify-full)|Database SSL Mode|M|col-3
+  row12:
+    - values|global.oauthClient: input|OAuth Client|M|col-2
+    - values|global.documentumserviceaccount: input|DCM Server Service Account|M|col-3
+    - values|global.removeDocumentation: toggle|Swagger Documentation|O|col-3
+    - values|global.fsGroup: input|FS Group|M|col-2
+    - values|global.locale: input|Language Code|M|col-2
+  row13:
+    - values|global.internalTlsEnable: toggle|Internal TLS|O|col-4
+    - values|global.createCommonTruststore: toggle|Create Common Truststore|O|col-4
+    - values|global.useCertificate|dependsOn(global.internalTlsEnable,global.createCommonTruststore): toggle|Use Certificate|O|col-4
+  row14:
+    - values|global.grayLogEnable: toggle|Graylog|O|col-12
+  row15:
+    - values|global.graylogServer|dependsOn(global.grayLogEnable): input|Graylog Server URL|M|col-4
+    - values|global.graylogPort|dependsOn(global.grayLogEnable): input(number)|Graylog Port|M|col-4
+    - values|global.graylogTCPPort|dependsOn(global.grayLogEnable): input(number)|Graylog TCP Port|M|col-4
+  row16:
+    - values|global.businessUnit|dependsOn(global.grayLogEnable): input|Business Unit|M|col-3
+    - values|global.datacenter|dependsOn(global.grayLogEnable): input|Data Center|M|col-3
+    - values|global.environment|dependsOn(global.grayLogEnable): input|Environment|M|col-3
+    - values|global.persistLogs|dependsOn(global.grayLogEnable): toggle|Disable Graylog for xPlore|M|col-3
+  row17:
+    - values|global.newrelic: toggle|New Relic|O|col-12
+  row18:
+    - values|global.newrelicProxyHost|dependsOn(global.newrelic): input|New Relic Proxy Host|O|col-4
+    - values|global.newrelicProxyPort|dependsOn(global.newrelic): input(number)|New Relic Proxy Port|O|col-4
+    - values|global.newrelicProxyProtocol|dependsOn(global.newrelic): input|New Relic Proxy Protocol|M|col-4
+  row19:
+    - values|global.licenseKeyName|dependsOn(global.newrelic): input|New Relic License Key Name|M|col-4
+    - passwords|licenseKey|dependsOn(global.newrelic): input|New Relic License Key|M|col-4
+    - passwords_vault|licenseKey|dependsOn(global.newrelic,vault): input|New Relic License Key|M|col-4
+  row20:
+    - values|global.fluentd: toggle|Fluentd|O|col-12
+  row21:
+    - values|global.fluentdTcpPort|dependsOn(global.fluentd): input(number)|Fluentd TCP Port|M|col-4
+    - values|global.fluentdRestPort|dependsOn(global.fluentd): input(number)|Fluentd REST Port|M|col-4
+    - values|global.fluentdUdpPort|dependsOn(global.fluentd): input(number)|Fluentd UDP Port|M|col-4
+  row22:
+    - values|global.kafka_admin_user_name|dependsOn(global.fluentd): input|Kafka Admin User Name|O|col-3
+    - passwords|kafka_admin_user_password|dependsOn(global.fluentd): password|Kafka Admin Password|O|col-3
+    - passwords_vault|kafka_admin_user_password|dependsOn(global.fluentd,vault): password(secret)|Kafka Admin Secret Key|O|col-3
+    - values|global.kafka_topic_name|dependsOn(global.fluentd): input|Kafka Topic Name|O|col-3
+    - values|global.kafkaBrokerList|dependsOn(global.fluentd): input|Kafka Broker List|O|col-3
+  row23:
+    - passwords_k8api|licenseKey|dependsOn(global.newrelic): input|New Relic License Key|O|col-4
+    - passwords_k8api|msclientsecret: password|Microsoft Secret|O|col-2
+    - configuration|cs-logging-configMap.vault.configmap|dependsOn(vault): textarea|Vault Configuration Properties|M|col-6
+  row24:
+    - values|global.proxy.enabled: toggle|Proxy|O|col-12
+  row25:
+    - values|global.proxy.protocol|dependsOn(global.proxy.enabled): input|Proxy Protocol|M|col-3
+    - values|global.proxy.host|dependsOn(global.proxy.enabled): input|Proxy Host|M|col-3
+    - values|global.proxy.port|dependsOn(global.proxy.enabled): input(number)|Proxy Port|M|col-3
+    - values|global.proxy.noProxy|dependsOn(global.proxy.enabled): input|No Proxy|M|col-3
+
+otds:
+  row1:
+    - configuration|otds.otdsws.publicHostname: input|OTDS Public Host Name|M|col-3
+    - configuration|otds.otdsws.otdsdb.url: input|OTDS Database URL|M|col-3
+    - values|global.otdsUserName: input|OTDS Database User Name|M|col-3
+    - passwords|otdsClientSecret: password|OTDS Client Secret|M|col-3
+    - passwords_vault|otdsClientSecret|dependsOn(vault): password(secret)|OTDS Client Secret Key|M|col-3
+    - passwords_k8api|otdsClientSecret: password|OTDS Client Secret|O|col-3
+  row2:
+    - configuration|otds.otdsws.newrelic.NEW_RELIC_APP_NAME|dependsOn(global.newrelic): input|OTDS New Relic App Name|M|col-4
+    - configuration|otds.otdsws.newrelic.NEW_RELIC_PROXY_HOST|dependsOn(global.newrelic): input|OTDS New Relic Proxy Host|O|col-4
+    - configuration|otds.otdsws.newrelic.NEW_RELIC_PROXY_PORT|dependsOn(global.newrelic): input(number)|OTDS New Relic Proxy Port|O|col-4
+  row3:
+    - passwords|otds.otdsws.otdsdb.password: password|OTDS Database User Password|M|col-4
+    - passwords_vault|otds.otdsws.otdsdb.password|dependsOn(vault): password(secret)|OTDS Database User Secret Key|M|col-4
+    - passwords|otdsAdminPassword: password|OTDS Admin Password|M|col-4
+    - passwords_vault|otdsAdminPassword|dependsOn(vault): password(secret)|OTDS Admin Secret Key|M|col-4
+    - passwords|otds.otdsws.cryptKey: input|OTDS Cryptographic Key|M|col-4
+    - passwords_vault|otds.otdsws.cryptKey|dependsOn(vault): password(secret)|OTDS Cryptographic Key|M|col-4
+  row4:
+    - configuration|otds.otdsws.vault.url|dependsOn(vault): input|Vault URL|M|col-3
+    - configuration|otds.otdsws.vault.namespace|dependsOn(vault): input|Vault Namespace|M|col-3
+    - configuration|otds.otdsws.vault.authpath|dependsOn(vault): input|Vault Auth Path|M|col-3
+    - configuration|otds.otdsws.vault.tokenAudience|dependsOn(vault): input|Vault Token Audience|O|col-3
+  row5:
+    - configuration|otds.otdsws.vault.proxyAddress|dependsOn(vault): input|Vault Proxy Address|O|col-3
+    - configuration|otds.otdsws.vault.role|dependsOn(vault): input|Vault Role|M|col-3
+    - configuration|otds.otdsws.vault.secretsPath|dependsOn(vault): input|Vault Secret Path|M|col-3
+    - configuration|otds.otdsws.vault.agentInjector|dependsOn(vault): toggle|Vault Agent Injector|O|col-3
+  row6:
+    - values|otds.ingress.enabled: toggle|Ingress|O|col-6
+    - configuration|otds.ingress.paths: list|OTDS Path Sequence|O|col-6
+  row7:
+    - configuration|da.wdkAppXmlConfig.tagsnvalues: list|Documentum Administrator tagsnvalues Sequence|O|col-12
+  row8:
+    - configuration|otds.otdsws.customSecretName: input|Name of Existing Secret Object|O|col-6
+
+docbroker:
+  row1:
+    - values|global.externalAccessEnabled: toggle|External Connection|O|col-12
+  row2:
+    - configuration|docbroker.ExtDocbroker.extNativeNodePort|dependsOn(global.externalAccessEnabled): input(number)|External Native Node Port|O|col-3
+    - configuration|docbroker.ExtDocbroker.extSSLNodePort|dependsOn(global.externalAccessEnabled): input(number)|External SSL Node Port|O|col-3
+    - configuration|docbroker.ExtDocbroker.createExtService|dependsOn(global.externalAccessEnabled): toggle|Create External Service|M|col-3
+    - configuration|docbroker.ExtDocbroker.enableLiveness|dependsOn(global.externalAccessEnabled): toggle|Liveness|O|col-3
+  row3:
+    - configuration|docbroker.ExtDocbroker.useELB|dependsOn(global.externalAccessEnabled,AWS): toggle|Externalizing Connection Broker|O|col-6
+    - configuration|docbroker.ExtDocbroker.useLBAnnotations|dependsOn(global.externalAccessEnabled): toggle|Load Balancer Annotations|O|col-6
+    - configuration|docbroker.ExtDocbroker.LBAnnotations|dependsOn(global.externalAccessEnabled,docbroker.ExtDocbroker.useLBAnnotations): list|Annotation List|M|col-6 # newline key value
+  row4:
+    - passwords|cs-secrets.docbroker.certificate.password|dependsOn(global.useCertificate): password|Keystore Password|M|col-4
+    - passwords_vault|cs-secrets.docbroker.certificate.password|dependsOn(vault,global.useCertificate): password(secret)|Keystore Secret Key|M|col-4
+    - passwords|cs-secrets.docbroker.certificate.aekpassphrase|dependsOn(global.useCertificate): password|AEK Passphrase|M|col-4
+    - passwords_vault|cs-secrets.docbroker.certificate.aekpassphrase|dependsOn(global.useCertificate,vault): password(secret)|AEK Secret Key|M|col-4
+    - passwords|cs-secrets.docbroker.certificate.trustpassword|dependsOn(global.useCertificate): password|Trust Store Password|M|col-4
+    - passwords_vault|cs-secrets.docbroker.certificate.trustpassword|dependsOn(vault,global.useCertificate): password(secret)|Trust Store Secret Key|M|col-4
+  row5:
+    - passwords|cs-secrets.docbroker.certificate.pemCertPrivKey|dependsOn(global.useCertificate): input|PEM Certificate Private Key|M|col-6
+    - passwords_vault|cs-secrets.docbroker.certificate.pemCertPrivKey|dependsOn(vault,global.useCertificate): input|PEM Certificate Private Key|M|col-6
+    - passwords|cs-secrets.docbroker.certificate.pemCertificate|dependsOn(global.useCertificate): textarea|PEM Certificate|M|col-6
+    - passwords_vault|cs-secrets.docbroker.certificate.pemCertificate|dependsOn(vault,global.useCertificate): textarea|PEM Certificate|M|col-6
+  row6:
+    - configuration|docbroker.newrelic.c_app_name|dependsOn(global.newrelic): input|Connection Broker New Relic App Name|M|col-6
+    - passwords|cs-secrets.ingress.keystorepassword|dependsOn(global.useCertificate): password|Keystore Password to Enable Backend TLS|M|col-6
+    - passwords_vault|cs-secrets.ingress.keystorepassword|dependsOn(global.useCertificate,vault): password(secret)|Keystore Password to Enable Backend TLS|M|col-6
+
+content-server:
+  row1:
+    - configuration|content-server.serviceAccount.createserviceaccount: toggle|Create Service Account|O|col-3
+    - configuration|content-server.docbase.id: input|Repository ID|M|col-3
+    - configuration|content-server.docbase.existing: toggle|Existing Repository|O|col-3
+    - configuration|content-server.docbase.index: input|Repository Index|M|col-3
+  row2:
+    - configuration|cs-secrets.database.userName: input|Database User|M|col-3
+    - configuration|content-server.database.port: input(number)|Database Port|O|col-3
+    - values|global.aekLocation: select(Local,Remote_Vault)|AEK Location|M|col-3
+    - configuration|cs-secrets.contentserver.aek.algorithm: select(AES_256_CBC,AES_192_CBC,AES_128_CBC)|Encryption Algorithm|M|col-3
+  row3:
+    - configuration|content-server.contentserver.fulltextEngineSSVCEnable: toggle|DCM Search as Default|O|col-6
+    - configuration|content-server.contentserver.localeName: input|Documentum CM Server Language Code|O|col-6
+  row4:
+    - passwords|cs-secrets.contentserver.install.appserver.admin.password: password|Admin Password|M|col-3
+    - passwords_vault|cs-secrets.contentserver.install.appserver.admin.password|dependsOn(vault): password(secret)|Admin Secret Key|M|col-3
+    - passwords|cs-secrets.contentserver.install.root.password: password|Root Password|M|col-3
+    - passwords_vault|cs-secrets.contentserver.install.root.password|dependsOn(vault): password(secret)|Root Secret Key|M|col-3
+    - passwords|cs-secrets.clients.preferencePassword: password|WDK Preference Password|M|col-3
+    - passwords_vault|cs-secrets.clients.preferencePassword|dependsOn(vault): password(secret)|WDK Preference Secret Key|M|col-3
+    - passwords|cs-secrets.clients.presetPassword: password|WDK Presets Password|M|col-3
+    - passwords_vault|cs-secrets.clients.presetPassword|dependsOn(vault): password(secret)|WDK Presets Secret Key|M|col-3
+  row5:
+    - configuration|content-server.ExtCS.tcp_route|dependsOn(global.externalAccessEnabled): input|Node IP Address|O|col-3
+    - configuration|content-server.ExtCS.nativeExtPort|dependsOn(global.externalAccessEnabled): input(number)|Native External Port|O|col-3
+    - configuration|content-server.ExtCS.sslExtPort|dependsOn(global.externalAccessEnabled): input(number)|SSL External Port|O|col-3
+    - configuration|content-server.ExtCS.extDbrPort|dependsOn(global.externalAccessEnabled): input(number)|External Connection Broker Port|O|col-3
+  row6:
+    - configuration|content-server.ExtCS.createExtService|dependsOn(global.externalAccessEnabled): toggle|Create External Service|O|col-6
+    - configuration|content-server.ExtCS.useELB|dependsOn(global.externalAccessEnabled,AWS): toggle|Externalizing Documentum CM Server|O|col-6
+  row7:
+    - configuration|content-server.ExtCS.useLBAnnotations|dependsOn(global.externalAccessEnabled): toggle|Load Balancer Annotations|O|col-3
+    - configuration|content-server.ExtCS.LBAnnotations|dependsOn(global.externalAccessEnabled,content-server.ExtCS.useLBAnnotations): list|Annotation List|M|col-6 # newline key value
+  row8:
+    - configuration|content-server.s3Store.enable|dependsOn(AWS): toggle|Amazon S3|O|col-12
+  row9:
+    - configuration|content-server.s3Store.name|dependsOn(AWS,content-server.s3Store.enable): input|S3 Store Name|M|col-4
+    - passwords|cs-secrets.s3Store.s3StoreBaseUrl|dependsOn(AWS,content-server.s3Store.enable): input|S3 Store Base URL|M|col-4
+    - passwords_vault|cs-secrets.s3Store.s3StoreBaseUrl|dependsOn(AWS,vault,content-server.s3Store.enable): input|S3 Store Base URL|M|col-4
+    - passwords|cs-secrets.s3Store.s3StoreCredentialID|dependsOn(AWS,content-server.s3Store.enable): password|S3 Store Credential ID|M|col-4
+    - passwords_vault|cs-secrets.s3Store.s3StoreCredentialID|dependsOn(AWS,vault,content-server.s3Store.enable): password(secret)|S3 Store Credential ID|M|col-4
+  row10:
+    - passwords|cs-secrets.s3Store.s3StoreCredentialKEY|dependsOn(AWS,content-server.s3Store.enable): password|S3 Store Credential Key|M|col-4
+    - passwords_vault|cs-secrets.s3Store.s3StoreCredentialKEY|dependsOn(AWS,vault,content-server.s3Store.enable): password(secret)|S3 Store Credential Key|M|col-4
+    - configuration|content-server.s3Store.default|dependsOn(AWS,content-server.s3Store.enable): toggle|Enable as Default Store|O|col-4
+    - configuration|content-server.s3Store.encryption|dependsOn(AWS,content-server.s3Store.enable): toggle|Encryption|O|col-4
+  row11:
+    - configuration|content-server.s3Store.proxyHost|dependsOn(AWS,content-server.s3Store.enable): input|Proxy Host|O|col-4
+    - configuration|content-server.s3Store.proxyPort|dependsOn(AWS,content-server.s3Store.enable): input(number)|Proxy Port|O|col-2
+    - configuration|content-server.s3Store.proxyProtocal|dependsOn(AWS,content-server.s3Store.enable): select(http,https)|Proxy Protocol|O|col-2
+    - configuration|content-server.s3Store.noProxy|dependsOn(AWS,content-server.s3Store.enable): input|No Proxy|O|col-4
+  row12:
+    - configuration|content-server.s3Store.isworm|dependsOn(AWS,content-server.s3Store.enable): toggle|WORM|O|col-4
+    - configuration|content-server.s3Store.vendor|dependsOn(AWS,content-server.s3Store.enable): input|Vendor|M|col-4
+    - configuration|content-server.s3Store.region|dependsOn(AWS,content-server.s3Store.enable): input|Region|M|col-4
+  row13:
+    - configuration|content-server.s3Store.enable_md5|dependsOn(AWS,content-server.s3Store.enable): toggle|MD5|O|col-3
+    - configuration|content-server.s3Store.enable_v4signing|dependsOn(AWS,content-server.s3Store.enable): toggle|v4 Signing|O|col-3
+    - configuration|content-server.s3Store.multiPartEnable|dependsOn(AWS, content-server.s3Store.enable): toggle|Multipart|O|col-3
+    - configuration|content-server.s3Store.numThreads|dependsOn(AWS, content-server.s3Store.enable): input|Multipart Thread Count|M|col-3
+  row14:
+    - configuration|content-server.restStore.enable|dependsOn(GCP,Azure): toggle|REST Store|O|col-12
+  row15:
+    - configuration|content-server.restStore.default|dependsOn(GCP,content-server.restStore.enable): toggle|Enable as Default Store|O|col-4
+    - configuration|content-server.restStore.name|dependsOn(GCP,Azure,content-server.restStore.enable): input|REST Store Name|M|col-4
+    - configuration|content-server.restStore.restStoreType|dependsOn(GCP,Azure,content-server.restStore.enable): input|REST Store Type|O|col-4
+  row16:
+    - passwords|cs-secrets.restStore.restStoreBaseUrl|dependsOn(GCP,content-server.restStore.enable): input|REST Store Base URL|M|col-4
+    - passwords_vault|cs-secrets.restStore.restStoreBaseUrl|dependsOn(GCP,content-server.restStore.enable,vault): input|REST Store Base URL|M|col-4
+    - passwords|cs-secrets.restStore.restStoreCredentialID|dependsOn(GCP,content-server.restStore.enable): password|REST Store Credential ID|O|col-4
+  row17:
+    - passwords_vault|cs-secrets.restStore.restStoreCredentialID|dependsOn(GCP,content-server.restStore.enable,vault): password(secret)|REST Store Credential ID|O|col-3
+    - passwords|cs-secrets.restStore.restStoreCredentialKEY|dependsOn(GCP,content-server.restStore.enable): password|REST Store Credential Key|O|col-3
+    - passwords_vault|cs-secrets.restStore.restStoreCredentialKEY|dependsOn(GCP,content-server.restStore.enable,vault): password(secret)|REST Store Credential Key|O|col-3
+    - configuration|content-server.gcpStore.enable|dependsOn(GCP,content-server.restStore.enable): toggle|GCP Store|O|col-6
+  row18:
+    - passwords|cs-secrets.gcpStore_credentials|dependsOn(GCP,content-server.restStore.enable,content-server.gcpStore.enable): password|GCP Store Credentials|M|col-12
+    - passwords_vault|cs-secrets.gcpStore_credentials|dependsOn(GCP,vault,content-server.gcpStore.enable): password(secret)|GCP Store Credentials|M|col-12
+  row19:
+    - configuration|content-server.mip.proxy_host: input|MIP Proxy Host|O|col-4
+    - configuration|content-server.mip.proxy_port: input(number)|MIP Proxy Port|O|col-4
+    - configuration|content-server.mip.mip_service_port: input(number)|MIP Service Port|O|col-4
+  row20:
+    - configuration|content-server.restStore.encryption|dependsOn(Azure,content-server.restStore.enable): toggle|Encryption|O|col-4
+    - configuration|content-server.restStore.compression|dependsOn(Azure,content-server.restStore.enable): toggle|Compression|O|col-4
+    - configuration|content-server.restStore.proxyHost|dependsOn(Azure,content-server.restStore.enable): input|Proxy Host|O|col-4
+  row21:
+    - configuration|content-server.restStore.proxyPort|dependsOn(Azure,content-server.restStore.enable): input(number)|Proxy Port|O|col-4
+    - configuration|content-server.restStore.proxyProtocal|dependsOn(Azure,content-server.restStore.enable): input|Proxy Protocol|M|col-4
+    - configuration|content-server.restStore.noProxy|dependsOn(Azure,content-server.restStore.enable): input|No Proxy|O|col-4
+  row22:
+    - passwords|cs-secrets.restStore.azurecertificate|dependsOn(Azure,content-server.restStore.enable): textarea|Azure Certificate|M|col-4
+    - passwords_vault|cs-secrets.restStore.azurecertificate|dependsOn(Azure,vault,content-server.restStore.enable): textarea|Azure Certificate|M|col-4
+    - passwords|cs-secrets.ingress.tlscrt|dependsOn(Azure): textarea|TLS Certificate|M|col-4
+    - passwords_vault|cs-secrets.ingress.tlscrt|dependsOn(Azure,vault): textarea|TLS Certificate|M|col-4
+    - passwords|cs-secrets.ingress.tlskey|dependsOn(Azure): textarea|TLS Key|M|col-4
+    - passwords_vault|cs-secrets.ingress.tlskey|dependsOn(Azure,vault): textarea|TLS Key|M|col-4
+  row23:
+    - configuration|content-server.email.configure: toggle|Email Server Configuration|O|col-12
+  row24:
+    - configuration|content-server.email.smtpServer|dependsOn(content-server.email.configure): input|SMTP Host Name|O|col-2
+    - configuration|content-server.email.smtpPort|dependsOn(content-server.email.configure): input(number)|SMTP Port|O|col-2
+    - configuration|cs-secrets.email.smtpUser|dependsOn(content-server.email.configure): input|SMTP User Name|O|col-2
+    - configuration|cs-secrets.email.m365ClientId|dependsOn(content-server.email.configure): input|Microsoft 365 Client ID|O|col-2
+    - configuration|content-server.email.emailAddress|dependsOn(content-server.email.configure): input|Email Address|M|col-2
+    - passwords|cs-secrets.email.smtpPass|dependsOn(content-server.email.configure): password|SMTP Password|M|col-2
+    - passwords_vault|cs-secrets.email.smtpPass|dependsOn(content-server.email.configure,vault): password(secret)|SMTP Secret Key|M|col-2
+  row25:
+    - configuration|content-server.email.smtpAuth|dependsOn(content-server.email.configure): toggle|SMTP Auth|M|col-4
+    - configuration|content-server.email.smtpSSL|dependsOn(content-server.email.configure): toggle|SMTP SSL|M|col-4
+    - configuration|content-server.email.m365TenantId|dependsOn(content-server.email.configure): input|M365 Tenant ID|O|col-4
+  row26:
+    - configuration|content-server.email.proxyHost|dependsOn(content-server.email.configure): input|Proxy Host|O|col-2
+    - configuration|content-server.email.proxyPort|dependsOn(content-server.email.configure): input(number)|Proxy Port|O|col-2
+    - passwords|cs-secrets.email.smtpSSLCertificate|dependsOn(content-server.email.configure): textarea|SMTP Certificate|O|col-4
+    - passwords_vault|cs-secrets.email.smtpSSLCertificate|dependsOn(content-server.email.configure,vault): textarea|SMTP Certificate|O|col-4
+    - configuration|content-server.newrelic.app_name|dependsOn(global.newrelic): input|App Server New Relic App Name|M|col-4
+  row27:
+    - configuration|content-server.newrelic.c_app_name|dependsOn(global.newrelic): input|Documentum CM Server New Relic App Name|M|col-4
+    - passwords|cs-secrets.contentserver.aek.oldPassphrase: password|Old Passphrase|O|col-4
+    - passwords_vault|cs-secrets.contentserver.aek.oldPassphrase|dependsOn(vault): password|Old Passphrase|O|col-4
+    - passwords|cs-secrets.contentserver.aek.passphrase: password|New Passphrase|M|col-4
+    - passwords_vault|cs-secrets.contentserver.aek.passphrase|dependsOn(vault): password|New Passphrase|M|col-4
+  row28:
+    - passwords|cs-secrets.contentserver.certificate.password|dependsOn(global.useCertificate): password|Certificate Password|O|col-3
+    - passwords_vault|cs-secrets.contentserver.certificate.password|dependsOn(global.useCertificate,vault): password(secret)|Certificate Secret Key|O|col-3
+    - passwords|cs-secrets.contentserver.certificate.trustpassword|dependsOn(global.useCertificate): password|Trust Store Passphrase|O|col-3
+    - passwords_vault|cs-secrets.contentserver.certificate.trustpassword|dependsOn(global.useCertificate,vault): password(secret)|Trust Store Secret Key|O|col-3
+    - passwords|cs-secrets.contentserver.certificate.pemCertPrivKey|dependsOn(global.useCertificate): input|Private Key|O|col-3
+    - passwords_vault|cs-secrets.contentserver.certificate.pemCertPrivKey|dependsOn(global.useCertificate,vault): input|Private Key|O|col-3
+    - passwords|cs-secrets.contentserver.certificate.pemCertificate|dependsOn(global.useCertificate): input|Private Certificate|O|col-3
+    - passwords_vault|cs-secrets.contentserver.certificate.pemCertificate|dependsOn(global.useCertificate,vault): input|Private Certificate|O|col-3
+  row29:
+    - configuration|content-server.extraEnv: list|Default Extra Env Sequence|O|col-12
+
+d2config:
+  row1:
+    - values|global.d2configWebappName: input|Client Configuration Webapp Name|M|col-4
+    - configuration|d2config.env.appTitle: input|Client Configuration Webapp Title|O|col-4
+    - configuration|d2config.locale: input|ClientConfiguration Language Code|O|col-4
+  row2:
+    - configuration|d2config.customConfigurations.custom: toggle|Customizations|M|col-12
+  row3:
+    - configuration|d2config.customConfigurations.d2configImportParameters|dependsOn(d2config.customConfigurations.custom): input|Client Configuration Import Parameters|M|col-6
+    - configuration|d2config.newrelic.app_name|dependsOn(global.newrelic): input|Client Configuration New Relic App Name|M|col-6
+  row4:
+    - configuration|d2config.customConfigurations.filename|dependsOn(d2config.customConfigurations.custom): list|File Name of Custom Configuration|M|col-12
+  row5:
+    - configuration|d2config.customConfigurations.hook_approach: toggle|Client Configuration Hook Approach|O|col-6
+    - configuration|d2config.customConfigurations.createPVC: toggle|Client Configuration Create PVC|O|col-6
+
+d2classic:
+  row1:
+    - values|global.d2classicWebappName: input|Classic View Webapp Name|M|col-3
+    - configuration|d2classic.env.appTitle: input|App Title|O|col-2
+    - configuration|d2classic.MIPTrusted.enable: toggle|MIP Trusted Client|O|col-3
+    - configuration|d2classic.locale: input|Classic View Language Code|O|col-4
+  row2:
+    - configuration|d2classic.settings.allowedFrameOrigins: textarea|Check Multiple Line of Data |M|col-12
+  row3:
+    - configuration|d2classic.customConfigurations.custom: toggle|Customizations|O|col-3
+    - configuration|d2classic.customConfigurations.hook_approach: toggle|Hook Approach|O|col-3
+    - configuration|d2classic.customConfigurations.createPVC: toggle|Create PVC|O|col-2
+    - configuration|d2classic.newrelic.app_name|dependsOn(global.newrelic): input|Classic View New Relic App Name|M|col-4
+  row4:
+    - configuration|d2classic.D2FS.LoadOnStartup: list|List of Repositories with LoadOnStartup|O|col-12
+
+d2smartview:
+  row1:
+    - values|global.d2smartviewWebappName: input|Smart View Webapp Name|M|col-4
+    - configuration|d2smartview.restApiRuntime.CookieConfiguration.enable: toggle|Cookie Configuration|O|col-4
+    - configuration|d2smartview.locale: input|Smart View Language Code|O|col-4
+  row2:
+    - configuration|d2smartview.restApiRuntime.ContentConnect.enable: toggle|Content Connect for Smart View|O|col-6
+    - configuration|d2smartview.restApiRuntime.ContentConnect.restAllowedOrigins|dependsOn(d2smartview.restApiRuntime.ContentConnect.enable): textarea|REST Allowed Origin URLs|M|col-6
+  row3:
+    - configuration|d2smartview.restApiRuntime.OTDS.authMode: select(ct-otds_token,ct-otds_ticket-otds_token)|Auth Mode|M|col-4
+    - configuration|d2smartview.restApiRuntime.disableUserAgents: input|Disable User Agents|O|col-4
+    - configuration|d2smartview.newrelic.app_name|dependsOn(global.newrelic): input|Smart View New Relic App Name|M|col-4
+  row4:
+    - configuration|d2smartview.D2FS.coreOAuth2AuthUrl: input|Core OAuth2 Auth URL|O|col-4
+    - configuration|d2smartview.D2FS.coreOAuth2AccessTokenUrl: input|Core OAuth2 Access Token URL|O|col-4
+    - configuration|d2smartview.D2FS.dccUrl: input|Documentum Connector for Core Share URL|O|col-4
+  row5:
+    - configuration|d2smartview.D2FS.LoadOnStartup: list|List of Repositories with LoadOnStartup|O|col-12
+  row6:
+    - configuration|d2smartview.customConfigurations.custom: toggle|Smart View Customizations|O|col-3
+    - configuration|d2smartview.customConfigurations.hook_approach: toggle|Smart View Hook Approach|O|col-3
+    - configuration|d2smartview.customConfigurations.createPVC: toggle|Smart View Create PVC|O|col-2
+    - configuration|d2smartview.MIPTrusted.enable: toggle|MIP Trusted Client for Smart View|O|col-4
+
+d2rest:
+  row1:
+    - values|global.d2restWebappName: input|Client REST API Webapp Name|M|col-4
+    - configuration|d2rest.restApiRuntime.authMode: select(basic-ct,oauth2,ctoauth2,ct-otds_token,otds_token,otds_ticketotds_token,ct-otds_ticket-otds_token,otds_password,ct-otds_password)|Auth Mode|M|col-4
+    - configuration|d2rest.restApiRuntime.dqlAccessMode: select(all,group,admin)|DQL Access Mode|M|col-4
+  row2:
+    - configuration|d2rest.locale: input|Client REST API Language Code|O|col-6
+    - configuration|d2rest.restApiRuntime.AllowCors.enable: toggle|Allow CORS|O|col-6
+  row3:
+    - configuration|d2rest.restApiRuntime.AllowCors.restAllowedHeaders|dependsOn(d2rest.restApiRuntime.AllowCors.enable): textarea|Client REST API Allowed Headers|O|col-6
+    - configuration|d2rest.restApiRuntime.AllowCors.restExposedHeaders|dependsOn(d2rest.restApiRuntime.AllowCors.enable): textarea|Client REST API Exposed Headers|O|col-6
+  row4:
+    - configuration|d2rest.msgraphConfig.enable: toggle|Microsoft Graph Configuration|O|col-6
+    - configuration|d2rest.msgraphConfig.scope|dependsOn(d2rest.msgraphConfig.enable): input|Microsoft Graph Configuration Scope|M|col-6
+  row5:
+    - configuration|d2rest.MIPTrusted.enable: toggle|MIP Trusted Client for Client REST API|O|col-6
+    - configuration|d2rest.newrelic.app_name|dependsOn(global.newrelic): input|Client REST API New Relic App Name|M|col-6
+  row6:
+    - configuration|d2rest.D2FS.LoadOnStartup: list|List of Repositories with LoadOnStartup|O|col-12
+  row7:
+    - configuration|d2rest.customConfigurations.custom: toggle|Client REST API Customizations|O|col-4
+    - configuration|d2rest.customConfigurations.hook_approach: toggle|Client REST API Hook Approach|O|col-4
+    - configuration|d2rest.customConfigurations.createPVC: toggle|Client REST API Create PVC|O|col-4
+
+adminconsole:
+  row1:
+    - configuration|adminconsole.env.tomcatJVMArgs: input|Admin Console JVM Arguments|O|col-4
+    - configuration|adminconsole.cs.custom.PVCSubPath: input|PVC Path|M|col-4
+    - configuration|adminconsole.customConfigurations.locale: input|Admin Console Language Code|O|col-4
+  row2:
+    - values|global.adminConsoleWebappName: input|Admin Console Webapp Name|M|col-4
+    - configuration|adminconsole.restApiRuntime.CookieConfiguration.enable: toggle|Cookie Configuration|O|col-4
+    - configuration|adminconsole.restApiRuntime.OTDS.authMode: select(ct-otds_token,ct-otds_ticket-otds_token)|Auth Mode|M|col-4
+  row3:
+    - configuration|adminconsole.MIPTrusted.enable: toggle|MIP Trusted Client for Admin Console|O|col-6
+    - configuration|adminconsole.newrelic.app_name|dependsOn(global.newrelic): input|Admin Console New Relic App Name|M|col-6
+  row4:
+    - values|adminconsole.log4j: list|Log4j Log File Path|M|col-12
+
+contentconnect:
+  row1:
+    - configuration|contentconnect.configmap.DB_DB: input|Database Name|M|col-3
+    - configuration|contentconnect.configmap.DB_TABLESPACE_NAME: input|Tablespace Name|O|col-3
+    - configuration|contentconnect.configmap.DB_SERVER_NAME: input|Database Server Name|O|col-3
+    - configuration|contentconnect.configmap.DB_SERVICE_NAME: input|Database Service Name|O|col-3
+  row2:
+    - configuration|contentconnect.configmap.DB_P12_WALLET_FILE_NAME: input|Database P12 Wallet File Name|O|col-4
+    - configuration|contentconnect.configmap.DB_SSO_WALLET_FILE_NAME: input|Database SSO Wallet File Name|O|col-4
+    - configuration|contentconnect.configmap.DB_TNS_FILE_NAME: input|Database TNS File Name|O|col-4
+  row3:
+    - configuration|contentconnect.configmap.authType: select(otds,Basic)|Auth Type|M|col-4
+    - configuration|contentconnect.configmap.clientId: input|Client ID|M|col-4
+    - passwords|contentconnect.configmap.clientSecret: password|Client Secret|M|col-4
+    - passwords_vault|contentconnect.configmap.clientSecret|dependsOn(vault): password|Client Secret|M|col-4
+  row4:
+    - configuration|contentconnect.configmap.tenantId: input|Tenant ID|M|col-3
+    - configuration|contentconnect.configmap.protocol: select(IPV6,IPV4)|Protocol|M|col-3
+    - configuration|contentconnect.newrelic.new_relic_app_name|dependsOn(global.newrelic): input|New Relic App Name|M|col-3
+    - passwords|contentconnect.configmap.DB_SSL_CA: textarea|Database SSL Certificate|O|col-3
+    - passwords_vault|contentconnect.configmap.DB_SSL_CA|dependsOn(vault): textarea|Database SSL Certificate|O|col-3
+  row5:
+    - passwords_k8api|contentconnect.configmap.clientSecret: password|Kubernetes API Client Secret|O|col-12
+
+records:
+  row1:
+    - configuration|records.LabelPrint.enable: toggle|Label Printing|O|col-4
+    - configuration|records.LabelPrint.servletIp|dependsOn(records.LabelPrint.enable): input|Servlet IP Address|O|col-4
+    - configuration|records.LabelPrint.servletPort|dependsOn(records.LabelPrint.enable): input(number)|Servlet Port|O|col-4
+  row2:
+    - configuration|records.otds.url: input|OTDS URL for Records|O|col-6
+    - configuration|records.userProvidedServices.newrelic.appName|dependsOn(adminconsole.newrelic): input|Records New Relic App Name|M|col-6
+
+rqm:
+  row1:
+    - configuration|rqm.containers.rqm.docbrokerhostname: input|RQM Connection Broker Host Name|M|col-4
+    - configuration|rqm.userProvidedServices.newrelic.appName|dependsOn(global.newrelic): input|RQM New Relic App Name|M|col-4
+    - passwords|rqm.containers.rqm.rqmSysAdminPass: password|RQM System Admin Password|M|col-4
+    - passwords_vault|rqm.containers.rqm.rqmSysAdminPass|dependsOn(vault): password|RQM System Admin Password|M|col-4
+
+dctm-dcc:
+  row1:
+    - configuration|dctm-dcc.database.quartzdbDelegateClass: select(org.quartz.impl.jdbcjobstore.PostgreSQLDelegate,org.quartz.impl.jdbcjobstore.oracle.OracleDelegate)|Quartz Scheduler Database Delegate Class|M|col-4
+    - configuration|dctm-dcc.database.db_sid: input|Database SID|O|col-4
+    - passwords|dctm-dcc.database.password: password|Database Password|M|col-4
+    - passwords_vault|dctm-dcc.database.password|dependsOn(vault): password(secret)|Database Secret Key|M|col-4
+  row2:
+    - configuration|dctm-dcc.database.sslrootcertRequired: toggle|SSL Root Certificate|O|col-4
+    - configuration|dctm-dcc.database.sslcertRequired: toggle|SSL Certificate|O|col-4
+    - configuration|dctm-dcc.database.databaseServiceName|dependsOn(vault): input|Database Service Name|O|col-4
+  row3:
+    - configuration|dctm-dcc.database.db_p12_wallet_file: input|Database P12 Wallet File Name|O|col-6
+    - configuration|dctm-dcc.database.db_sso_wallet_file: input|Database SSO Wallet File Name|O|col-6
+  row4:
+    - configuration|dctm-dcc.metadata.enabled: toggle|Metadata Service|O|col-12
+  row5:
+    - configuration|dctm-dcc.metadata.dbSchemaInit.enabled|dependsOn(dctm-dcc.metadata.enabled): toggle|Metadata Database Schema|O|col-4
+    - configuration|dctm-dcc.metadata.dbSchemaInit.dbname|dependsOn(dctm-dcc.metadata.enabled): input|Metadata Database Name|M|col-4
+    - configuration|dctm-dcc.metadata.configMap.database.url|dependsOn(dctm-dcc.metadata.enabled): input|Metadata Database URL|O|col-4
+  row6:
+    - configuration|dctm-dcc.metadata.newrelic.app_name|dependsOn(dctm-dcc.metadata.enabled,global.newrelic): input|Metadata New Relic App Name|M|col-12
+  row7:
+    - configuration|dctm-dcc.syncagent.enabled: toggle|Syncagent|O|col-12
+  row8:
+    - configuration|dctm-dcc.syncagent.dbSchemaInit.enabled|dependsOn(dctm-dcc.syncagent.enabled): toggle|Syncagent Database Schema|O|col-4
+    - configuration|dctm-dcc.syncagent.dbSchemaInit.dbname|dependsOn(dctm-dcc.syncagent.enabled): input|Syncagent Database Name|M|col-4
+    - configuration|dctm-dcc.syncagent.configMap.database.url|dependsOn(dctm-dcc.syncagent.enabled): input|Syncagent Database URL|M|col-4
+  row9:
+    - configuration|dctm-dcc.syncagent.newrelic.app_name|dependsOn(dctm-dcc.syncagent.enabled,global.newrelic): input|Syncagent New Relic App Name|M|col-12
+  row10:
+    - configuration|dctm-dcc.syncagent.configMap.mail.fromEmailId|dependsOn(dctm-dcc.syncagent.enabled): input|From Email ID|O|col-4
+    - configuration|dctm-dcc.syncagent.configMap.mail.toEmailId|dependsOn(dctm-dcc.syncagent.enabled): input|To Email ID|O|col-4
+    - configuration|dctm-dcc.syncagent.configMap.mail.bccEmailId|dependsOn(dctm-dcc.syncagent.enabled): input|Bcc Email ID|O|col-4
+  row11:
+    - configuration|dctm-dcc.syncagent.configMap.mail.ccEmailId|dependsOn(dctm-dcc.syncagent.enabled): input|Cc Email ID|O|col-6
+    - configuration|dctm-dcc.syncagent.configMap.mail.subject|dependsOn(dctm-dcc.syncagent.enabled): input|Email Subject|O|col-6
+  row12:
+    - configuration|dctm-dcc.syncnshareManual.enabled: toggle|syncnshareManual|O|col-12
+  row13:
+    - configuration|dctm-dcc.syncnshareManual.dbSchemaInit.enabled|dependsOn(dctm-dcc.syncnshareManual.enabled): toggle|syncnshareManual Database Schema|O|col-4
+    - configuration|dctm-dcc.syncnshareManual.dbSchemaInit.dbname|dependsOn(dctm-dcc.syncnshareManual.enabled): input|syncnshareManual Database Name|M|col-4
+    - configuration|dctm-dcc.syncnshareManual.configMap.database.url|dependsOn(dctm-dcc.syncnshareManual.enabled): input|syncnshareManual Database URL|M|col-4
+  row14:
+    - configuration|dctm-dcc.syncnshareManual.newrelic.app_name|dependsOn(dctm-dcc.syncnshareManual.enabled,global.newrelic): input|syncnshareManual New Relic App Name|M|col-12
+  row15:
+    - configuration|dctm-dcc.syncnshareManual.configMap.setup.sourceRepoUrl|dependsOn(dctm-dcc.syncnshareManual.enabled): input|Internal Client REST API Service URL|M|col-4
+    - configuration|dctm-dcc.syncnshareManual.configMap.setup.targetRepoUrl|dependsOn(dctm-dcc.syncnshareManual.enabled): input|Connector for Core Share Endpoint URL|M|col-4
+    - configuration|dctm-dcc.syncnshareManual.configMap.setup.targetRepoClientId|dependsOn(dctm-dcc.syncnshareManual.enabled): input|Target Repository Client ID|M|col-4
+  row16:
+    - passwords|dctm-dcc.syncnshareManual.configMap.setup.targetRepoClientSecret|dependsOn(dctm-dcc.syncnshareManual.enabled): password|Target Repository Client Secret|M|col-6
+    - passwords_vault|dctm-dcc.syncnshareManual.configMap.setup.targetRepoClientSecret|dependsOn(vault,dctm-dcc.syncnshareManual.enabled): password(secret)|Target Repository Client Secret|M|col-6
+    - passwords|dctm-dcc.syncnshareManual.configMap.setup.sourceRepoPassword|dependsOn(dctm-dcc.syncnshareManual.enabled): password|Source Repository Password|M|col-6
+    - passwords_vault|dctm-dcc.syncnshareManual.configMap.setup.sourceRepoPassword|dependsOn(vault,dctm-dcc.syncnshareManual.enabled): password(secret)|Source Repository Secret Key|M|col-6
+  row17:
+    - configuration|dctm-dcc.coreNotification.enabled: toggle|Core Notification Service|O|col-12
+  row18:
+    - configuration|dctm-dcc.coreNotification.dbSchemaInit.enabled|dependsOn(dctm-dcc.coreNotification.enabled): toggle|Core Notification Database Schema|O|col-4
+    - configuration|dctm-dcc.coreNotification.dbSchemaInit.dbname|dependsOn(dctm-dcc.coreNotification.enabled): input|Core Notification Database Name|M|col-4
+    - configuration|dctm-dcc.coreNotification.configMap.database.url|dependsOn(dctm-dcc.coreNotification.enabled): input|Core Notification Database URL|O|col-4
+  row19:
+    - configuration|dctm-dcc.coreNotification.newrelic.app_name|dependsOn(dctm-dcc.coreNotification.enabled,global.newrelic): input|Core Notification New Relic App Name|M|col-12
+  row20:
+    - configuration|dctm-dcc.mailService.enabled: toggle|Mail Service|O|col-12
+  row21:
+    - configuration|dctm-dcc.mailService.configMap.mailconfig.authenticationType: select(basic,oauth)|Auth Type|M|col-3
+    - configuration|dctm-dcc.mailService.configMap.mailconfig.serviceProvider|dependsOn(dctm-dcc.mailService.enable): input|Service Provider Name|M|col-3
+    - configuration|dctm-dcc.mailService.configMap.mailconfig.tenantId|dependsOn(dctm-dcc.mailService.enable): input|Tenant ID|O|col-3
+    - configuration|dctm-dcc.mailService.configMap.mailconfig.clientId|dependsOn(dctm-dcc.mailService.enable): input|Client ID|O|col-3
+  row22:
+    - configuration|dctm-dcc.mailService.configMap.mailconfig.tokenUrl|dependsOn(dctm-dcc.mailService.enable): input|Token URL|M|col-3
+    - configuration|dctm-dcc.mailService.configMap.mailconfig.graphApiUrl|dependsOn(dctm-dcc.mailService.enable): input|Graph API URL|M|col-3
+    - configuration|dctm-dcc.mailService.configMap.mailconfig.smtpmailhost|dependsOn(dctm-dcc.mailService.enable): input|SMTP Mail Host|O|col-3
+    - configuration|dctm-dcc.mailService.configMap.mailconfig.smtpmailport|dependsOn(dctm-dcc.mailService.enable): input(number)|SMTP Mail Port|O|col-3
+  row23:
+    - configuration|dctm-dcc.mailService.configMap.mailconfig.usermail|dependsOn(dctm-dcc.mailService.enable): input|User Mail ID|O|col-3
+    - passwords|dctm-dcc.mailService.configMap.mailconfig.mailpassword|dependsOn(dctm-dcc.mailService.enable): password|Mail Password|O|col-3
+    - passwords_vault|dctm-dcc.mailService.configMap.mailconfig.mailpassword|dependsOn(vault,dctm-dcc.mailService.enable): password(secret)|Mail Secret Key|O|col-3
+    - configuration|dctm-dcc.mailService.configMap.mailconfig.starttls|dependsOn(dctm-dcc.mailService.enable): toggle|TLS|O|col-3
+    - passwords|dctm-dcc.mailService.configMap.mailconfig.clientSecret|dependsOn(dctm-dcc.mailService.enable): password|Client Secret|O|col-3
+    - passwords_vault|dctm-dcc.mailService.configMap.mailconfig.clientSecret|dependsOn(vault,dctm-dcc.mailService.enable): password|Client Secret|O|col-3
+  row24:
+    - configuration|dctm-dcc.mailService.newrelic.app_name|dependsOn(dctm-dcc.mailService.enabled,global.newrelic): input|Mail Service New Relic App Name|M|col-12
+
+dctm-rest:
+  row1:
+    - configuration|dctm-rest.newrelic.app_name|dependsOn(global.newrelic): input|Foundation REST API New Relic App Name|M|col-6
+    - configuration|dctm-rest.extraConfigMountPath: input|Extra Config Mount Path Volume|O|col-6
+
+dfs:
+  row1:
+    - configuration|dfs.newrelic.dfs_application_name|dependsOn(global.newrelic): input|Foundation SOAP API New Relic App Name|M|col-12
+
+dctm-cmis:
+  row1:
+    - configuration|dctm-cmis.newrelic.app_name|dependsOn(global.newrelic): input|Foundation CMIS API New Relic App Name|M|col-6
+    - configuration|dctm-cmis.extraConfigMountPath: input|Extra Config Mount Path Volume|O|col-6
+
+dctm-dms:
+  row1:
+    - passwords|dctm-dms.jmx.password: password|Java Management Extensions Password|M|col-6
+    - passwords_vault|dctm-dms.jmx.password|dependsOn(vault): password(secret)|Java Management Extensions Secret Key|O|col-6
+    - passwords|dctm-dms.certificates.bocsssl: textarea|Branch Office Caching Services SSL Certificate|M|col-6
+    - passwords_vault|dctm-dms.certificates.bocsssl|dependsOn(vault): textarea|Branch Office Caching Services SSL Certificate|M|col-6
+  row2:
+    - configuration|dctm-dms.newrelic.app_name|dependsOn(global.newrelic): input|Messaging Service New Relic App Name|M|col-6
+    - configuration|dctm-dms.extraConfigMountPath: input|Extra Config Mount Path Volume|O|col-6
+
+dtrbase:
+  row1:
+    - configuration|dtrbase.containers.dtrbase.drServiceUserEmailID: input|Service Account Email ID|M|col-4
+    - passwords|cs-secrets.clients.drServiceAccountPassword: password|Service Account Password|M|col-4
+    - passwords_vault|cs-secrets.clients.drServiceAccountPassword|dependsOn(vault): password(secret)|Service Account Secret Key|M|col-4
+  row2:
+    - configuration|dtrbase.containers.dtrbase.drCoreSmtpAuthRequired: toggle|SMTP Auth|M|col-12
+  row3:
+    - configuration|dtrbase.containers.dtrbase.drCoreSmtpUser|dependsOn(dtrbase.containers.dtrbase.drCoreSmtpAuthRequired): input|SMTP User Name|O|col-4
+    - configuration|dtrbase.newrelic.appName|dependsOn(global.newrelic): input|Reports New Relic App Name|M|col-4
+    - passwords|dtrbase.containers.dtrbase.drCoreSmtpPassword|dependsOn(dtrbase.containers.dtrbase.drCoreSmtpAuthRequired): password|SMTP Password|O|col-4
+    - passwords_vault|dtrbase.containers.dtrbase.drCoreSmtpPassword|dependsOn(vault,dtrbase.containers.dtrbase.drCoreSmtpAuthRequired): password|SMTP Password|O|col-4
+  row4:
+    - configuration|dtrbase.containers.dtrbase.drCoreSmtpStarttlsEnable: toggle|SMTP TLS|M|col-4
+    - configuration|dtrbase.containers.dtrbase.drCoreFromAddress: input|Sender Email ID|M|col-4
+    - configuration|dtrbase.containers.dtrbase.drCoreReportServlet: input|Reports Servlet URL|M|col-4
+  row5:
+    - configuration|dtrbase.containers.dtrbase.drCoreMailSubject: input|Email Subject|M|col-3
+    - configuration|dtrbase.containers.dtrbase.drCoreSmtpHost: input|SMTP Host|O|col-3
+    - configuration|dtrbase.containers.dtrbase.drCoreSmtpPort: input(number)|SMTP Port Number|O|col-3
+    - configuration|dtrbase.containers.dtrbase.ingressHost: input|Ingress Host Name|M|col-3
+
+appworks-gateway:
+  row1:
+    - configuration|appworks-gateway.database.vendor: input|Database Vendor|M|col-4
+    - configuration|appworks-gateway.database.appworksdb.database: input|Database Name|M|col-4
+    - configuration|appworks-gateway.database.appworksdb.service: input|Database Service|O|col-4
+  row2:
+    - configuration|appworks-gateway.database.appworksdb.user: input|Database User Name|M|col-3
+    - passwords|appworks-gateway.database.appworksdb.password: password|Database User Password|M|col-3
+    - configuration|appworks-gateway.database.admin.user: input|Database Admin User|M|col-3
+    - passwords|appworks-gateway.database.admin.password: password|Database Admin Password|M|col-3
+  row3:
+    - configuration|appworks-gateway.database.useSSL: toggle|SSL|O|col-4
+    - configuration|appworks-gateway.database.trustDbCerts: toggle|Trust Database Certificate|O|col-4
+    - configuration|appworks-gateway.database.sslMode: select(verify-ca,require)|SSL Mode|O|col-4
+  row4:
+    - configuration|appworks-gateway.otds.admin.user: input|OTDS Admin User|M|col-3
+    - configuration|appworks-gateway.otds.partition.new: input|Partition Name|M|col-3
+    - configuration|appworks-gateway.otds.resource.new: input|Resource Name|M|col-3
+    - configuration|appworks-gateway.newrelic.appName|dependsOn(global.newrelic): input|AppWorks Gateway New Relic App Name|M|col-3
+  row5:
+    - configuration|appworks-gateway.awg.admin.newadminuser: input|Admin User Name|M|col-4
+    - passwords|appworks-gateway.awg.admin.newadminpassword: password|New Admin Password|M|col-4
+    - configuration|appworks-gateway.awg.externalurl: input|External URL|M|col-4
+  row6:
+    - configuration|appworks-gateway.ingress.hosts: list|Ingress Host Name|M|col-12
+  row7:
+    - configuration|appworks-gateway.ingress.tls.enabled: toggle|Ingress TLS|O|col-12
+  row8:
+    - configuration|appworks-gateway.ingress.tls.info|dependsOn(appworks-gateway.ingress.tls.enabled): list|TLS Info|O|col-12
+  row9:
+    - configuration|appworks-gateway.vault.type|dependsOn(vault): input|Vault Type|M|col-4
+    - configuration|appworks-gateway.vault.host|dependsOn(vault): input|Vault Host|O|col-4
+    - configuration|appworks-gateway.vault.port|dependsOn(vault): input(number)|Vault Port|O|col-4
+  row10:
+    - configuration|appworks-gateway.vault.namespace|dependsOn(vault): input|Vault Namespace|M|col-4
+    - configuration|appworks-gateway.vault.secrets|dependsOn(vault): input|Vault Secrets|M|col-4
+    - configuration|appworks-gateway.vault.authConfigPath|dependsOn(vault): input|Vault Auth Configuration Path|M|col-4
+  row11:
+    - configuration|appworks-gateway.vault.authPath|dependsOn(vault): input|Vault Auth Path|M|col-4
+    - configuration|appworks-gateway.vault.role|dependsOn(vault): input|Vault Role|M|col-4
+    - configuration|appworks-gateway.vault.authType|dependsOn(vault): textarea|Vault Auth Type|M|col-4
+  row12:
+    - configuration|appworks-gateway.secretName: input|Secret Name|O|col-12
+
+xPlore-OneD:
+  row1:
+    - configuration|xPlore-OneD.indexagent.docbaseUser: input|Index Agent Docbase User|M|col-4
+    - configuration|xPlore-OneD.newRelic.appNameSuffix|dependsOn(global.newrelic): input|xPlore OneD New Relic App Name|M|col-4
+    - configuration|xPlore-OneD.ingress.enable: toggle|xPlore OneD Ingress|O|col-4
+  row2:
+    - configuration|xPlore-OneD.ingress.name|dependsOn(xPlore-OneD.ingress.enable): input|xPlore OneD Ingress Name|M|col-4
+    - configuration|xPlore-OneD.ingress.domain|dependsOn(xPlore-OneD.ingress.enable): input|xPlore OneD Ingress Domain|M|col-4
+    - configuration|xPlore-OneD.ingress.hostName|dependsOn(xPlore-OneD.ingress.enable): input|xPlore OneD Ingress Host Name|M|col-4
+  row3:
+    - passwords|xPlore-OneD.cps.extraEnv: list|CPS Extra Environment Variables|O|col-6
+    - passwords_vault|xPlore-OneD.cps.extraEnv|dependsOn(vault): list|CPS Extra Environment Variables|O|col-6
+    - passwords_k8api|xPlore-OneD.cps.extraEnv: list|CPS Extra Environment Variables for Kubernetes API|O|col-6
+  row4:
+    - passwords|xPlore-OneD.indexserver.extraEnv: list|Index Server Extra Environment Variables|O|col-6
+    - passwords_vault|xPlore-OneD.indexserver.extraEnv|dependsOn(vault): list|Index Server Extra Environment Variables|O|col-6
+    - passwords_k8api|xPlore-OneD.indexserver.extraEnv: list|Index Server Extra Environment Variables for Kubernetes API|O|col-6
+  row5:
+    - configuration|xPlore-OneD.dcis-text-extractor.parser.serviceAccount.createserviceaccount: toggle|Create Service Account|O|col-6
+    - configuration|xPlore-OneD.dcis-text-extractor.fetcher.serviceAccount.createserviceaccount: toggle|Create Service Account|O|col-6
+  row6:
+    - configuration|xPlore-OneD.dcis-text-extractor.fetcher.docbrokers: list|Connection Broker Details|O|col-12
+  row7:
+    - configuration|xPlore-OneD.dcis-text-extractor.global.extraDocbases: list|Extra Docbases|O|col-12
+
+dctm-workflow-designer:
+  row1:
+    - configuration|dctm-workflow-designer.otds.logon_appname: input|OTDS Login App Name|M|col-6
+    - configuration|dctm-workflow-designer.newrelic.app_name|dependsOn(global.newrelic): input|Workflow Designer New Relic App Name|M|col-6
+
+bps:
+  row1:
+    - configuration|bps.newrelic.app_name|dependsOn(global.newrelic): input|Business Process Services New Relic App Name|M|col-4
+    - passwords|bps.tomcat.password: password|Tomcat Login Password|M|col-4
+    - passwords_vault|bps.tomcat.password|dependsOn(vault): password|Tomcat Login Password|M|col-4
+
+da:
+  row1:
+    - configuration|da.newrelic.appName|dependsOn(global.newrelic): input|Documentum Administrator New Relic App Name|M|col-12
+
+xda:
+  row1:
+    - configuration|xda.newrelic.app_name|dependsOn(global.newrelic): input|xDA New Relic App Name|M|col-6
+    - passwords|xda.xdacli.password: password|xDA Client Password|M|col-6
+    - passwords_vault|xda.xdacli.password|dependsOn(vault): password(secret)|xDA Client Secret Key|M|col-6
+
+smartviewm365:
+  row1:
+    - values|global.msClientId: input|Client ID|M|col-4
+    - values|global.mstenantid: input|Tenant ID|M|col-4
+    - passwords|msclientsecret: input|Microsoft Secret|M|col-4
+    - passwords_vault|msclientsecret|dependsOn(vault): input|Microsoft Secret|M|col-4
+  row2:
+    - configuration|smartviewm365.ccsv.appname: input|App Name|M|col-3
+    - configuration|smartviewm365.ccsv.teamsrootpath: input|Teams Root Path|M|col-3
+    - configuration|smartviewm365.ccsv.sharepointdomains: input|SharePoint Domain|M|col-2
+    - configuration|smartviewm365.newrelic.app_name|dependsOn(global.newrelic): input|Smart View M365 New Relic App Name|M|col-4
+  row3:
+    - configuration|smartviewm365.ccsv.importconfig: select(both,move,copy)|Import Configuration|M|col-4
+    - configuration|smartviewm365.ccsv.defaultconfig: select(copy,move)|Default Import Configuration|M|col-4
+    - configuration|smartviewm365.ccsv.rootreposelection: toggle|Display Root of Repository|O|col-4
+  row4:
+    - configuration|smartviewm365.ccsv.loglevel: select(ERROR,WARN,INFO,DEBUG)|Log Level|M|col-2
+    - configuration|smartviewm365.ccsv.window: toggle|View Logs in New Window|O|col-3
+    - configuration|smartviewm365.ccsv.consoleRe: toggle|View Logs in Console|O|col-3
+    - configuration|smartviewm365.customConfigurations.locale: input|Smart View M365 Language Code|O|col-4
+
+otiv:
+  row1:
+    - configuration|otiv.global.database.ivName: input|Database Name|M|col-3
+    - configuration|otiv.global.database.type: select(postgresql,oracle,mssql)|Database Type|M|col-3
+    - configuration|otiv.global.database.port: input(number)|Database Port|O|col-3
+    - configuration|otiv.global.database.adminDatabase: input|Admin Database Name|M|col-3
+  row2:
+    - configuration|otiv.global.database.adminUsername: input|Admin User Name|M|col-2
+    - values|otiv.global.ingressDomainName|dependsOn(global.multiIngress): input|Ingress Domain Name|O|col-2
+    - configuration|otiv.global.database.ssl: toggle|Database SSL communication|M|col-4
+    - configuration|otiv.global.database.sslMode|dependsOn(otiv.global.database.ssl): select(prefer,require,verify-ca,verifyfull)|Database SSL Mode|M|col-4
+  row3:
+    - passwords|otiv.global.amqp.password: password|Global AMQP Password|M|col-4
+    - passwords_vault|otiv.global.amqp.password|dependsOn(vault): password|Global AMQP Password|M|col-4
+    - passwords|otiv.global.amqp.pwdKey: password|Global AMQP Password Key|M|col-4
+    - passwords_vault|otiv.global.amqp.pwdKey|dependsOn(vault): password|Global AMQP Password Key|M|col-4
+    - passwords|otiv.global.database.ivPassword: password|Database App User Password|M|col-4
+  row4:
+    - configuration|otiv.existingSecret: input|Kubernetes API Secret Name|O|col-12
+  row5:
+    - configuration|otiv.global.newRelic.baseAppName|dependsOn(global.newrelic): input|Intelligent Viewing New Relic App Name|M|col-12
+  row6:
+    - configuration|otiv.global.secretlink.vault.address|dependsOn(vault): input|Vault Address|M|col-4
+    - configuration|otiv.global.secretlink.vault.mountpoint|dependsOn(vault): input|Vault Mount Point|M|col-4
+    - configuration|otiv.global.secretlink.vault.path|dependsOn(vault): input|Vault Path|M|col-4
+  row7:
+    - configuration|otiv.global.secretlink.vault.namespace|dependsOn(vault): input|Vault Namespace|O|col-4
+    - configuration|otiv.global.secretlink.vault.authpath|dependsOn(vault): input|Vault Auth Path|M|col-4
+    - configuration|otiv.global.secretlink.vault.role|dependsOn(vault): input|Vault Role|M|col-4
+  row8:
+    - configuration|otiv.global.trustedSourceOrigins: input|Trusted Source Origins|O|col-6
+    - configuration|otiv.global.trustedSourceOriginsAnonymous: input|Trusted Source Origins for Anonymous|O|col-6
+amq:
+  row1:
+    - configuration|amq.serviceAccount.createserviceaccount: toggle|Create Service Account|O|col-12
+
+notificationservice:
+  row1:
+    - passwords|notificationservice.configMap.database.password: password|Database Password for Notification Service|M|col-6
+    - passwords_vault|notificationservice.configMap.database.db_ssl_rootcert|dependsOn(vault): textarea|SSL Root Certificate for Notification Service|O|col-6
+    - passwords|notificationservice.configMap.database.db_ssl_rootcert: textarea|SSL Root Certificate for Notification Service|O|col-6
+    - passwords_vault|notificationservice.configMap.database.password|dependsOn(vault,notificationservice.enabled): password|Database Password|M|col-6
+  row2:
+    - configuration|notificationservice.enabled: toggle|Notification Service|O|col-12
+  row3:
+    - configuration|notificationservice.configMap.extApiconfig.teamsNSEnabled|dependsOn(notificationservice.enabled): toggle|Notification Service for Smart View M365|M|col-6
+    - configuration|notificationservice.dbSchemaInit.enabled|dependsOn(notificationservice.enabled): toggle|Schema Init|O|col-3
+    - configuration|notificationservice.dbSchemaInit.dbname|dependsOn(notificationservice.enabled): input|Database Name|M|col-3
+  row4:
+    - configuration|notificationservice.configMap.extApiconfig.oesNSEnabled|dependsOn(notificationservice.enabled): toggle|Notification Service for Online Editing Service|M|col-12
+  row5:
+    - configuration|notificationservice.systemproxy.enabled|dependsOn(notificationservice.enabled): toggle|System Proxy|O|col-3
+    - configuration|notificationservice.systemproxy.noProxyHosts|dependsOn(notificationservice.enabled): input|No Proxy Host Details|O|col-3
+    - configuration|notificationservice.configMap.database.url|dependsOn(notificationservice.enabled): input|Database URL|O|col-3
+    - configuration|notificationservice.configMap.database.db_servicename|dependsOn(notificationservice.enabled): input|Database Service Name|O|col-3
+  row6:
+    - configuration|notificationservice.configMap.database.db_p12filename|dependsOn(notificationservice.enabled): input|Database P12 File Name|O|col-4
+    - configuration|notificationservice.configMap.database.db_ssofilename|dependsOn(notificationservice.enabled): input|Database SSO File Name|O|col-4
+    - configuration|notificationservice.newrelic.proxy_enable|dependsOn(notificationservice.enabled): toggle|Proxy for New Relic|O|col-4
+  row7:
+    - configuration|notificationservice.newrelic.app_name|dependsOn(global.newrelic): input|DCM for Microsoft 365 New Relic App Name|M|col-12
+  row8:
+    - passwords_k8api|notificationservice.configMap.database.db_ssl_rootcert|dependsOn(otiv.global.database.ssl): textarea|Database SSL Root Certificate for Notification Service|O|col-12
+
+oesconnector:
+  row1:
+    - passwords|oesconnector.configMap.database.password: password|Database Password for OES Connector|M|col-6
+    - passwords_vault|oesconnector.configMap.database.password|dependsOn(vault): password(secret)|Database Password for OES Connector|M|col-6
+    - configuration|oesconnector.env.tomcatJVMArgs: input|OES Connector JVM Arguments|O|col-6
+  row2:
+    - configuration|oesconnector.dbSchemaInit.enabled: toggle|Database Schema Init Container for OES Connector|M|col-12
+  row3:
+    - configuration|oesconnector.dbSchemaInit.dbname|dependsOn(oesconnector.dbSchemaInit.enabled): input|Database Name for OES Connector|M|col-6
+    - configuration|oesconnector.newrelic.app_name|dependsOn(global.newrelic): input|OES Connector New Relic App Name|M|col-6
+  row4:
+    - configuration|oesconnector.configMap.database|dependsOn(oesconnector.dbSchemaInit.enabled): list|Database Service Name for OES Connector|O|col-6
+    - configuration|oesconnector.configMap.database.url|dependsOn(oesconnector.dbSchemaInit.enabled): input|Database URL for OES Connector|O|col-6
+  row5:
+    - passwords_k8api|oesconnector.configMap.database.db_ssl_rootcert|dependsOn(otiv.global.database.ssl): textarea|Database SSL Root Certificate for OES Connector|O|col-12
+
+dctm-dcis:
+  row1:
+    - aviator-config|dctm-dcis.activemq.broker_url: input|ActiveMQ Broker URL|M|col-3
+    - aviator-config|dctm-dcis.activemq.user_name: input|ActiveMQ User Name|M|col-3
+    - aviator-config|dctm-dcis.activemq.queue_name: input|ActiveMQ Queue Name|M|col-3
+    - passwords|dctm-dcis.activemq.password: password|ActiveMQ Password|M|col-3
+  row2:
+    - aviator-config|dctm-dcis.csai.embedding_svc_url: input|CSAI Embedding Service URL|M|col-4
+    - aviator-config|dctm-dcis.csai.chat_svc_url: input|CSAI Chat Service URL|M|col-4
+    - aviator-config|dctm-dcis.activemq.folder_queue_name: input|ActiveMQ Folder Queue Name|O|col-4
+  row3:
+    - aviator-config|dctm-dcis.saasproxy.websocketEndpoint: input|SaaS Proxy WebSocket Endpoint|M|col-4
+    - aviator-config|dctm-dcis.saasproxy.websocketAuth: input|SaaS Proxy WebSocket Auth|M|col-4
+    - aviator-config|dctm-dcis.saasproxy.websocketConnections: input|SaaS Proxy WebSocket Connections|M|col-4
+  row4:
+    - aviator-config|dctm-dcis.saasproxy.callbacksAuthEndpoint: input|Callbacks Auth Endpoint|M|col-4
+    - aviator-config|dctm-dcis.saasproxy.callbacksPermsEndpoint: input|Foundation REST API Permission Check Endpoint|M|col-4
+    - aviator-config|dctm-dcis.saasproxy.callbacksDctmAuthEndpoint: input|Foundation REST API Auth Endpoint|O|col-4
+  row5:
+    - aviator-config|dctm-dcis.otds.enabled: toggle|OTDS Integration|O|col-12
+  row6:
+    - aviator-config|dctm-dcis.otds.oauth_client_id|dependsOn(dctm-dcis.otds.enabled): input|OAuth Client ID|M|col-4
+    - aviator-config|dctm-dcis.otds.oauth_token_url|dependsOn(dctm-dcis.otds.enabled): input|OAuth Token URL|M|col-4
+    - passwords|dctm-dcis.otds.oauth_client_secret|dependsOn(dctm-dcis.otds.enabled): input|OTDS Client Secret for DCIS|M|col-4
+
+lss:
+  row1:
+    - ls-config|createSC|dependsOn(AWS): toggle|Create Storage Class|O|col-6
+    - ls-config|enable_sharepoint: toggle|SharePoint|O|col-6
+  row2:
+    - ls-config|filesystem_id|dependsOn(AWS,createSC): input|EFS ID|O|col-4
+    - ls-config|dc4spserverIP|dependsOn(enable_sharepoint): input|DC4SP Server IP|M|col-4
+    - ls-config|d2publicingress.dc4spService.host|dependsOn(enable_sharepoint): input|DC4SP Ingress Host Short Name|O|col-4
+  row3:
+    - ls-config|d2classic.extraEnv: list|Classic View Extra Environment Variables|O|col-12
+  row4:
+    - ls-config|allowedFrameOrigins: textarea|Allowed Frame Origins|M|col-12
+  row5:
+    - ls-config|lms_type: select(Internal,External)|LMS Type|M|col-3
+    - ls-config|lms_api_password: password|LMS API Password|M|col-3
+    - ls-config|global.noproxy.services: input|No Proxy Service List|M|col-3
+    - ls-config|lss.ls-sftp.ports.nodePort: input(number)|SFTP Node Port|O|col-3
+  row6:
+    - ls-config|is_otoscertificate_enabled: toggle|Import Output Server Certificate on Print and Smart View Pod|O|col-4
+    - passwords|lss.global.otosCertificate|dependsOn(is_otoscertificate_enabled): textarea|Output Server Certificate|M|col-6
+    - passwords_vault|lss.global.otosCertificate|dependsOn(is_otoscertificate_enabled, vault): textarea|Output Server Certificate|M|col-6
+  row7:
+    - ls-config|is_ivcertificate_enabled: toggle|Import OTIV Certificate on Smart View Pod|O|col-4
+    - passwords|lss.global.ivCertificate|dependsOn(is_ivcertificate_enabled): textarea|OTIV Certificate|M|col-6
+    - passwords_vault|lss.global.ivCertificate|dependsOn(is_ivcertificate_enabled, vault): textarea|OTIV Certificate|M|col-6
+  row8:
+    - passwords|lss.global.ihubServicePasswordKey: password|iHub Service Admin Password|O|col-4
+    - passwords_vault|lss.global.ihubServicePasswordKey|dependsOn(vault): password|iHub Service Admin Password|O|col-4
+    - ls-config|smtpServer: input|SMTP Server|M|col-3
+    - ls-config|smtpPort: input(number)|SMTP Port|M|col-2
+    - ls-config|emailAddress: input|Admin Email Address|M|col-3
+  row09:
+    - ls-config|d2rest.restApiRuntime.rest_api_runtime_properties: textarea|Client REST API Runtime Properties|O|col-6
+  row10:
+    - ls-config|lss.ls-print.newrelic.app_name|dependsOn(global.newrelic): input|Print New Relic App Name|M|col-6
+    - ls-config|lss.ls-sftp.newrelic.app_name|dependsOn(global.newrelic): input|SFTP New Relic App Name|M|col-6
+
+ao-installer:
+  row1:
+    - ao-config|ao-installer.aoc.enabled: toggle|Core for Supplier Exchange|O|col-12
+  row2:
+    - ao-config|ao-installer.aoc.xchangeVersion|dependsOn(ao-installer.aoc.enabled): select(v3,v2)|Supplier Exchange Version|M|col-4
+    - ao-config|ao-installer.aoc.xchangeUrl|dependsOn(ao-installer.aoc.enabled): input|Supplier Exchange URL|M|col-4
+    - ao-config|ao-installer.aoc.xchangeSubscriptionName|dependsOn(ao-installer.aoc.enabled): input|Subscription Name|M|col-4
+  row3:
+    - ao-config|ao-installer.aoc.xchangeKeyId|dependsOn(ao-installer.aoc.enabled): input|Supplier Exchange Client ID|M|col-3
+    - ao-config|ao-installer.aoc.xchangePrivateKey|dependsOn(ao-installer.aoc.enabled): input|Supplier Exchange Client Secret|M|col-3
+    - ao-config|ao-installer.aoc.xchangeProxyHost|dependsOn(ao-installer.aoc.enabled): input|Proxy Host|O|col-3
+    - ao-config|ao-installer.aoc.xchangeProxyPort|dependsOn(ao-installer.aoc.enabled): input(number)|Proxy Port|O|col-3
+  row4:
+    - ao-config|ao-installer.brava.enabled: toggle|Brava Viewer Integration|O|col-4
+    - ao-config|ao-installer.configuration.bravaServerURL|dependsOn(ao-installer.brava.enabled): input|Brava Enterprise Server URL|M|col-4
+    - ao-config|ao-installer.xecm.enabled: toggle|Extended ECM Integration|O|col-4
+
+dctm-assap:
+  row1:
+    - configuration|dctm-assap.userProvidedServices.newrelic.appName|dependsOn(global.newrelic): input| Documentum AS SAP Solutions New Relic App Name|M|col-12
+
+dctm-assap-ilm:
+  row1:
+    - configuration|dctm-assap-ilm.userProvidedServices.newrelic.appName|dependsOn(global.newrelic): input|Documentum AS SAP Solutions ILM New Relic App Name|M|col-6
+    - passwords|dctm-assap-ilm.ilmUserPassword: password|ILM User Password|M|col-6
+    - passwords_vault|dctm-assap-ilm.ilmUserPassword|dependsOn(vault): password(secret)|ILM User Secret Key|M|col-6
+
+dctm-cssap:
+  row1:
+    - configuration|dctm-cssap.userProvidedServices.newrelic.appName|dependsOn(global.newrelic): input|Documentum CS SAP Solutions New Relic App Name|M|col-6
+    - configuration|dctm-cssap.snc.enabled: toggle|SNC for Documentum CS SAP Solutions|O|col-6
+  row2:
+    - configuration|dctm-cssap.snc.secret.name|dependsOn(dctm-cssap.snc.enabled): input|SNC Secret Name|O|col-3
+    - configuration|dctm-cssap.snc.secret.volumeName|dependsOn(dctm-cssap.snc.enabled): input|SNC Secret Volume Name|O|col-3
+    - configuration|dctm-cssap.snc.pseName|dependsOn(dctm-cssap.snc.enabled): input|PSE Name|O|col-2
+    - passwords|dctm-cssap.soapConfigAuthenticationPassword: password|SOAP Configuration Auth Password|O|col-4
+    - passwords_vault|dctm-cssap.soapConfigAuthenticationPassword|dependsOn(vault): password(secret)|SOAP Configuration Auth Secret Key|O|col-4
+  row3:
+    - configuration|dctm-cssap.snc.psePassPhrase|dependsOn(dctm-cssap.snc.enabled): input|PSE Passphrase|O|col-4
+    - configuration|dctm-cssap.snc.pseOwnerName|dependsOn(dctm-cssap.snc.enabled): input|PSE Owner Name|O|col-4
+    - configuration|dctm-cssap.snc.sap.certificateName|dependsOn(dctm-cssap.snc.enabled): input|SAP Certificate Name|M|col-4
+  row4:
+    - configuration|dctm-cssap.snc.sap.certificate|dependsOn(dctm-cssap.snc.enabled): textarea|SAP Certificate|O|col-12
+  row5:
+    - configuration|dctm-cssap.containers.cssap.soapConfigOtdsEndpoint: input|OTDS Endpoint for SOAP Configuration|O|col-4
+    - configuration|dctm-cssap.containers.cssap.soapConfigCreateUpdateWorkspaceEndPoint: input|Create/Update Workspace Endpoint for SOAP Configuration|O|col-8
+  row6:
+    - configuration|dctm-cssap.containers.cssap.soapConfigAuthenticationUser: input|SOAP Configuration Auth User|O|col-6
+    - configuration|dctm-cssap.containers.cssap.authenticationDomain: input|Auth Domain|O|col-6
+  row7:
+    - configuration|dctm-cssap.containers.cssap.hvpLogLevel: input|HVP Log Level|O|col-3
+    - configuration|dctm-cssap.containers.cssap.hvpLogRetain: toggle|HVP Log Retain|O|col-3
+    - configuration|dctm-cssap.containers.cssap.hvpJobEncryptSapUser: toggle|HVP Job Encrypt SAP User|O|col-6
+  row8:
+    - configuration|dctm-cssap.containers.cssap.hvpJobCopyOnRepSapAction: toggle|HVP Job Copy on Replication SAP Action|O|col-12

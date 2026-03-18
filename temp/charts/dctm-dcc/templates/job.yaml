@@ -1,0 +1,439 @@
+{{- if and (eq .Values.coreNotification.enabled true) (eq .Values.coreNotification.dbSchemaInit.enabled true) }}   
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: dbschema-{{ .Values.coreNotification.prefix }}
+spec:
+  template:
+    spec:
+      serviceAccountName: {{ .Values.serviceAccount.serviceAccountName | default .Values.global.documentumserviceaccount }}
+      {{- if .Values.images.pullSecrets | default .Values.global.pullSecretName }}
+      imagePullSecrets:
+        - name: {{ .Values.images.pullSecrets | default .Values.global.pullSecretName }}
+      {{ end }}
+      containers:
+        - name: dbschema-{{ .Values.coreNotification.prefix }}
+          image: {{ .Values.database.dbSchemaInit.image.repository | default .Values.global.repository }}/{{ .Values.database.dbSchemaInit.image.name }}:{{ .Values.database.dbSchemaInit.image.tag }}
+          imagePullPolicy: Always
+          env:
+          - name: db_host
+            value: "{{ .Values.database.db_host | default .Values.global.db_hostname }}"
+          - name: db_port
+            value: "{{ .Values.database.db_port | default .Values.global.dbport }}"
+          - name: db_usr
+            value: "{{ .Values.database.username | default .Values.global.databaseusername }}"
+          - name: db_name
+            value: "{{ .Values.database.dbSchemaName  | default .Values.global.dbSchema_Name }}"
+          - name: db_sid
+            value: "{{ .Values.database.db_sid }}"
+          - name: db_ssl
+            value: "{{ (empty (.Values.database.ssl | quote) | ternary .Values.global.db_ssl .Values.database.ssl) }}"
+          - name: db_sslmode
+            value: "{{ .Values.database.sslmode | default .Values.global.db_ssl_mode }}"
+          - name: db_p12_wallet_file
+            value: "{{ .Values.database.db_p12_wallet_file }}"
+          - name: db_sso_wallet_file
+            value: "{{ .Values.database.db_sso_wallet_file }}"
+          - name: sslcertRequired
+            value: "{{ .Values.database.sslcertRequired }}"
+          - name: sslrootcertRequired
+            value: "{{ .Values.database.sslrootcertRequired }}"
+          - name: db_pass
+            valueFrom:
+              secretKeyRef:
+                name: db-secret
+                key: db-pass
+          - name: db_name_core_notification
+            value: "{{ .Values.coreNotification.dbSchemaInit.dbname }}"
+          - name: vaultEnabled
+            value: {{ (empty (.Values.vault.enabled | quote) | ternary (.Values.global.isVaultEnabled | quote) (.Values.vault.enabled | quote)) }}
+          - name: databaseServiceName
+            value: {{ quote .Values.database.databaseServiceName }}
+          command: ["/bin/bash", "-c", " sudo chmod +x ./DbSchemaCoreNotification.sh && ./DbSchemaCoreNotification.sh || exit 1"]
+          volumeMounts:
+            {{- if and ((empty (.Values.database.ssl | quote) | ternary .Values.global.db_ssl .Values.database.ssl)) (eq (.Values.database.dbSchemaName | default .Values.global.dbSchema_Name) "oracle") }}
+            - mountPath: usr/lib/oracle/21/client64/lib/network/admin/tnsnames.ora
+              subPath: tnsnames.ora
+              name: {{ .Values.database.dbSchemaName  | default .Values.global.dbSchema_Name }}-configmap
+            - mountPath: /opt/dctm/data/oracle_wallet
+              subPath: data/dcs-pg/oracle_wallet
+              name: dcs-pg-pvc
+            {{- end}}
+            {{- if (empty (.Values.database.ssl | quote) | ternary .Values.global.db_ssl .Values.database.ssl) }}
+            - mountPath: /usr/src/dcc/dbrootca.crt
+              subPath: dbrootca.crt
+              name: {{ .Values.coreNotification.prefix }}-db-secret-volume
+            - mountPath: /usr/src/dcc/dbserver.crt
+              subPath: dbserver.crt
+              name: {{ .Values.coreNotification.prefix }}-db-secret-volume
+            - mountPath: /usr/src/dcc/dbkey.key
+              subPath: dbkey.key
+              name: {{ .Values.coreNotification.prefix }}-db-secret-volume
+          {{- end}}
+          {{- if (empty (.Values.vault.enabled | quote) | ternary .Values.global.isVaultEnabled .Values.vault.enabled) }}
+            - mountPath: /opt/dctm_docker/vault_config
+              name: vault-volume
+            - mountPath: /opt/dctm_docker/dsis_binary_volume
+              name: dsis-binary-volume
+          {{- end }}
+      volumes:
+        - name: db-secret
+          secret:
+            secretName: db-secret
+          persistentVolumeClaim:
+        {{- if (empty (.Values.database.ssl | quote) | ternary .Values.global.db_ssl .Values.database.ssl) }}
+        - name: {{ .Values.coreNotification.prefix }}-db-secret-volume
+          secret:
+            secretName: db-secret
+            optional: false
+        {{- end}}
+        {{- if (empty (.Values.vault.enabled | quote) | ternary .Values.global.isVaultEnabled .Values.vault.enabled) }}
+        - name: dsis-binary-volume
+          persistentVolumeClaim:
+            claimName: dsis-binary-pvc
+        - name: vault-volume
+          configMap:
+            name: dctm-vault-configmap
+        {{- end }}
+        {{- if and ((empty (.Values.database.ssl | quote) | ternary .Values.global.db_ssl .Values.database.ssl)) (eq (.Values.database.dbSchemaName | default .Values.global.dbSchema_Name) "oracle") }}
+        - name: {{ .Values.database.dbSchemaName  | default .Values.global.dbSchema_Name }}-configmap
+          configMap:
+            name: {{ .Values.database.dbSchemaName  | default .Values.global.dbSchema_Name }}-configmap
+        - name: dcs-pg-pvc
+          persistentVolumeClaim:
+            claimName: dcs-pg-pvc
+        {{- end }}
+      restartPolicy: Never
+  backoffLimit: 1
+{{ end }}  
+---
+
+{{- if and (eq .Values.metadata.enabled true) (eq .Values.metadata.dbSchemaInit.enabled true) }}     
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: dbschema-{{ .Values.metadata.prefix }}
+spec:
+  template:
+    spec:
+      serviceAccountName: {{ .Values.serviceAccount.serviceAccountName | default .Values.global.documentumserviceaccount }}
+      {{- if .Values.images.pullSecrets | default .Values.global.pullSecretName }}
+      imagePullSecrets:
+        - name: {{ .Values.images.pullSecrets | default .Values.global.pullSecretName }}
+      {{ end }}
+      containers:
+        - name: dbschema-{{ .Values.metadata.prefix }}
+          image: {{ .Values.database.dbSchemaInit.image.repository | default .Values.global.repository }}/{{ .Values.database.dbSchemaInit.image.name }}:{{ .Values.database.dbSchemaInit.image.tag }}
+          imagePullPolicy: Always
+          env:
+          - name: db_host
+            value: "{{ .Values.database.db_host | default .Values.global.db_hostname }}"
+          - name: db_port
+            value: "{{ .Values.database.db_port | default .Values.global.dbport  }}"
+          - name: db_usr
+            value: "{{ .Values.database.username | default .Values.global.databaseusername }}"
+          - name: db_name
+            value: "{{ .Values.database.dbSchemaName  | default .Values.global.dbSchema_Name }}"
+          - name: db_sid
+            value: "{{ .Values.database.db_sid }}"
+          - name: db_ssl
+            value: "{{ (empty (.Values.database.ssl | quote) | ternary .Values.global.db_ssl .Values.database.ssl) }}"
+          - name: db_sslmode
+            value: "{{ .Values.database.sslmode | default .Values.global.db_ssl_mode }}"
+          - name: db_p12_wallet_file
+            value: "{{ .Values.database.db_p12_wallet_file }}"
+          - name: db_sso_wallet_file
+            value: "{{ .Values.database.db_sso_wallet_file }}"
+          - name: sslcertRequired
+            value: "{{ .Values.database.sslcertRequired }}"
+          - name: sslrootcertRequired
+            value: "{{ .Values.database.sslrootcertRequired }}"            
+          - name: db_pass
+            valueFrom:
+              secretKeyRef:
+                name: db-secret
+                key: db-pass
+          - name: db_name_metadata
+            value: "{{ .Values.metadata.dbSchemaInit.dbname }}"
+          - name: vaultEnabled
+            value: {{ (empty (.Values.vault.enabled | quote) | ternary (.Values.global.isVaultEnabled | quote) (.Values.vault.enabled | quote)) }}
+          - name: databaseServiceName
+            value: {{ quote .Values.database.databaseServiceName }}
+          command: ["/bin/bash", "-c", "sudo chmod +x ./DbSchemaMetadataService.sh && ./DbSchemaMetadataService.sh || exit 1"]
+          volumeMounts:
+            {{- if and ((empty (.Values.database.ssl | quote) | ternary .Values.global.db_ssl .Values.database.ssl)) (eq (.Values.database.dbSchemaName | default .Values.global.dbSchema_Name) "oracle") }}
+            - mountPath: usr/lib/oracle/21/client64/lib/network/admin/tnsnames.ora
+              subPath: tnsnames.ora
+              name: {{ .Values.database.dbSchemaName  | default .Values.global.dbSchema_Name }}-configmap
+            - mountPath: /opt/dctm/data/oracle_wallet
+              subPath: data/dcs-pg/oracle_wallet
+              name: dcs-pg-pvc
+            {{- end }}
+            {{- if (empty (.Values.database.ssl | quote) | ternary .Values.global.db_ssl .Values.database.ssl) }}
+            - mountPath: /usr/src/dcc/dbrootca.crt
+              subPath: dbrootca.crt
+              name: {{ .Values.metadata.prefix }}-db-secret-volume
+            - mountPath: /usr/src/dcc/dbserver.crt
+              subPath: dbserver.crt
+              name: {{ .Values.metadata.prefix }}-db-secret-volume
+            - mountPath: /usr/src/dcc/dbkey.key
+              subPath: dbkey.key
+              name: {{ .Values.metadata.prefix }}-db-secret-volume
+          {{- end}}
+          {{- if (empty (.Values.vault.enabled | quote) | ternary .Values.global.isVaultEnabled .Values.vault.enabled) }}
+            - mountPath: /opt/dctm_docker/vault_config
+              name: vault-volume
+            - mountPath: /opt/dctm_docker/dsis_binary_volume
+              name: dsis-binary-volume
+          {{- end }}
+      volumes:
+        - name: db-secret
+          secret:
+            secretName: db-secret
+          persistentVolumeClaim:
+        {{- if (empty (.Values.database.ssl | quote) | ternary .Values.global.db_ssl .Values.database.ssl) }}
+        - name: {{ .Values.metadata.prefix }}-db-secret-volume
+          secret:
+            secretName: db-secret
+            optional: false
+        {{- end}}
+        {{- if (empty (.Values.vault.enabled | quote) | ternary .Values.global.isVaultEnabled .Values.vault.enabled) }}
+        - name: dsis-binary-volume
+          persistentVolumeClaim:
+            claimName: dsis-binary-pvc
+        - name: vault-volume
+          configMap:
+            name: dctm-vault-configmap
+        {{- end }}
+        {{- if and ((empty (.Values.database.ssl | quote) | ternary .Values.global.db_ssl .Values.database.ssl)) (eq (.Values.database.dbSchemaName | default .Values.global.dbSchema_Name) "oracle") }}
+        - name: {{ .Values.database.dbSchemaName  | default .Values.global.dbSchema_Name }}-configmap
+          configMap:
+            name: {{ .Values.database.dbSchemaName  | default .Values.global.dbSchema_Name }}-configmap
+        - name: dcs-pg-pvc
+          persistentVolumeClaim:
+            claimName: dcs-pg-pvc
+        {{- end }}
+      restartPolicy: Never
+  backoffLimit: 1
+{{ end }}  
+---
+
+{{- if and (eq .Values.syncagent.enabled true) (eq .Values.syncagent.dbSchemaInit.enabled true) }}     
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: dbschema-{{ .Values.syncagent.prefix }}
+spec:
+  template:
+    spec:
+      serviceAccountName: {{ .Values.serviceAccount.serviceAccountName | default .Values.global.documentumserviceaccount }}
+      {{- if .Values.images.pullSecrets | default .Values.global.pullSecretName }}
+      imagePullSecrets:
+        - name: {{ .Values.images.pullSecrets | default .Values.global.pullSecretName }}
+      {{ end }}
+      containers:
+        - name: dbschema-{{ .Values.syncagent.prefix }}
+          image: {{ .Values.database.dbSchemaInit.image.repository | default .Values.global.repository }}/{{ .Values.database.dbSchemaInit.image.name }}:{{ .Values.database.dbSchemaInit.image.tag }}
+          imagePullPolicy: Always
+          env:
+          - name: db_host
+            value: "{{ .Values.database.db_host | default .Values.global.db_hostname }}"
+          - name: db_port
+            value: "{{ .Values.database.db_port | default .Values.global.dbport  }}"
+          - name: db_usr
+            value: "{{ .Values.database.username | default .Values.global.databaseusername }}"
+          - name: db_name
+            value: "{{ .Values.database.dbSchemaName  | default .Values.global.dbSchema_Name }}"
+          - name: db_sid
+            value: "{{ .Values.database.db_sid }}"
+          - name: db_ssl
+            value: "{{ (empty (.Values.database.ssl | quote) | ternary .Values.global.db_ssl .Values.database.ssl) }}"
+          - name: db_sslmode
+            value: "{{ .Values.database.sslmode | default .Values.global.db_ssl_mode }}"
+          - name: db_p12_wallet_file
+            value: "{{ .Values.database.db_p12_wallet_file }}"
+          - name: db_sso_wallet_file
+            value: "{{ .Values.database.db_sso_wallet_file }}"
+          - name: sslcertRequired
+            value: "{{ .Values.database.sslcertRequired }}"
+          - name: sslrootcertRequired
+            value: "{{ .Values.database.sslrootcertRequired }}"            
+          - name: db_pass
+            valueFrom:
+              secretKeyRef:
+                name: db-secret
+                key: db-pass
+          
+          - name: db_name_syncagent
+            value: "{{ .Values.syncagent.dbSchemaInit.dbname }}"
+          - name: vaultEnabled
+            value: {{ (empty (.Values.vault.enabled | quote) | ternary (.Values.global.isVaultEnabled | quote) (.Values.vault.enabled | quote)) }}
+          - name: databaseServiceName
+            value: {{ quote .Values.database.databaseServiceName }}
+          command: ["/bin/bash", "-c", "sudo chmod +x ./DbSchemaSyncagent.sh && ./DbSchemaSyncagent.sh || exit 1"]
+          volumeMounts:
+            {{- if and ((empty (.Values.database.ssl | quote) | ternary .Values.global.db_ssl .Values.database.ssl)) (eq (.Values.database.dbSchemaName | default .Values.global.dbSchema_Name) "oracle") }}
+            - mountPath: usr/lib/oracle/21/client64/lib/network/admin/tnsnames.ora
+              subPath: tnsnames.ora
+              name: {{ .Values.database.dbSchemaName  | default .Values.global.dbSchema_Name }}-configmap
+            - mountPath: /opt/dctm/data/oracle_wallet
+              subPath: data/dcs-pg/oracle_wallet
+              name: dcs-pg-pvc
+            {{- end }}
+            {{- if (empty (.Values.database.ssl | quote) | ternary .Values.global.db_ssl .Values.database.ssl) }}
+            - mountPath: /usr/src/dcc/dbrootca.crt
+              subPath: dbrootca.crt
+              name: {{ .Values.syncagent.prefix }}-db-secret-volume
+            - mountPath: /usr/src/dcc/dbserver.crt
+              subPath: dbserver.crt
+              name: {{ .Values.syncagent.prefix }}-db-secret-volume
+            - mountPath: /usr/src/dcc/dbkey.key
+              subPath: dbkey.key
+              name: {{ .Values.syncagent.prefix }}-db-secret-volume
+          {{- end}}
+          {{- if (empty (.Values.vault.enabled | quote) | ternary .Values.global.isVaultEnabled .Values.vault.enabled) }}
+            - mountPath: /opt/dctm_docker/vault_config
+              name: vault-volume
+            - mountPath: /opt/dctm_docker/dsis_binary_volume
+              name: dsis-binary-volume
+          {{- end }}
+      volumes:
+        - name: db-secret
+          secret:
+            secretName: db-secret
+          persistentVolumeClaim:
+        {{- if (empty (.Values.database.ssl | quote) | ternary .Values.global.db_ssl .Values.database.ssl) }}
+        - name: {{ .Values.syncagent.prefix }}-db-secret-volume
+          secret:
+            secretName: db-secret
+            optional: false
+        {{- end}}
+        {{- if (empty (.Values.vault.enabled | quote) | ternary .Values.global.isVaultEnabled .Values.vault.enabled) }}
+        - name: dsis-binary-volume
+          persistentVolumeClaim:
+            claimName: dsis-binary-pvc
+        - name: vault-volume
+          configMap:
+            name: dctm-vault-configmap
+        {{- end }}
+        {{- if and ((empty (.Values.database.ssl | quote) | ternary .Values.global.db_ssl .Values.database.ssl)) (eq (.Values.database.dbSchemaName | default .Values.global.dbSchema_Name) "oracle") }}
+        - name: {{ .Values.database.dbSchemaName  | default .Values.global.dbSchema_Name }}-configmap
+          configMap:
+            name: {{ .Values.database.dbSchemaName  | default .Values.global.dbSchema_Name }}-configmap
+        - name: dcs-pg-pvc
+          persistentVolumeClaim:
+            claimName: dcs-pg-pvc
+        {{- end }}
+      restartPolicy: Never
+  backoffLimit: 1
+{{ end }}  
+---
+
+{{- if and (eq .Values.syncnshareManual.enabled true) (eq .Values.syncnshareManual.dbSchemaInit.enabled true) }}      
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: dbschema-{{ .Values.syncnshareManual.prefix }}
+spec:
+  template:
+    spec:
+      serviceAccountName: {{ .Values.serviceAccount.serviceAccountName | default .Values.global.documentumserviceaccount }}
+      {{- if .Values.images.pullSecrets | default .Values.global.pullSecretName }}
+      imagePullSecrets:
+        - name: {{ .Values.images.pullSecrets | default .Values.global.pullSecretName }}
+      {{ end }}
+      containers:
+        - name: dbschema-{{ .Values.syncnshareManual.prefix }}
+          image: {{ .Values.database.dbSchemaInit.image.repository | default .Values.global.repository }}/{{ .Values.database.dbSchemaInit.image.name }}:{{ .Values.database.dbSchemaInit.image.tag }}
+          imagePullPolicy: Always
+          env:
+          - name: db_host
+            value: "{{ .Values.database.db_host | default .Values.global.db_hostname }}"
+          - name: db_port
+            value: "{{ .Values.database.db_port | default .Values.global.dbport  }}"
+          - name: db_usr
+            value: "{{ .Values.database.username | default .Values.global.databaseusername }}"
+          - name: db_name
+            value: "{{ .Values.database.dbSchemaName  | default .Values.global.dbSchema_Name }}"
+          - name: db_sid
+            value: "{{ .Values.database.db_sid }}"
+          - name: db_ssl
+            value: "{{ .Values.database.ssl | default .Values.global.db_ssl}}"
+          - name: db_sslmode
+            value: "{{ .Values.database.sslmode | default .Values.global.db_ssl_mode }}"
+          - name: db_p12_wallet_file
+            value: "{{ .Values.database.db_p12_wallet_file }}"
+          - name: db_sso_wallet_file
+            value: "{{ .Values.database.db_sso_wallet_file }}"
+          - name: sslcertRequired
+            value: "{{ .Values.database.sslcertRequired }}"
+          - name: sslrootcertRequired
+            value: "{{ .Values.database.sslrootcertRequired }}"            
+          - name: db_pass
+            valueFrom:
+              secretKeyRef:
+                name: db-secret
+                key: db-pass
+          - name: db_name_syncagentmanual
+            value: "{{ .Values.syncnshareManual.dbSchemaInit.dbname }}"
+          - name: vaultEnabled
+            value: {{ (empty (.Values.vault.enabled | quote) | ternary (.Values.global.isVaultEnabled | quote) (.Values.vault.enabled | quote)) }}
+          - name: databaseServiceName
+            value: {{ quote .Values.database.databaseServiceName }}
+          command: ["/bin/bash", "-c", "sudo chmod +x ./DbSchemaSyncagentManual.sh && ./DbSchemaSyncagentManual.sh || exit 1"]
+          volumeMounts:
+            {{- if and ((empty (.Values.database.ssl | quote) | ternary .Values.global.db_ssl .Values.database.ssl)) (eq (.Values.database.dbSchemaName | default .Values.global.dbSchema_Name) "oracle") }}
+            - mountPath: usr/lib/oracle/21/client64/lib/network/admin/tnsnames.ora
+              subPath: tnsnames.ora
+              name: {{ .Values.database.dbSchemaName  | default .Values.global.dbSchema_Name }}-configmap
+            - mountPath: /opt/dctm/data/oracle_wallet
+              subPath: data/dcs-pg/oracle_wallet
+              name: dcs-pg-pvc
+            {{- end }}
+            {{- if (empty (.Values.database.ssl | quote) | ternary .Values.global.db_ssl .Values.database.ssl) }}
+            - mountPath: /usr/src/dcc/dbrootca.crt
+              subPath: dbrootca.crt
+              name: {{ .Values.syncnshareManual.prefix }}-db-secret-volume
+            - mountPath: /usr/src/dcc/dbserver.crt
+              subPath: dbserver.crt
+              name: {{ .Values.syncnshareManual.prefix }}-db-secret-volume
+            - mountPath: /usr/src/dcc/dbkey.key
+              subPath: dbkey.key
+              name: {{ .Values.syncnshareManual.prefix }}-db-secret-volume
+          {{- end}}
+          {{- if (empty (.Values.vault.enabled | quote) | ternary .Values.global.isVaultEnabled .Values.vault.enabled) }}
+            - mountPath: /opt/dctm_docker/vault_config
+              name: vault-volume
+            - mountPath: /opt/dctm_docker/dsis_binary_volume
+              name: dsis-binary-volume
+          {{- end }}
+      volumes:
+        - name: db-secret
+          secret:
+            secretName: db-secret
+          persistentVolumeClaim:
+        {{- if (empty (.Values.database.ssl | quote) | ternary .Values.global.db_ssl .Values.database.ssl) }}
+        - name: {{ .Values.syncnshareManual.prefix }}-db-secret-volume
+          secret:
+            secretName: db-secret
+            optional: false
+        {{- end}}
+        {{- if (empty (.Values.vault.enabled | quote) | ternary .Values.global.isVaultEnabled .Values.vault.enabled) }}
+        - name: dsis-binary-volume
+          persistentVolumeClaim:
+            claimName: dsis-binary-pvc
+        - name: vault-volume
+          configMap:
+            name: dctm-vault-configmap
+        {{- end }}
+        {{- if and ((empty (.Values.database.ssl | quote) | ternary .Values.global.db_ssl .Values.database.ssl)) (eq (.Values.database.dbSchemaName | default .Values.global.dbSchema_Name) "oracle") }}
+        - name: {{ .Values.database.dbSchemaName  | default .Values.global.dbSchema_Name }}-configmap
+          configMap:
+            name: {{ .Values.database.dbSchemaName  | default .Values.global.dbSchema_Name }}-configmap
+        - name: dcs-pg-pvc
+          persistentVolumeClaim:
+            claimName: dcs-pg-pvc
+        {{- end }}
+      restartPolicy: Never
+  backoffLimit: 1
+{{ end }}

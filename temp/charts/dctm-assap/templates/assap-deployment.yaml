@@ -1,0 +1,229 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.deployment.name }}
+  labels:
+    app: {{ .Values.deployment.appName }}
+spec:
+  strategy:
+    type: {{ .Values.deployment.strategyType }}
+  replicas: {{ .Values.deployment.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Values.deployment.appName }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.deployment.appName }}
+    spec:
+      {{- if (empty (.Values.vault.enable | quote) | ternary .Values.global.isVaultEnabled .Values.vault.enable) }}
+      # VE# 4852332 - Added the documentum global service account, image pull secrets
+      serviceAccountName: {{ .Values.vault.serviceAccountName | default .Values.global.documentumserviceaccount }}
+      {{- end }}
+      {{- if or .Values.images.pullSecret .Values.global.pullSecretName }}
+      imagePullSecrets:
+      - name: {{ .Values.images.pullSecret  | default .Values.global.pullSecretName }}
+      {{ end }}
+      {{- if eq .Values.deployment.openshift true }}
+      securityContext:
+        runAsUser: 1000
+      {{- end }}
+      containers:
+      - name: {{ .Values.containers.assap.name }}
+        # VE# 4852332 - Added the default repo details and thepull policy
+        image: {{ .Values.images.assap.repository | default .Values.global.repository}}/{{ .Values.images.assap.name | default .Values.global.appserverImageName}}:{{ .Values.images.assap.tag | default .Values.global.appserverImageTag}}
+        imagePullPolicy: {{ .Values.images.assap.pullPolicy | default .Values.global.pullPolicyType }}
+        env:
+        - name: KUBERNETES
+          value: "{{ .Values.containers.assap.kubernetes }}"
+        - name: CS_PVC_SAPC_PATH
+          value: "{{ .Values.containers.assap.dcsPvcPath }}"
+        - name: MAX_DELAY_FOR_DAR
+          value: "{{ .Values.containers.assap.maxDelaySecondsForDars }}"
+          # Vault Type to determine if it is HashiCorp or K8API
+        - name: VAULT_TYPE
+          value: "{{ .Values.global.vaultType }}"
+          
+      {{ if or (eq .Values.certificate.use_certificate true) (eq .Values.global.useCertificate true) }}
+        - name: USE_CERTIFICATE
+          value: {{ (empty (.Values.certificate.use_certificate | quote) | ternary .Values.global.useCertificate .Values.certificate.use_certificate) | quote}}
+        - name: INTERNAL_TLS_ENABLED
+          value: "{{ .Values.global.internalTlsEnable }}"
+        - name: DFC_SSL_TRUSTSTORE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.global.csSecrets }}
+              key: csCertTrustPassword
+      {{- end }}
+      {{ if (eq .Values.global.internalTlsEnable true) }}
+        - name: INGRESS_KEYSTORE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.global.csSecrets }}
+              key: ingress.keystorepassword
+      {{- end }}
+        - name: JMS_SERVER_PORT
+          value: "{{ .Values.global.jmsPort }}"
+        - name: DOCBASE_NAME
+          value: "{{ .Values.global.docbase }}"
+        - name: DOCBASE_USERNAME
+          value: "{{ .Values.global.installOwnerUsername }}"
+        - name: DOCBASE_PASSWORD
+          value: "{{ .Values.docbasePassword }}"
+        - name: DFC_GLOBALREGISTRY_PASSWORD
+          valueFrom:
+              secretKeyRef:
+                name: {{ .Values.cs.csSecretConfigName | default .Values.global.csSecrets }}
+                key: globalRegistryPassword
+        - name: IGNORE_MARKER
+          value: "{{ .Values.containers.assap.ignoreMarker }}"
+        - name: DFC_DSIS_ENABLED
+          value: {{ (empty (.Values.vault.enable | quote) | ternary .Values.global.isVaultEnabled .Values.vault.enable) | quote}}
+        - name: DFC_DSIS_DAEMON_TOKEN
+          value: "{{ .Values.vault.daemontoken }}"
+        - name: DFC_DSIS_DAEMON_URL
+          value: {{ .Values.vault.daemonurl | default "http://localhost:8200/dsis" | quote }}
+        {{- define "applyHotfix" -}}
+        #Hotfix
+        - name: APPLY_HOTFIX
+          value: "{{ .Values.containers.assap.applyHotfix }}"
+        {{- end -}}
+        # newrelic env parameters
+        {{- if (empty (.Values.userProvidedServices.newrelic.enable | quote) | ternary .Values.global.newrelic .Values.userProvidedServices.newrelic.enable) }}
+        - name: NEW_RELIC_AGENT_ENABLED
+          value: {{ (empty (.Values.userProvidedServices.newrelic.enable | quote) | ternary .Values.global.newrelic .Values.userProvidedServices.newrelic.enable) | quote}}
+        - name: NEW_RELIC_APP_NAME
+          value: {{ quote .Values.userProvidedServices.newrelic.appName }}
+        - name: NEW_RELIC_LICENSE_KEY
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.cs.csSecretConfigName | default .Values.global.csSecrets }}
+              key: {{ .Values.userProvidedServices.newrelic.licenseKeyName }}
+        {{- if (empty (.Values.userProvidedServices.newrelic.proxyHost | quote) | ternary .Values.global.newrelicProxyHost .Values.userProvidedServices.newrelic.proxyHost) }}
+        - name: NEW_RELIC_PROXY_HOST
+          value: {{ (.Values.userProvidedServices.newrelic.proxyHost | quote) | default .Values.global.newrelicProxyHost  | quote }}
+        {{ end }}
+        {{- if (empty (.Values.userProvidedServices.newrelic.proxyPort | quote) | ternary .Values.global.newrelicProxyPort .Values.userProvidedServices.newrelic.proxyPort) }}
+        - name: NEW_RELIC_PROXY_PORT
+          value: {{ (.Values.userProvidedServices.newrelic.proxyPort | quote) | default .Values.global.newrelicProxyPort | quote }}
+        {{ end }}
+        {{- if (empty (.Values.userProvidedServices.newrelic.proxyScheme | quote) | ternary .Values.global.newrelicProxyProtocol .Values.userProvidedServices.newrelic.proxyScheme) }}
+        - name: NEW_RELIC_PROXY_SCHEME
+          value: {{ (.Values.userProvidedServices.newrelic.proxyScheme | quote) | default .Values.global.newrelicProxyProtocol | quote }}
+        {{ end }}
+        {{ end }}
+        volumeMounts:
+        - name: nfs-data
+          mountPath: /opt/tomcat/logs
+          subPath: logs/tomcat
+        - name: nfs-data
+          mountPath: /opt/Dar_Installer/linux/logs
+          subPath: logs/cmpsr
+        - name: nfs-data  
+          mountPath: var/documentum/logs
+          subPath: logs/dctm
+        {{- if .Values.cs.custom.scriptinPVC }}
+        - name: {{ .Values.cs.custom.volumeMountName }}
+          mountPath: {{ .Values.containers.assap.dcsPvcPath }}
+          subPath: {{ .Values.cs.custom.sapcSubPath }}
+        {{ end }}
+        - name: dfc-properties-configmap
+          mountPath: {{ .Values.containers.assap.externalFolderPath }}/dfc.properties
+          subPath: dfc.properties
+        - name: assap-logging-configmap
+          mountPath: {{ .Values.containers.assap.externalFolderPath }}/log4j2.properties
+          subPath: log4j2.properties
+        - name: assap-alproperties-configmap
+          mountPath: {{ .Values.containers.assap.externalFolderPath }}/al.properties
+          subPath: al.properties
+        - mountPath: {{ .Values.containers.assap.externalFolderPath }}/assap_configmap_server.xml
+          name: assap-server-xml-volume
+          subPath: assap_configmap_server.xml
+        - mountPath: /opt/common
+          name: assap-custom-pvc
+          subPath: marker
+        {{- if (empty (.Values.certificate.use_certificate | quote) | ternary .Values.global.useCertificate .Values.certificate.use_certificate) }}
+        - mountPath: /opt/assap_config/secure
+          name: {{ .Values.dbrpersistentVolume.dbrdataPVCName | default .Values.global.dbrDataPVCName }}
+          subPath: certificate/{{ .Values.dbrpersistentVolume.dbrdataPVCName }}
+        {{ end }}
+        {{- if (empty (.Values.vault.enable | quote) | ternary .Values.global.isVaultEnabled .Values.vault.enable) }}
+        - mountPath: /opt/dctm_docker/dsis_binary_volume
+          name: {{ .Values.vault.volumeName }}
+        {{- end }}
+        {{- if (empty (.Values.vault.enable | quote) | ternary .Values.global.isVaultEnabled .Values.vault.enable) }}
+        - mountPath: /opt/dctm_docker/vault_config
+          name: {{ .Values.vault.configMapVolName }}
+        {{- end }}
+        resources:
+          requests:
+             memory: {{ .Values.resources.requests.memory | quote  }}
+             cpu: {{ .Values.resources.requests.cpu | quote  }}
+          limits:
+             memory: {{ .Values.resources.limits.memory | quote  }}
+             cpu: {{ .Values.resources.limits.cpu | quote  }}
+        ports:
+        - containerPort: {{ .Values.containers.assap.containerPort }}
+        readinessProbe:
+          httpGet:
+            path: {{ .Values.containers.assap.probing.healthPath }}
+            port: {{ .Values.containers.assap.probing.healthPort }}
+            scheme: {{ eq .Values.global.internalTlsEnable true | ternary "HTTPS" "HTTP" }}
+          initialDelaySeconds: {{ .Values.containers.assap.probing.readinessProbe.initialDelaySeconds }}
+          periodSeconds: {{ .Values.containers.assap.probing.readinessProbe.periodSeconds }}
+          failureThreshold: {{ .Values.containers.assap.probing.failureThreshold }}
+          successThreshold: {{ .Values.containers.assap.probing.successThreshold }}
+          timeoutSeconds: {{ .Values.containers.assap.probing.timeoutSeconds }}
+        livenessProbe:
+          httpGet:
+            path: {{ .Values.containers.assap.probing.healthPath }}
+            port: {{ .Values.containers.assap.probing.healthPort }}
+            scheme: {{ eq .Values.global.internalTlsEnable true | ternary "HTTPS" "HTTP" }}
+          initialDelaySeconds: {{ .Values.containers.assap.probing.livenessProbe.initialDelaySeconds }}
+          periodSeconds: {{ .Values.containers.assap.probing.livenessProbe.periodSeconds }}
+          failureThreshold: {{ .Values.containers.assap.probing.failureThreshold }}
+          successThreshold: {{ .Values.containers.assap.probing.successThreshold }}
+          timeoutSeconds: {{ .Values.containers.assap.probing.timeoutSeconds }}
+      volumes:
+      - name: {{ .Values.cs.custom.volumeMountName }}
+        persistentVolumeClaim:
+            claimName: {{ .Values.cs.custom.scriptPVCname }}
+      - name: nfs-data
+        persistentVolumeClaim:
+          claimName: {{ .Values.persistentVolumeClaim.pvcName }}
+
+      # VE #4852332 - Adding this config map approach
+      - name: dfc-properties-configmap
+      {{- if eq .Values.cs.useCSDfcConfigMap true }}
+        configMap:
+          name: {{ .Values.cs.configMapName | default .Values.global.dbrConfigmapName}}
+      {{ else }}
+        configMap:
+           name: {{ .Values.deployment.name}}-dfcproperties-configmap
+      {{- end }}
+      - name: assap-logging-configmap
+        configMap:
+          name: {{ .Values.deployment.name }}-logging-configmap
+      - name: assap-alproperties-configmap
+        configMap:
+          name: {{ .Values.deployment.name }}-alproperties-configmap
+      - name: assap-server-xml-volume
+        configMap:
+          name: assap-appserver-xml
+      - name: assap-custom-pvc
+        persistentVolumeClaim:
+          claimName: {{ .Values.custom.PVCname }}
+      {{- if (empty (.Values.certificate.use_certificate | quote) | ternary .Values.global.useCertificate .Values.certificate.use_certificate) }}
+      - name: {{ .Values.dbrpersistentVolume.dbrdataPVCName | default .Values.global.dbrdataPVCName }}
+        persistentVolumeClaim:
+            claimName: {{ .Values.certificate.dbrserviceName | default .Values.global.dbrServiceName }}-pvc
+      {{- end }}
+      {{- if (empty (.Values.vault.enable | quote) | ternary .Values.global.isVaultEnabled .Values.vault.enable) }}
+      - name: {{ .Values.vault.volumeName }}
+        persistentVolumeClaim:
+          claimName: {{ .Values.vault.PVCName }}
+      - name: {{ .Values.vault.configMapVolName }}
+        configMap:
+          name: {{ .Values.vault.vault_configmap }}
+      {{- end }}
+      restartPolicy: Always

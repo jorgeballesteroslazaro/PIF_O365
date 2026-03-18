@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: ao-supplierexchange
+data:
+  {{- if eq .Values.aoc.enabled true }}
+  xchange_version: {{ .Values.aoc.xchangeVersion | b64enc | quote }}
+  xchange_url: {{ .Values.aoc.xchangeUrl | b64enc | quote }}
+  xchange_key_id: {{ .Values.aoc.xchangeKeyId | b64enc | quote }}
+  xchange_private_key: {{ .Values.aoc.xchangePrivateKey | b64enc | quote }}
+  xchange_subscription_name: {{ .Values.aoc.xchangeSubscriptionName | b64enc | quote }}
+{{- if .Values.global.proxy.enabled }}
+  xchange_proxy_host: {{ .Values.aoc.xchangeProxyHost | default .Values.global.proxy.host | b64enc | quote }}
+  xchange_proxy_port: {{ .Values.aoc.xchangeProxyPort | default .Values.global.proxy.port | b64enc | quote }}
+{{- else if and .Values.aoc.xchangeProxyHost .Values.aoc.xchangeProxyPort }}
+  xchange_proxy_host: {{ .Values.aoc.xchangeProxyHost | b64enc | quote }}
+  xchange_proxy_port: {{ .Values.aoc.xchangeProxyPort | b64enc | quote }}
+{{- end }}
+{{ end }}

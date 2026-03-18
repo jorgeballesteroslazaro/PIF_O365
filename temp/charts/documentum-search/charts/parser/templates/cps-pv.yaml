@@ -1,0 +1,17 @@
+{{- if .Values.persistence.awsEFS }}
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: {{ .Values.persistence.existVolumePv }}
+spec:
+  capacity:
+    storage: {{ .Values.persistence.size }}
+  volumeMode: Filesystem
+  accessModes:
+    - {{ .Values.persistence.accessModes }}
+  persistentVolumeReclaimPolicy: {{ .Values.persistence.awsEFSCSIClaimPolicy }}
+  storageClassName: {{ .Values.persistence.storageClass }}
+  csi:
+    driver: {{ .Values.persistence.awsEFSCSIDriver }}
+    volumeHandle: {{ .Values.persistence.awsEFSCSIHandle }}
+{{- end }}

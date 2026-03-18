@@ -1,0 +1,101 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.prefix }}-bps-dfc-config
+  labels:
+    name: {{ .Values.prefix }}-bps-dfc-config
+data:
+  {{- if (eq .Values.global.proxy.enabled true) }}
+  msgraph: |
+    network.proxy.server={{ .Values.msgraph.proxyServer | default .Values.global.proxy.host }}
+    network.proxy.port={{ .Values.msgraph.proxyPort | default .Values.global.proxy.port }}
+  {{ end }}
+  bps-config: |-
+    <?xml version="1.0"?>
+      <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <polling_interval>{{ .Values.bpsConfig.pollingInterval }}</polling_interval>
+        <message_store_home_dir>{{ .Values.bpsConfig.messageStoreHomeDir }}</message_store_home_dir>
+        <instance_name>{{ .Values.bpsConfig.instanceName }}</instance_name>
+        <ha_enabled>{{ .Values.bpsConfig.haEnabled }}</ha_enabled>
+        <config_properties>
+            <property name="mail.imap.partialfetch" value="false"/>
+            <property name="mail.debug" value="false"/>
+        </config_properties>
+        <connections>
+            <docbase-connection>
+                <docbase>{{ .Values.docbaseConnection.docbase | default .Values.global.docbase }}</docbase>
+                <user>{{ .Values.docbaseConnection.username | default .Values.global.installOwnerUsername }}</user>
+                <password>{{ .Values.docbaseConnection.password }}</password>
+                <domain>{{ .Values.docbaseConnection.domain }}</domain>
+            </docbase-connection>
+        </connections>
+    </config> 
+  dfc-properties-config: |-
+    dfc.data.dir={{ .Values.dfc.dataDir }}
+    dfc.tokenstorage.dir=${dfc.data.dir}/apptoken
+    dfc.tokenstorage.enable=false
+    dfc.docbroker.host[0]={{ .Values.docbaseConnection.docbroker | default .Values.global.dbrServiceName }}
+    dfc.docbroker.port[0]={{ .Values.docbaseConnection.port | default .Values.global.dbr_port }}
+    dfc.globalregistry.repository={{ .Values.docbaseConnection.globalRegistryRepository | default .Values.global.docbase }}
+    dfc.globalregistry.username={{ .Values.docbaseConnection.globalRegistryUsername | default .Values.global.globalRegistryUsername }}
+    dfc.globalregistry.password={{ .Values.docbaseConnection.globalRegistryPassword }}
+    dfc.security.keystore.file=${dfc.data.dir}/dfc.keystore
+    {{- if (empty (.Values.docbaseConnection.use_certificate | quote) | ternary .Values.global.useCertificate .Values.docbaseConnection.use_certificate) }}
+    dfc.security.ssl.truststore=/opt/dctm/certificate/dfc.keystore    
+    dfc.security.ssl.truststore_password={{ .Values.docbaseConnection.truststorePassword }}
+    dfc.session.secure_connect_default=try_secure_first                                    
+    dfc.security.ssl.use_existing_truststore=false                                             
+    {{ else }}
+    dfc.session.secure_connect_default=try_native_first
+    {{ end }}
+    {{- if (empty (.Values.vault.enable | quote) | ternary .Values.global.isVaultEnabled .Values.vault.enable) }}
+    dfc.dsis.enabled={{ .Values.vault.enable | default .Values.global.isVaultEnabled }}
+    {{ end }} 
+    
+  server_tls.xml: |-
+    <?xml version='1.0' encoding='utf-8'?>
+    <Server port="8005" shutdown="SHUTDOWN">
+    <Listener className="org.apache.catalina.startup.VersionLoggerListener" />
+    <Listener className="org.apache.catalina.core.AprLifecycleListener" SSLEngine="on" />
+    <Listener className="org.apache.catalina.core.JreMemoryLeakPreventionListener" />
+    <Listener className="org.apache.catalina.mbeans.GlobalResourcesLifecycleListener" />
+    <Listener className="org.apache.catalina.core.ThreadLocalLeakPreventionListener" />
+    <GlobalNamingResources>
+    <Resource name="UserDatabase" auth="Container" type="org.apache.catalina.UserDatabase" description="User database" factory="org.apache.catalina.users.MemoryUserDatabaseFactory" pathname="conf/tomcat-users.xml"/>
+    </GlobalNamingResources>
+    <Service name="Catalina">
+    {{- if (eq .Values.global.internalTlsEnable true) }}
+    <Connector port={{ .Values.tomcat.httpsPort | quote }}
+           protocol="org.apache.coyote.http11.Http11NioProtocol"
+           connectionTimeout={{ .Values.global.tomcatConnectionTimeout | quote }}
+           keepAliveTimeout={{ .Values.global.tomcatKeepAliveTimeout | quote}}
+           maxThreads={{ .Values.global.tomcatMaxThreads | quote }}
+           maxHttpHeaderSize={{ .Values.global.tomcatMaxHttpHeaderSize | quote }}
+           acceptCount={{ .Values.global.tomcatAcceptCount | quote }}
+           scheme="https"
+           SSLEnabled="true"
+           secure="true">
+           <SSLHostConfig ciphers="TLS_AES_256_GCM_SHA384">
+           <Certificate certificateKeystoreFile="/opt/dctm/certificate/ingress.p12" 
+           certificateKeystorePassword={{ .Values.ingressPassword | quote }}/>
+           </SSLHostConfig>
+    </Connector>
+    {{ else }}    
+    <Connector port={{ .Values.tomcat.httpPort | quote }} protocol="HTTP/1.1" redirectPort="8443"
+    connectionTimeout={{ .Values.global.tomcatConnectionTimeout | quote }}
+           keepAliveTimeout={{ .Values.global.tomcatKeepAliveTimeout | quote}}
+           maxThreads={{ .Values.global.tomcatMaxThreads | quote }}
+           maxHttpHeaderSize={{ .Values.global.tomcatMaxHttpHeaderSize | quote }}
+           acceptCount={{ .Values.global.tomcatAcceptCount | quote }}/>
+    {{- end }}
+    <Connector port="8009" protocol="AJP/1.3" redirectPort="8443" secret="xcp_tomcat"/>
+    <Engine name="Catalina" defaultHost="localhost" jvmRoute="#jvmRoute#">
+    <Realm className="org.apache.catalina.realm.LockOutRealm">
+    <Realm className="org.apache.catalina.realm.UserDatabaseRealm" resourceName="UserDatabase"/>
+    </Realm>
+    <Host name="localhost"  appBase="webapps" unpackWARs="true" autoDeploy="true">
+       <Valve className="org.apache.catalina.valves.AccessLogValve" directory="logs" prefix="localhost_access_log" suffix=".txt" pattern="%h %l %u %t &quot;%r&quot; %s %b"/>
+     </Host>
+     </Engine>
+     </Service>
+    </Server>

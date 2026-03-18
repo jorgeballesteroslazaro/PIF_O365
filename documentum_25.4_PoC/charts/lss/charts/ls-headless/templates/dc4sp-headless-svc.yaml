@@ -1,0 +1,32 @@
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.dc4spHeadless.name }}-svc
+spec:
+  ipFamilies:
+{{- if .Values.dc4spHeadless.ipFamilies}}
+{{ toYaml .Values.dc4spHeadless.ipFamilies | indent 2 }}
+{{- end }}  
+  ipFamilyPolicy: {{ .Values.dc4spHeadless.ipFamilyPolicy }}
+  ports: 
+  - port: {{ template "lss.servicePort" . }}
+    targetPort: {{ .Values.dc4spHeadless.targetPort }}
+    name: {{ .Values.dc4spHeadless.name }}
+  clusterIP: None
+  
+
+---
+
+apiVersion: v1
+kind: Endpoints
+metadata:
+  name: {{ .Values.dc4spHeadless.name }}-svc
+subsets:
+- addresses:
+{{- if .Values.dc4spHeadless.addresses}}
+{{ toYaml .Values.dc4spHeadless.addresses | indent 4 }}
+{{- end }}
+  ports:
+  - name: {{ .Values.dc4spHeadless.name }}
+    port: {{ .Values.dc4spHeadless.targetPort }}

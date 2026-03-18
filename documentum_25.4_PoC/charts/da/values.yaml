@@ -1,0 +1,259 @@
+#######################################################
+# Documentum Administrator default values.            #
+# This is This is a YAML-formatted file.              #
+# Declare variables to be passed into your templates. #
+#######################################################
+
+persistentVolumeClaim:  
+  pvcName: da-pvc
+  accessMode: ReadWriteMany
+  size: 1Gi
+  storageClass:
+  awsEFSCSIDriver: efs.csi.aws.com
+  awsEFSCSIHandle:
+
+service:
+  name: da-svc
+  type:
+  port: 8080
+  serviceAnnotations: {}
+
+serviceAccount:
+    createserviceaccount: false
+    serviceAccountName:
+
+snc:
+  enabled: false
+  secret:
+    name: <namespace>-dasnc-secret
+    volumeName: <namespace>-dasnc-volume
+  pseName:
+  psePassPhrase:
+  pseOwnerName: CN=<common name>, OU=<organizational unit>, O=<organization>, C=<country>
+  sap:
+    certificateName: SNCSAP.crt
+    certificate: |
+      -----BEGIN CERTIFICATE-----
+      xxx
+      -----END CERTIFICATE-----    
+
+
+ingress:
+  name: da-ingress
+  # If common ingress created in the cluster/namespace then ensure this is false.
+  enable: true
+  ingressHostName: da-ingress-host
+  clusterDomainName: ce-shared.bp.anthos.otxlab.net
+  path: /
+  annotations: 
+    nginx.ingress.kubernetes.io/proxy-body-size: 5g
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: 30m
+    # Uncomment for deploying on azure.
+    # kubernetes.io/ingress.class: nginx    
+    # nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    # kubernetes.io/tls-acme: "true"
+
+cs:  
+  useCSDfcConfigMap: true
+  configMapName:
+  csSecretConfigName:
+  allowTrustedLogin: false
+
+##################################################################################################
+# set the useCertificate to true if this DA is getting configured to SSL enabled CS.             # 
+# The dbrServiceName & dbrDataPVCName needs to be updated from the Docbroker Charts accordingly. # 
+# dfc.properties values should be updated manually if connecting to SSL enabled CS &             #
+# the useCSDfcConfigMap need to be reset to false.                                               #
+##################################################################################################
+
+certificate:
+  useCertificate:
+  dbrServiceName:
+  dbrDataPVCName: certdbr-data-pvc
+  
+####################################################################################
+# Suppose Content Server config map not used                                       #
+# then uncomment and update the below listed parameters with appropriate values of # 
+# dfc.properties and ensure to toggle the flag useDfcConfigMap to false.           #
+####################################################################################
+#dfc:  
+#  properties:
+#  - dfc.data.dir=/opt/dctm
+#  - dfc.tokenstorage.dir=/opt/dctm/apptoken
+#  - dfc.tokenstorage.enable=false
+#  - dfc.security.ssl.use_anonymous_cipher=true
+#  - dfc.security.ssl.truststore=/opt/dctm/certificate/dfc.keystore
+#  - dfc.security.ssl.use_existing_truststore=false
+#  - dfc.docbroker.host[0]=<DOCBROKER_SERVICE_NAME>
+#  - dfc.docbroker.port[0]=<PORT_NO>
+#  - dfc.crypto.repository=<CRYPTO_REPO_NAME>
+#  - dfc.globalregistry.repository=<GLOBAL_REPO>
+#  - dfc.session.secure_connect_default=try_secure_first
+#  - dfc.globalregistry.username=dm_bof_registry
+#  - dfc.session.allow_trusted_login=false
+
+deployment:
+  name: da
+  appName: da
+  replicaCount: 1
+  strategyType: RollingUpdate
+
+# Base Image Will Be Passed Here  
+images:
+  da:
+    repository:
+    name:
+    tag:
+    pullPolicy:
+    imagePullSecrets:
+  extensionImage:
+    repository:
+    name: ot-dctm-admin
+    tag: 25.2
+    pullPolicy:
+
+containers:
+  da:
+    name: da
+    kubernetes: true
+    externalFolderPath: /opt/tomcat/webapps/da/external-configurations
+    containerPort: 8080
+    docbaseName:
+    hvpLogLevel: INFO
+    hvpLogRetain: true
+    hvpJobCopyOnRepSapAction: false
+    hvpJobEncryptSapUser: false
+    probing:
+      healthPath: /da/health
+      healthPort: 8080
+      healthPortHttps: 8443
+      failureThreshold: 2
+      successThreshold: 1
+      timeoutSeconds: 150
+      readinessProbe:
+        initialDelaySeconds: 150
+        periodSeconds: 150
+      livenessProbe:
+        initialDelaySeconds: 150
+        periodSeconds: 150
+
+#extension pvc
+extension:
+  pvcName:
+  PVCAccessMode: ReadWriteMany
+  PVCStorageClass:
+  PVCSize: 2Gi
+  useCommonPVC:
+  awsEFSCSIDriver: efs.csi.aws.com
+  awsEFSCSIHandle:
+
+# OTDS SSO details.
+# Following mentioned values will be updated in otdsoauth.properties file of DA if enabled.
+otds:
+  enable:
+  url:
+  clientID:
+  scheme:
+  authentication:
+    useDefaultDocbase: true
+    repoSelectionPageRequired: true
+    loginTicketTimeout: 250
+    renewtokenafterlogout: true
+    
+lmsgcustomLog:
+    enable: false
+    loglocation: /opt/tomcat/logs
+
+allowinstallowner: true
+    
+dctmreports:
+  enable: false 
+  url:
+
+cssap:
+  enable: false
+
+###############################################################################
+# To update the wdk/app.xml file take hierarchal structure and form parameter #
+# as below. Exclude tags <scope> and <config>.                                #
+#<application>                                                                #
+#     <language>                                                              #
+#        <supported_locales>                                                  #
+#           <locale>                                                          #
+# this should be converted to application.language.supported_locales.locale   #
+# and add equals operator then value                                          #
+#                                                                             #
+###############################################################################
+wdkAppXmlConfig:
+  tagsnvalues:
+  # Syntax for specifying both English and Japanese language pack 
+  # application.language.supported_locales.locale=[en_US, ja_JP]
+  - application.language.supported_locales.locale=[en_US]
+  - application.language.default_locale=en_US
+  - application.authentication.enableskipsso=true
+  - application.session_config.enable_advanced_session_timeout_control=false
+  - application.session_config.timeout_control.client_warning_session_timeout=1  
+  # - application.contentxfer.accelerated-write.enabled=true
+  # - application.contentxfer.accelerated-write.bocs-write-mode=default-async
+  # - application.contentxfer.accelerated-write.allow-override-bocs-write-mode=true
+      
+# log4j2 logging config details.
+logging:  
+  rootLoggerLevel: WARN
+  consoleThresholdLevel: WARN
+  filename: documentum.log
+  logFileSize: 10MB
+  maxLogFiles: 5
+  monitorInterval: 30
+
+newrelic:
+  enable:
+  appName: DOCUMENTUM_DA-PROD-OT2_CFCR_BP2-ECD
+  licenseKeyName: newrelicLicensekey
+  proxyHost:
+  proxyPort:
+  proxyScheme:
+
+dms:
+  dmsServiceName:
+  dmsHttpPort:
+
+# Added for DMS with service
+env:
+  domain:
+
+vault:
+  enable:
+  vault_configmap: dctm-vault-configmap
+  createPVC: false
+  PVCName: dsis-binary-pvc
+  pvcAccessModes: ReadWriteMany
+  size: 100Mi
+  storageClass:
+  existVolumePv:
+
+internalTlsEnable:
+
+tomcat:
+  connectionTimeout:
+  maxHttpHeaderSize:
+  maxThreads:
+  keepAliveTimeout:
+  acceptCount:
+
+resources:
+  limits:
+    cpu: 400m
+    memory: 4Gi
+  requests:
+    cpu: 400m
+    memory: 4Gi
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+session:
+  timeout:

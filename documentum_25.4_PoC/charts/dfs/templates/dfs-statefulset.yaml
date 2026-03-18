@@ -1,0 +1,255 @@
+#StatefulSet
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+   name: {{ .Values.serviceName }}
+spec:
+  serviceName: {{ .Values.serviceName }}
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Values.serviceName }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.serviceName }}
+    spec:
+{{- if or .Values.imagePullSecrets .Values.global.pullSecretName }}
+      imagePullSecrets:
+        - name: {{ .Values.imagePullSecrets | default .Values.global.pullSecretName }}
+{{ end }}
+      serviceAccountName: {{ .Values.serviceAccount.serviceAccountName | default .Values.global.documentumserviceaccount }}
+
+      initContainers:
+      - name: {{ .Values.containers.initcontainer.name }}
+        image: {{ .Values.containers.initcontainer.image.repository | default .Values.global.repository }}/{{ .Values.containers.initcontainer.image.name }}:{{ .Values.containers.initcontainer.image.tag }}
+        imagePullPolicy: {{ .Values.containers.initcontainer.image.pullPolicy | default .Values.global.pullPolicyType }}
+        
+        volumeMounts:
+          - name: extensionpvc
+            mountPath: /opt/dfsxtension
+            subPath: dfsxtension
+
+      containers:
+
+
+      - name: {{ .Values.containers.dfs.name }}
+        image: {{ .Values.containers.dfs.image.repository | default .Values.global.repository }}/{{ .Values.containers.dfs.image.name | default .Values.global.appserverImageName }}:{{ .Values.containers.dfs.image.tag | default .Values.global.appserverImageTag }}
+
+        command: ['bin/bash', '-c', 'mkdir -p /home/dmadmin/extnscriptfolder/;chmod 755 /home/dmadmin/extnscriptfolder/;cp /opt/dfsxtension/scripts/extensionstartup.sh /home/dmadmin/extnscriptfolder/;chmod +x /home/dmadmin/extnscriptfolder/extensionstartup.sh;/home/dmadmin/extnscriptfolder/extensionstartup.sh']
+        imagePullPolicy: {{ .Values.containers.dfs.image.pullPolicy | default .Values.global.pullPolicyType }}
+
+{{- if .Values.containers.dfs.probing.readinessProbe.enable }}
+        readinessProbe:
+          httpGet:
+            path: {{ .Values.containers.dfs.probing.url }}
+            port: {{ eq .Values.global.internalTlsEnable true | ternary .Values.containers.dfs.containerSslPort .Values.containers.dfs.containerHttpPort }}
+            scheme: {{ eq .Values.global.internalTlsEnable true | ternary "HTTPS" "HTTP" }}
+          initialDelaySeconds: {{ .Values.containers.dfs.probing.readinessProbe.initialDelaySeconds }}
+          periodSeconds: {{ .Values.containers.dfs.probing.readinessProbe.periodSeconds }}
+          failureThreshold: {{ .Values.containers.dfs.probing.failureThreshold }}
+          successThreshold: {{ .Values.containers.dfs.probing.successThreshold }}
+          timeoutSeconds: {{ .Values.containers.dfs.probing.timeoutSeconds }}
+{{ end }}
+{{- if .Values.containers.dfs.probing.livenessProbe.enable }}
+        livenessProbe:
+          httpGet:
+            path: {{ .Values.containers.dfs.probing.url }}
+            port: {{ eq .Values.global.internalTlsEnable true | ternary .Values.containers.dfs.containerSslPort .Values.containers.dfs.containerHttpPort }}
+            scheme: {{ eq .Values.global.internalTlsEnable true | ternary "HTTPS" "HTTP" }}
+          initialDelaySeconds: {{ .Values.containers.dfs.probing.livenessProbe.initialDelaySeconds }}
+          periodSeconds: {{ .Values.containers.dfs.probing.livenessProbe.periodSeconds }}
+          failureThreshold: {{ .Values.containers.dfs.probing.failureThreshold }}
+          successThreshold: {{ .Values.containers.dfs.probing.successThreshold }}
+          timeoutSeconds: {{ .Values.containers.dfs.probing.timeoutSeconds }}
+{{ end }}        
+        env:
+        - name: KUBERNETES
+          value: "true"
+        - name: CATALINA_HOME
+          value: {{ .Values.tomcat.home }}
+        - name: CUSTOM_JAVA_OPTS
+          value: {{ .Values.tomcat.customJavaOpts }}
+        - name: NEWRELIC_JAVA_AGENT
+          value: {{ .Values.newrelic.newrelic_home_folder }}
+        - name: INTERNAL_TLS_ENABLED
+          value: {{ .Values.internalTlsEnable | default .Values.global.internalTlsEnable | default false | quote }}
+        - name: INGRESS_KEYSTORE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.cs.secretName | default .Values.global.csSecrets }}
+              key: ingress.keystorepassword
+        - name: CONTAINER_NAME
+          value: {{ .Values.serviceName }}
+        - name: KUBERNETES_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: KUBERNETES_LABELS
+          value: app={{ .Values.serviceName }}
+        - name: KUBERNETES_TOMCAT_CLUSTER_ENABLED
+          value: {{ .Values.tomcat.tomcatClusterEnabled | quote }}
+        - name: DOCBASE_NAME
+          value: {{ .Values.dfc.docbase | default .Values.global.docbase }}
+        - name: BOF_REGISTRY_USER_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.cs.secretName | default .Values.global.csSecrets }}
+              key: globalRegistryPassword
+        - name: INSTALL_OWNER
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.cs.secretName | default .Values.global.csSecrets }}
+              key: installOwner
+        - name: SECRETS_CHANGE  
+          value: {{ .Values.secretsChange | default .Values.global.secrets_Change | quote}}
+        - name: DOCBROKER_HOST
+          value: {{ .Values.dfc.docbroker | default .Values.global.dbrServiceName }}
+        - name: DOCBROKER_PORT
+          value: {{ .Values.dfc.port | default .Values.global.dbr_port | quote }}
+        - name: SECURE_CONNECT_MODE
+          value: {{ .Values.dfc.connectionMode }}
+{{ if (empty (.Values.certificate.use_certificate | quote) | ternary .Values.global.useCertificate .Values.certificate.use_certificate) }}
+        - name: DOCBASE_USE_CERTIFICATES
+          value: {{ (empty (.Values.certificate.use_certificate | quote) | ternary .Values.global.useCertificate .Values.certificate.use_certificate) | quote }}
+        - name: DFC_SSL_TRUSTSTORE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.cs.secretName | default .Values.global.csSecrets }}
+              key: csCertTrustPassword
+{{ end }}
+{{- if (empty (.Values.newrelic.enable | quote) | ternary .Values.global.newrelic .Values.newrelic.enable) }}
+        - name: NEWRELIC_LICENSE_KEY
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.cs.secretName | default .Values.global.csSecrets }}
+              key: {{ .Values.newrelic.licenseKeyName }}
+        - name: NEWRELIC_DFS_APPLICATION_NAME
+          value: {{ .Values.newrelic.dfs_application_name }}
+        - name: NEWRELIC_PROXY_HOST
+          value: {{ .Values.newrelic.proxy_host | default .Values.global.newrelicProxyHost }}
+        - name: NEWRELIC_PROXY_PORT
+          value: {{ .Values.newrelic.proxy_port | default .Values.global.newrelicProxyPort | quote }}
+        - name: ENABLE_NEWRELIC
+          value: {{ (empty (.Values.newrelic.enable | quote) | ternary .Values.global.newrelic .Values.newrelic.enable) | quote }}
+{{- end }}
+{{- if (empty (.Values.vault.enable | quote) | ternary .Values.global.isVaultEnabled .Values.vault.enable) }}
+        - name: DFC_DSIS_ENABLED
+          value: {{ (empty (.Values.vault.enable | quote) | ternary .Values.global.isVaultEnabled .Values.vault.enable) | quote }}
+{{- end }}
+        - name: SINGLE_HELM_ENABLED
+          value: {{ .Values.single_helm.enable | quote }}
+        - name: ACS_HOST
+          value: {{ .Values.acsService.serviceName | default .Values.global.jmsServiceName | quote }}
+        - name: ACS_PORT
+          value: {{ .Values.acsService.servicePort | default .Values.global.jmsPort | quote }}
+        - name: DMS_SERVICE_NAME
+          value: {{ .Values.dms.dmsServiceName | default .Values.global.dmsServiceName }}
+        - name: DMS_HTTP_PORT
+          value: {{ .Values.dms.dmsHttpPort | default .Values.global.dmsHttpPort | quote}}
+
+        ports:
+        - containerPort: {{ .Values.containers.dfs.containerHttpPort }}
+          name: dfs-http-port
+        - containerPort: {{ .Values.containers.dfs.containerSslPort }}
+          name: dfs-secure-port
+        volumeMounts:
+          - mountPath: /opt/dfsxtension
+            name: extensionpvc
+            subPath: dfsxtension
+          - mountPath: /opt/tomcat/logs
+            name: {{ .Values.serviceName }}-vct 
+          - mountPath: /opt/tomcat/DfcPropConfigMap
+            name: dfc-properties-volume
+          - mountPath: /opt/tomcat/Log4jPropConfigMap
+            name: log4j-properties-volume
+          - mountPath: /opt/tomcat/ConfigXMLs
+            name: dfs-appserver-xml-volume
+{{ if (empty (.Values.certificate.use_certificate | quote) | ternary .Values.global.useCertificate .Values.certificate.use_certificate) }}
+          - mountPath: /opt/dctm/certificate
+            name: {{ .Values.dbrpersistentVolume.dbrdataPVCName }}
+            subPath: certificate/{{ .Values.dbrpersistentVolume.dbrdataPVCName }}
+{{ end }}
+{{- if (empty (.Values.vault.enable | quote) | ternary .Values.global.isVaultEnabled .Values.vault.enable) }}
+          - mountPath: {{ .Values.vault.vault_config_mount_path }}
+            name: vault-volume
+          - mountPath: {{ .Values.vault.binary_volume_mount_path }}
+            name: dsis-binary-volume
+{{- end }}
+
+        resources:
+          requests:
+            memory: {{ .Values.resources.requests.memory | quote  }}
+            cpu: {{ .Values.resources.requests.cpu | quote  }}
+          limits:
+            memory: {{ .Values.resources.limits.memory | quote  }}
+            cpu: {{ .Values.resources.limits.cpu | quote  }}
+      volumes:
+
+        - name: extensionpvc
+          persistentVolumeClaim:
+         {{- if (empty (.Values.extensionPVC.useCommonPVC | quote) | ternary .Values.global.tomcatbase_usecommonpvc .Values.extensionPVC.useCommonPVC) }}
+            claimName: {{ .Values.extensionPVC.commonPVCName | default .Values.global.tomcatbase_commonpvcname }}
+        {{- else }} 
+            claimName: {{ .Values.serviceName }}-dfs-extension-pvc        
+        {{- end }}
+  
+  {{ if (empty (.Values.certificate.use_certificate | quote) | ternary .Values.global.useCertificate .Values.certificate.use_certificate) }}
+        - name: {{ .Values.dbrpersistentVolume.dbrdataPVCName }}
+          persistentVolumeClaim:
+            claimName: {{ .Values.dfc.docbroker | default .Values.global.dbrServiceName }}-pvc
+{{- end }}
+        - name: log4j-properties-volume
+          configMap:
+            name: {{ .Values.serviceName }}-dfs-config
+            items:
+              - key: log4j
+                path: log4j2.properties
+        - name: dfs-appserver-xml-volume
+          configMap:
+            name: {{ .Values.serviceName }}-dfs-config
+            items:
+{{- if (eq .Values.global.internalTlsEnable true) }}
+              - key: server_tls.xml
+                path: server_tls.xml
+{{- else }}
+              - key: server.xml
+                path: server.xml                
+{{- end }}
+        - name: dfc-properties-volume
+        {{- if eq .Values.cs.useCSDfcConfigMap true }}
+          configMap:
+            name: {{ .Values.cs.configMapName | default .Values.global.dbrConfigmapName}}
+            items:
+              - key: dfc.properties
+                path: dfc.properties
+        {{ else }}
+          configMap:
+            name: {{ .Values.serviceName }}-dfs-config
+            items:
+              - key: dfc
+                path: dfc.properties
+        {{ end }}
+{{- if (empty (.Values.vault.enable | quote) | ternary .Values.global.isVaultEnabled .Values.vault.enable) }}
+        - name: dsis-binary-volume
+          persistentVolumeClaim:
+            claimName: {{ .Values.vault.PVCName }}
+        - name: vault-volume
+          configMap:
+            name: {{ .Values.vault.vaultConfigmap }}
+            items:
+              - key: vault
+                path: application.properties
+{{- end }}
+
+      restartPolicy: Always
+  volumeClaimTemplates:
+  - metadata:
+      name: {{ .Values.serviceName }}-vct
+    spec:
+      accessModes:
+        - {{ .Values.volumeClaimTemplate.logVctAccessModes }}
+      resources:
+         requests:
+            storage: {{ .Values.volumeClaimTemplate.size }}
+      storageClassName: {{ .Values.volumeClaimTemplate.logVctStorageClass | default .Values.global.rwoStorage }}

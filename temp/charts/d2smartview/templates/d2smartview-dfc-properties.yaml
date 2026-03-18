@@ -1,0 +1,42 @@
+{{- if .Values.global.dctmclientinstaller.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: d2smartview-dfc-properties
+  {{- template "configMap.labels" . }}
+data:
+  dfc.properties: |-
+    dfc.data.dir=/opt/dctm
+    dfc.tokenstorage.dir=/opt/dctm/apptoken
+    dfc.tokenstorage.enable=false
+    dfc.docbroker.host[0]={{ .Values.docbroker.serviceName | default .Values.global.dbrServiceName }}
+    dfc.docbroker.port[0]=1489
+    dfc.crypto.repository={{ .Values.docbase.name | default .Values.global.docbase }}
+    {{ if (empty (.Values.certificate.use_certificate | quote) | ternary .Values.global.useCertificate .Values.certificate.use_certificate) -}}
+    dfc.session.secure_connect_default=try_secure_first
+    dfc.security.ssl.truststore=/opt/dctm/certificate/dfc.keystore
+    dfc.security.ssl.truststore_password=DFC_SECURITY_SSL_TRUSTSTORE_PASSWORD_AS_ENV_VARIABLE_DFC_SSL_TRUSTSTORE_PASSWORD
+    {{- else -}}
+    dfc.session.secure_connect_default=try_native_first
+    {{- end }}
+    dfc.globalregistry.repository={{ .Values.docbase.name | default .Values.global.docbase }}
+    dfc.globalregistry.username=dm_bof_registry
+    dfc.globalregistry.password=DFC_GLOBALREGISTRY_PASSWORD_AS_ENV_VARIABLE_BOF_REGISTRY_USER_PASSWORD
+    dfc.security.ssl.use_anonymous_cipher=true
+    dfc.security.keystore.file={{ .Values.tomcat.catalinaHome }}/CustomConf/DFCKeystore/dfc.keystore
+    dfc.session.allow_trusted_login={{ (empty (.Values.session.allowTrustedLogin | quote) | ternary .Values.global.sessionAllowTrustedLogin .Values.session.allowTrustedLogin) }}
+    {{- if $configFileAppendsValues := .Values.dfc_properties }}
+    {{ $configFileAppendsValues | indent 4 }}
+    {{- end }}
+
+{{- $configFileOverridesFile := printf "%s/%s" .Values.configFileOverrideFilesDir "dfc.properties" }}
+{{- $configFileMsg0 := printf "\n\n##### Begin lines added from %s\n" $configFileOverridesFile }}
+{{- $configFileMsg1 := printf "##### End lines added from %s" $configFileOverridesFile }}
+{{- $configFileLinesToAppend := .Files.Get $configFileOverridesFile }}
+{{- if $configFileLinesToAppend }}
+{{ $configFileMsg0 | indent 4 }}
+{{ $configFileLinesToAppend | indent 4 }}
+{{ $configFileMsg1 | indent 4 }}
+{{- end }}
+
+    {{- end }}

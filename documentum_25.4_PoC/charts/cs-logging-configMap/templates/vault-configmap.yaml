@@ -1,0 +1,11 @@
+{{- if (empty (.Values.vault.enable | quote) | ternary .Values.global.isVaultEnabled .Values.vault.enable) }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.configMap.vault_configmap_name }}
+data:
+  vault: |-
+{{ .Values.vault.configmap | indent 4 }}
+{{- printf "\ndsis.dctm.vault_type=%s\n" .Values.global.vaultType | indent 4 }}
+{{- printf "dsis.dctm.secretConfigName=%s" .Values.global.secretConfigName }}
+{{- end }}

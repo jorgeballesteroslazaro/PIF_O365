@@ -1,0 +1,106 @@
+## Consul Service ##
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.prefix | default .Values.global.dccPrefix }}-{{ .Values.consul.prefix }}-service
+  namespace: {{ .Values.namespace | default .Release.Namespace }}
+{{- with .Values.serviceAnnotationsConsul }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+{{- end }}
+spec:
+  selector:
+    app: {{ .Values.prefix | default .Values.global.dccPrefix }}-{{ .Values.consul.prefix }}
+  ports:
+    - port: {{ .Values.consul.service.servicePort }}
+      targetPort: {{ include "dctm-dcc.consulservicePortNumber" . }}
+  type: ClusterIP
+---
+{{ if eq .Values.syncagent.enabled true }}
+## Syncagent robotic service ##
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.prefix | default .Values.global.dccPrefix }}-{{ .Values.syncagent.prefix }}-service
+  namespace: {{ .Values.namespace | default .Release.Namespace }}
+{{- with .Values.serviceAnnotationsSyncagent }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+{{- end }}
+spec:
+  selector:
+    app: {{ .Values.prefix | default .Values.global.dccPrefix }}-{{ .Values.syncagent.prefix }}
+  ports:
+    - port: {{ .Values.syncagent.service.servicePort }}
+      targetPort: {{ include "dctm-dcc.syncagentservicePortNumber" . }}
+  sessionAffinity: ClientIP
+  type: ClusterIP
+{{ end }}
+---
+{{ if eq .Values.syncnshareManual.enabled true }}
+## syncagent manual service ##
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.prefix | default .Values.global.dccPrefix }}-{{ .Values.syncnshareManual.prefix }}-service
+  namespace: {{ .Values.namespace | default .Release.Namespace }}
+spec:
+  selector:
+    app: {{ .Values.prefix | default .Values.global.dccPrefix }}-{{ .Values.syncnshareManual.prefix }}
+  ports:
+    - port: {{ .Values.syncnshareManual.service.servicePort }}
+      targetPort: {{ include "dctm-dcc.manualservicePortNumber" . }}
+  sessionAffinity: ClientIP
+  type: ClusterIP
+{{ end }}
+---
+{{ if eq .Values.metadata.enabled true }}
+## Metadata service ##
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.prefix | default .Values.global.dccPrefix }}-{{ .Values.metadata.prefix }}-service
+  namespace: {{ .Values.namespace | default .Release.Namespace }}
+spec:
+  selector:
+    app: {{ .Values.prefix | default .Values.global.dccPrefix }}-{{ .Values.metadata.prefix }}
+  ports:
+      - port: {{ .Values.metadata.service.servicePort }}
+        targetPort: {{ .Values.metadata.service.targetPort }}
+  sessionAffinity: ClientIP
+  type: ClusterIP
+{{ end }}
+---
+{{ if eq .Values.coreNotification.enabled true }}
+## Core Notification service ##
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.prefix | default .Values.global.dccPrefix }}-{{ .Values.coreNotification.prefix }}-service
+  namespace: {{ .Values.namespace | default .Release.Namespace }}
+spec:
+  selector:
+    app: {{ .Values.prefix | default .Values.global.dccPrefix }}-{{ .Values.coreNotification.prefix }}
+  ports:
+    - port: {{ .Values.coreNotification.service.servicePort }}
+      targetPort: {{ .Values.coreNotification.service.targetPort }}
+  sessionAffinity: ClientIP
+  type: ClusterIP
+{{ end }}
+---
+{{ if eq .Values.mailService.enabled true }}
+## Mail service ##
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.prefix | default .Values.global.dccPrefix }}-{{ .Values.mailService.prefix }}-service
+  namespace: {{ .Values.namespace | default .Release.Namespace }}
+spec:
+  selector:
+    app: {{ .Values.prefix | default .Values.global.dccPrefix }}-{{ .Values.mailService.prefix }}
+  ports:
+    - port: {{ .Values.mailService.service.servicePort }}
+      targetPort: {{ .Values.mailService.service.targetPort }}
+  sessionAffinity: ClientIP
+  type: ClusterIP
+{{ end }}

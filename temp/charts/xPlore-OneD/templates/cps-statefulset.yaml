@@ -1,0 +1,153 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ .Values.service.cps.name }}
+spec:
+  serviceName: {{ .Values.service.cps.name }}
+  replicas: {{ .Values.cps.replicaCount }}
+  selector:
+    matchLabels:
+      xplore/app: {{ .Values.service.cps.name }}
+      xplore/name: {{ .Chart.Name }}
+      xplore/release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        xplore/app: {{ .Values.service.cps.name }}
+        xplore/name: {{ .Chart.Name }}
+        xplore/release: {{ .Release.Name }}
+    spec:
+      serviceAccountName: {{ .Values.serviceAccount.serviceAccountName | default .Values.global.documentumserviceaccount }}
+      {{ if (empty (.Values.image.pullSecrets | quote) | ternary .Values.global.pullSecretName .Values.image.pullSecrets) }}
+      imagePullSecrets:
+        - name: {{ .Values.image.pullSecrets | default .Values.global.pullSecretName }}
+      {{ end }}    
+      containers:
+        - name: xplore-cps
+          image: "{{ .Values.image.repository | default .Values.global.repository }}/{{ .Values.image.cps.name }}:{{ .Values.image.cps.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy | default .Values.global.pullPolicyType }}
+          env:
+            - name: ESS_HOST
+              {{- if (not (.Values.cps.essHost))}}            
+              value: {{ .Values.service.indexserver.name }}
+              {{- else }}
+              value: {{ .Values.cps.essHost }}
+              {{- end }}
+            - name: PERSIST_LOGS
+              value: {{ .Values.cps.persistLogs | default .Values.global.persistLogs | quote }}
+            {{- if (.Values.cps.extConfPath)}}
+            - name: EXT_CONF_PATH
+              value: {{ .Values.cps.extConfPath }}
+            {{- end }}
+            - name: CONFIG_NEW_RELIC
+              value: {{ .Values.newRelic.enable | default .Values.global.newrelic | quote }}
+            {{- if (.Values.newRelic.appNameSuffix) }}
+            - name: NEW_RELIC_APP_NAME_SUFFIX
+              value: {{ .Values.newRelic.appNameSuffix | quote }}
+            {{- end }}
+            {{- if (.Values.newRelic.rootPath) }}
+            - name: NEW_RELIC_ROOT
+              value: {{ .Values.newRelic.rootPath | quote }}
+            {{- end }}
+            {{- range $key, $value := .Values.cps.extraEnv }}
+            - name: {{ $key }}
+              value: {{ $value | quote }}
+            {{- end }}
+            {{- if (empty (.Values.vault.enable | quote) | ternary .Values.global.isVaultEnabled .Values.vault.enable) }}
+            - name: VAULT_ENABLED
+              value: {{ .Values.vault.enable | default .Values.global.isVaultEnabled | quote }}
+            - name: DFC_DSIS_ENABLED
+              value: {{ .Values.vault.enable | default .Values.global.isVaultEnabled | quote }}
+            - name: DSIS_VOLUME_DIR
+              value: {{ .Values.vault.binaryVolumeMountPath | quote }}
+            - name: VAULT_CONFIG_DIR
+              value: {{ .Values.vault.vaultConfigMountPath | quote }}              
+            {{- end }}
+          ports:
+            - name: cps-port
+              containerPort: {{ .Values.service.cps.targetPort }}
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /cps/health/liveness
+              port: {{ .Values.service.cps.targetPort }}
+            initialDelaySeconds: {{ .Values.cps.livenessProbe.initialDelay }}
+            timeoutSeconds: {{ .Values.cps.livenessProbe.timeout }}
+            periodSeconds: {{ .Values.cps.livenessProbe.period }}
+            failureThreshold: {{ .Values.cps.livenessProbe.failure }}
+          readinessProbe:
+            httpGet:
+              path: /cps/health/readiness
+              port: {{ .Values.service.cps.targetPort }}
+            initialDelaySeconds: {{ .Values.cps.readinessProbe.initialDelay }}
+            timeoutSeconds: {{ .Values.cps.readinessProbe.timeout }}
+            periodSeconds: {{ .Values.cps.readinessProbe.period }}
+            failureThreshold: {{ .Values.cps.readinessProbe.failure }}
+          resources:
+            requests:
+              memory: {{ .Values.resources.cps.requests.memory | quote }}
+              cpu: {{ .Values.resources.cps.requests.cpu | quote }}
+            limits:
+              memory: {{ .Values.resources.cps.limits.memory | quote }}
+              cpu: {{ .Values.resources.cps.limits.cpu | quote }}
+          volumeMounts:
+            - mountPath: /root/xPlore/rtdata
+              name: xplore-data
+              subPath: {{ .Values.volumeMounts.subPath }}
+            {{- if (empty (.Values.newRelic.enable | quote) | ternary .Values.global.newrelic .Values.newRelic.enable) }}
+            - name: new-relic-config-map
+              {{- if (.Values.cps.extConfPath)}}
+              mountPath: {{ .Values.cps.extConfPath }}/newrelic.yml
+              {{- else }}
+              mountPath: /root/xPlore/external-configurations/newrelic.yml
+              {{- end }}
+              subPath: newrelic.yml
+            {{- end }}
+            {{- if (empty (.Values.cps.persistLogs | quote) | ternary .Values.global.persistLogs .Values.cps.persistLogs) }}
+            - name: xplore-logs
+              mountPath: /root/xPlore/logs/  
+            {{- end }}
+            {{- if and (.Values.customVolume.customMountPath) (.Values.customVolume.customClaimName)}}
+            - name: custom-files
+              mountPath: {{ .Values.customVolume.customMountPath }}
+            {{- end }}                 
+            {{- if (empty (.Values.vault.enable | quote) | ternary .Values.global.isVaultEnabled .Values.vault.enable) }}
+            - name: vault-volume
+              mountPath: {{ .Values.vault.vaultConfigMountPath }}
+            - name: dsis-binary-volume
+              mountPath: {{ .Values.vault.binaryVolumeMountPath }} 
+            {{- end }}            
+
+      volumes:
+        - name: xplore-data
+          persistentVolumeClaim:
+            claimName: {{ .Values.persistentVolume.claimName }}
+        {{- if (empty (.Values.newRelic.enable | quote) | ternary .Values.global.newrelic .Values.newRelic.enable) }}
+        - name: new-relic-config-map
+          configMap:
+            name: {{ .Values.newRelic.configMap.name }}
+            items:
+              - key: {{ .Values.newRelic.configMap.key.newRelicConfigKey }}
+                path: newrelic.yml
+        {{- end }}
+        {{- if (empty (.Values.cps.persistLogs | quote) | ternary .Values.global.persistLogs .Values.cps.persistLogs) }}
+        - name: xplore-logs
+          emptyDir: {}
+        {{- end }}
+        {{- if and (.Values.customVolume.customMountPath) (.Values.customVolume.customClaimName)}}
+        - name: custom-files
+          persistentVolumeClaim:
+            claimName: {{ .Values.customVolume.customClaimName }}
+        {{- end }}
+        {{- if (empty (.Values.vault.enable | quote) | ternary .Values.global.isVaultEnabled .Values.vault.enable) }}
+        - name: dsis-binary-volume
+          persistentVolumeClaim:
+            claimName: {{ .Values.vault.PVCName }}
+        - name: vault-volume
+          configMap:
+            name: {{ .Values.vault.vaultConfigmap }}
+            items:
+              - key: vault
+                path: application.properties
+        {{- end }}
+        

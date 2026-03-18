@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ls-sftp-config-properties
+  {{- template "configMap.labels" . }}
+data:
+  sftpconfig.properties: |-
+    USER_LIST_LIMIT=15
+
+
+
+      

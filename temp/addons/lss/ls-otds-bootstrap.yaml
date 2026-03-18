@@ -1,0 +1,251 @@
+# These are samples of everything that can be bootstrapped
+# Keep and customize only the data you wish to bootstrap and delete everything else
+# Note: Sync partition creation is not supported in cloud, it is disabled by default.
+
+otds:
+  otdsws:
+    enableBootstrapConfig: true
+    existingBootstrapConfig: |
+      partitions:
+        - name: <USER_PARTITION>  # Replace with actual partition (e.g., <USER_PARTITION>)
+          description: Non-sync Partition for Admin Users
+      users:      
+        - name: businessadmin
+          userPartitionID: otds.admin
+          values: 
+            - name: userPassword
+              values: 
+                - <OTDS_ADMIN_PASSWORD>
+            - name: displayName
+              values: 
+                - businessadmin
+            - name: UserMustChangePasswordAtNextSignIn
+              values: 
+                - false
+            - name: UserCannotChangePassword
+              values: 
+                - true
+            - name: PasswordNeverExpires
+              values: 
+                - true                 
+        - name: d2_workflow_notifier
+          userPartitionID: <USER_PARTITION>
+          values: 
+            - name: userPassword
+              values: 
+                - <OTDS_ADMIN_PASSWORD>
+            - name: displayName
+              values: 
+                - d2_workflow_notifier    
+        - name: d2mail_config
+          userPartitionID: <USER_PARTITION>
+          values: 
+            - name: userPassword
+              values: 
+                - <OTDS_ADMIN_PASSWORD>
+            - name: displayName
+              values: 
+                - d2mail_config                               
+        - name: dsadmin
+          userPartitionID: <USER_PARTITION>
+          values: 
+            - name: userPassword
+              values: []
+            - name: displayName
+              values: 
+                - dsadmin   
+        - name: lunr_fulltext_user
+          userPartitionID: <USER_PARTITION>
+          values: 
+            - name: userPassword
+              values: []
+            - name: displayName
+              values: 
+                - lunr_fulltext_user    
+      groups:
+        - name: otdsbusinessadmins
+          userPartitionID: otds.admin
+          users: 
+            - businessadmin@otds.admin
+        - name: LS_Dev_Client_Consumer
+          userPartitionID: <USER_PARTITION>
+        - name: LS_Dev_Client_Contributor
+          userPartitionID: <USER_PARTITION>
+        - name: LS_Dev_Client_Coordinator
+          userPartitionID: <USER_PARTITION>
+        - name: LS_Dev_Client_System_Administrator
+          userPartitionID: <USER_PARTITION>
+        - name: LS_Dev_privilege_createcabinet
+          userPartitionID: <USER_PARTITION> 
+      roles:
+        - name: Client_Consumer
+          userPartitionID: <USER_PARTITION>
+        - name: Client_Contributor
+          userPartitionID: <USER_PARTITION>
+        - name: Client_Coordinator
+          userPartitionID: <USER_PARTITION>
+        - name: Client_System_Administrator
+          userPartitionID: <USER_PARTITION>
+        - name: privilege_createcabinet
+          userPartitionID: <USER_PARTITION>
+        - name: privilege_creategroup
+          userPartitionID: <USER_PARTITION>
+        - name: privilege_creategroupandcabinet
+          userPartitionID: <USER_PARTITION>
+        - name: privilege_creategroupandtype
+          userPartitionID: <USER_PARTITION>
+        - name: privilege_creategroupcabinetandtype
+          userPartitionID: <USER_PARTITION>
+        - name: privilege_createtype
+          userPartitionID: <USER_PARTITION>
+        - name: privilege_createtypeandcabinet
+          userPartitionID: <USER_PARTITION>
+        - name: privilege_superuser
+          userPartitionID: <USER_PARTITION>
+        - name: privilege_sysadmin
+          userPartitionID: <USER_PARTITION> 
+      oauthClients:
+        - name: <OTDS_CLIENT_ID>
+          description: <OTDS_CLIENT_ID>
+          confidential: true
+          secret: <OTDS_CLIENT_SECRET>   
+          useSessionRefreshTokenLifeTime: true
+          allowRefreshToken: true
+          redirectURLs:
+            - "https://<PUBLIC_URL_SHORT_NAME>.<PUBLIC_DOMAIN_NAME>/D2"
+            - "https://<PUBLIC_URL_SHORT_NAME>.<PUBLIC_DOMAIN_NAME>/D2-Smartview"
+            - "https://<PUBLIC_URL_SHORT_NAME>.<PUBLIC_DOMAIN_NAME>/D2/d2_otds.html"
+            - "https://<PUBLIC_URL_SHORT_NAME>.<PUBLIC_DOMAIN_NAME>/D2/OTDSLogoutResponse.html"
+            - "https://<PUBLIC_URL_SHORT_NAME>.<PUBLIC_DOMAIN_NAME>/D2/d2_external_signoff_page.jsp"
+            - "https://<PUBLIC_URL_SHORT_NAME>.<PUBLIC_DOMAIN_NAME>/D2-Smartview/ui"
+            - "https://<PUBLIC_URL_SHORT_NAME>.<PUBLIC_DOMAIN_NAME>/records"
+            - "https://<PUBLIC_URL_SHORT_NAME>.<PUBLIC_DOMAIN_NAME>/d2-rest"
+            - "https://<PUBLIC_URL_SHORT_NAME>.<PUBLIC_DOMAIN_NAME>/dctm-rest"
+            - "https://<VPN_URL_SHORT_NAME>.<VPN_DOMAIN_NAME>/admin"
+            - "https://<VPN_URL_SHORT_NAME>.<VPN_DOMAIN_NAME>/da"
+            - "https://<VPN_URL_SHORT_NAME>.<VPN_DOMAIN_NAME>/D2-Config"
+            - "https://<VPN_URL_SHORT_NAME>.<VPN_DOMAIN_NAME>/D2-Config/d2config_otds.html"
+            - "https://<VPN_URL_SHORT_NAME>.<VPN_DOMAIN_NAME>/D2-Config/OTDSLogoutResponse.html"
+            - "https://<VPN_URL_SHORT_NAME>.<VPN_DOMAIN_NAME>/DocumentumWorkflowDesigner/otds-signin.jsp"
+          allowedScopes:
+            - "create_publications"
+            - "create_any_publication"
+            - "view_publications"
+            - "view_any_publication"
+            - "read_any_markups"
+            - "write_any_markups"
+            - "delete_publications"
+            - "delete_any_publication"
+            - "search_all_publications"
+            - "search_publications"
+          defaultScopes:
+            - "create_publications"
+            - "create_any_publication"
+            - "view_publications"
+            - "view_any_publication"
+            - "read_any_markups"
+            - "write_any_markups"
+            - "delete_publications"
+            - "delete_any_publication"
+            - "search_all_publications"
+            - "search_publications"
+      resources:
+        - resourceName: <RESOURCE_NAME>
+          description: <RESOURCE_NAME>
+          connectorName: REST (Generic)
+          connectorid: rest
+          userSynchronizationState: true
+          pcCreatePermissionAllowed: true
+          pcModifyPermissionAllowed: true
+          userAttributeMapping:
+            - sourceAttr:
+                - ds-pwp-account-disabled
+              destAttr: AccountDisabled
+              mappingFormat: "/%s"
+            - sourceAttr:
+                - otMemberOf
+              destAttr: client_capability
+              mappingFormat: "%mvjs: function format(memberof) { const capabilities = {\"LS_Dev_Client_Consumer\":1,\"LS_Dev_Client_Contributor\":2, \"LS_Dev_Client_Coordinator\":4,\"LS_Dev_Client_System_Administrator\":8}; var ret = 1; var keys = Object.keys(capabilities); for (var i = 0; i < memberof.length; i++) { for (var j = 0; j < keys.length; j++) { if (memberof[i].toString() == keys[j]) ret = Math.max(ret, capabilities[keys[j]]) } } return ret.toString(); }"
+            - sourceAttr:
+                - oTExternalID3
+              destAttr: user_login_name
+              mappingFormat: "%s"
+            - sourceAttr:
+                - ""
+              destAttr: user_type
+              mappingFormat: "dm_user"
+            - sourceAttr:
+                - displayName
+              destAttr: user_name
+              mappingFormat: "%s"
+            - sourceAttr:
+                - mail
+              destAttr: user_address
+              mappingFormat: "%s"
+            - sourceAttr:
+                - ""
+              destAttr: create_default_cabinet
+              mappingFormat: "F"
+            - sourceAttr:
+                - ""
+              destAttr: user_rename_enabled
+              mappingFormat: "T"
+            - sourceAttr:
+                - displayName
+              destAttr: __NAME__
+              mappingFormat: "%s"
+            - sourceAttr:
+                - ""
+              destAttr: user_privileges
+              mappingFormat: "2"
+            - sourceAttr:
+                - ""
+              destAttr: user_rename_unlock_locked_obj
+              mappingFormat: "T"
+            - sourceAttr:
+                - ""
+              destAttr: user_xprivileges
+              mappingFormat: "32"
+            - sourceAttr:
+                - oTObjectGUID
+              destAttr: user_global_unique_id
+              mappingFormat: "%s"
+          groupAttributeMapping:
+            - sourceAttr:
+                - mail
+              destAttr: group_address
+              mappingFormat: "%s"
+            - sourceAttr:
+                - oTObjectGUID
+              destAttr: group_global_unique_id
+              mappingFormat: "%s"
+            - sourceAttr:
+                - ""
+              destAttr: group_rename_enabled
+              mappingFormat: "T"
+            - sourceAttr:
+                - cn
+              destAttr: group_name
+              mappingFormat: "%s"
+            - sourceAttr:
+                - cn
+              destAttr: __NAME__
+              mappingFormat: "%s"
+          connectionParamInfo:
+            - name: fBaseURL
+              value: http://dcs-pg.<NAMESPACE>.svc.cluster.local:9080/dmotdsrest
+            - name: fUsername
+              value: <DOCBASE_NAME>\<INSTALL_OWNER>
+            - name: fPassword
+              value: <INSTALL_OWNER_PASSWORD>
+      accessRoles:
+        - name: <ACCESS_ROLE_NAME>
+          description: Default access role for resource and partition
+          accessRoleMembers:
+            userPartitions:
+              - userPartition: <USER_PARTITION>
+          resources:
+            - resourceName: <RESOURCE_NAME>
+      trustedSites:
+        - https://<PUBLIC_URL_SHORT_NAME>.<PUBLIC_DOMAIN_NAME>
+        - https://<PUBLIC_URL_SHORT_NAME>.<PUBLIC_DOMAIN_NAME>/D2

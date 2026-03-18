@@ -1,0 +1,19 @@
+#Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.prefix }}
+{{- with .Values.serviceAnnotations }}
+  annotations:
+{{- toYaml . | nindent 4 }}
+{{- end }}
+  labels:
+    app: {{ .Values.prefix }}
+spec:
+  type: {{ .Values.serviceType | default .Values.global.webappServiceType }}
+  ports:
+  - port: {{ default "7000" .Values.adminConsoleServicePort }}
+    name: xdaport
+    targetPort: 7000
+  selector:
+    app: {{ .Values.prefix }}

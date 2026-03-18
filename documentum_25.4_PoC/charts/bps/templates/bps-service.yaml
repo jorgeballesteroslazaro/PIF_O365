@@ -1,0 +1,19 @@
+#Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.prefix }}
+{{- with .Values.serviceAnnotations }}
+  annotations:
+{{- toYaml . | nindent 4 }}
+{{- end }}
+spec:
+  type: {{ .Values.serviceType | default .Values.global.webappServiceType }}
+  sessionAffinity: ClientIP
+  ports:
+  - port: {{ eq .Values.global.internalTlsEnable true | ternary .Values.tomcat.httpsPort .Values.tomcat.httpPort }}
+    targetPort: {{ eq .Values.global.internalTlsEnable true | ternary .Values.tomcat.httpsPort .Values.tomcat.httpPort }}
+    name: bpsport
+  selector:
+    app: {{ .Values.prefix }}   
+    

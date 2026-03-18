@@ -1,0 +1,34 @@
+# Default values for aoinstaller.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+# Description: Specify the DCME D2 Configuration details.
+
+configuration:
+  ingressDomain:
+  d2classicWebappName:
+  bravaServerURL: https://brava.d2.cfcr-lab.bp-paas.otxlab.net
+
+aoc:
+  # Description: Set this value to true if you want to connect Documentum Content Management for Engineering (DCME) with Core Collaboration for Engineering by using DCME Connector.
+  enabled: false
+  # Description: Specify the Core Collaboration for Engineering supported version.
+  xchangeVersion:
+  # Description: Specify the Core Collaboration for Engineering application URL.
+  xchangeUrl:
+  # Description: Specify the Core Collaboration for Engineering ClientID.
+  xchangeKeyId:
+  # Description: Specify the Core Collaboration for Engineering Clientsecret. 
+  xchangePrivateKey:
+  # Description: Sepecify the subscription name for Core Collaboration for Engineering.  
+  xchangeSubscriptionName:
+  # Description: Specify the Proxyhost.
+  xchangeProxyHost:
+  # Description: Specify the Proxyport.  
+  xchangeProxyPort:
+
+# Description: The following variables are required to connect DCME with Content Management for SAP integration.
+xecm:
+  enabled: false
+
+brava:
+  enabled: true

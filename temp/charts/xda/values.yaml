@@ -1,0 +1,107 @@
+# Default values for xDA.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+#Prefix. Give a suitable prefix to distinguish the xDA pods
+prefix: <prefix>-xda
+
+#Docker Image Details
+image:
+  repository: 
+  #Name of xDA Docker image
+  name: <xda_image_name>
+  #Tag of xDA Docker image
+  tag : 25.4
+  #Image Pull Policy for xDA Docker image
+  pullPolicy: 
+  pullSecrets:
+  
+#Redirection Parameters.
+redirectionParameters: 
+  redirectToHTTPS: true
+  redirectPort: 443
+
+#Docbase Connection Info
+docbaseConnection:
+  use_certificate: 
+  truststorePassword: 
+  docbroker: 
+  
+#Volume used by CS and Broker to store CS and Broker certificates. Should match the persistentVolume name given in Broker values.yaml
+dbrpersistentVolume:
+  dbrdataPVCName: 
+
+#CS Secret. Used to fetch TrustStore Password and Newrelic License Value  
+secret:
+  name: 
+  
+#Newrelic agent configuration
+newrelic:
+  enable: 
+  #Key Name of Newrelic License Key in CS Secrets. This value is referenced from yaml file of CS Secrets, needs to be changed accordingly. 
+  licenseKeyName: newrelicLicensekey
+  app_name: <newrelic_app_name>
+  proxy_host: 
+  proxy_port: 
+  
+#Persistent Volume Details
+persistentVolume:
+  #Name of the Persistent Volume Claim for persistent data
+  #ex : storageClass: bp-paas-nfs
+  storageClassReadWriteOnce: 
+  size: 1Gi
+
+serviceType:
+
+resources: {}
+# We usually recommend not to specify default resources and to leave this as a conscious
+# choice for the user. This also increases chances charts run on environments with little
+# resources, such as Minikube. If you do want to specify resources, uncomment the following
+# lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+ # limits:
+  #  cpu: 4000m
+   # memory: 12Gi
+  #requests:
+    #cpu: 100m
+    #memory: 4Gi
+    
+#xDA Admin Console service Port
+adminConsoleServicePort: 7000
+  
+dfcTracing:
+  isEnabled: false
+
+
+#CIS Info
+cis:
+  ip:
+  hostname:
+
+#Service Account
+serviceAccount:
+  createserviceaccount: true
+  serviceAccountName: 
+
+serviceAnnotations: {}
+
+vault:
+  enable: 
+  vault_configmap: dctm-vault-configmap
+  createPVC: false
+  PVCName: dsis-binary-pvc
+  pvcAccessModes: ReadWriteMany
+  size: 100Mi
+  storageClass: 
+  existVolumePv:
+  vault_config_mount_path: /opt/dctm_docker/vault_config
+  binary_volume_mount_path: /opt/dctm_docker/dsis_binary_volume
+  statusCheckRetryCount: 20
+  statusCheckTimeInterval: 1
+  vault_timeout: 30
+  
+xdacli:
+  username: awduser@wfdpartition
+  password: 
+  #environmentName: DeploymentEnvironment
+  environmentMode: Development
+  reponame: 

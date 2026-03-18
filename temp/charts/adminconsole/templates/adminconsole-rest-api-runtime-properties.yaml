@@ -1,0 +1,157 @@
+{{- if .Values.global.dctmclientinstaller.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: adminconsole-rest-api-runtime-properties
+  {{- template "configMap.labels" . }}
+data:
+  rest-api-runtime.properties: |-
+    #
+    # Copyright (c) 2025 Open Text. All Rights Reserved
+    #
+    # Sets user defined runtime properties below. Settings in this file override the default ones defined in specific
+    # libraries. Please refer to file 'rest-api-runtime.properties.template' for available runtime configurations.
+    # Custom config java based configuration location for the REST runtime.
+    #
+    {{- if .Values.restApiRuntime.context_config_location }}
+    rest.context.config.location=com.opentext.dctm.admin.rest.context.jc,{{ .Values.restApiRuntime.context_config_location }}
+    {{- else }}
+    rest.context.config.location=com.opentext.dctm.admin.rest.context.jc
+    {{- end }}
+
+    # Url patterns of anonymous resources.
+    rest.security.anonymous.url.patterns=/product-configuration, /ui*/**, /liveness
+
+    # Authentication scheme.
+    {{- if not (empty (.Values.restApiRuntime.OTDS.enable | quote) | ternary .Values.global.otdsEnabled .Values.restApiRuntime.OTDS.enable) }}
+    rest.security.auth.mode=basic-ct
+    {{- else }}
+    rest.security.auth.mode={{ .Values.restApiRuntime.OTDS.authMode }}
+    rest.security.realm.name=com.documentum.rest
+    rest.security.otds.esignoff.url={{ .Values.restApiRuntime.OTDS.authSvc | default (include "documentum.publicOtdsSvcUrl" .) }}/login?response_type=id_token&client_id={{ .Values.restApiRuntime.OTDS.clientId | default .Values.global.oauthClient }}&prompt=login&authcontext=sign&scope=openid
+    {{- end }}
+
+    # Determines whether the CSRF protection is enabled for Client Token. The default value is true.
+    rest.security.csrf.enabled=true
+
+    # Ensure that client token cookie is scoped at each repository level
+    rest.security.client.token.cookie.scoped=true
+    {{- if and .Values.customConfigurations.custom .Values.customConfigurations.locale }}
+    rest.error.message.supported.locales=en,{{ .Values.customConfigurations.locale }}
+    {{- else }}
+    rest.error.message.supported.locales=en
+    {{- end }}
+
+    # Ensure that client token cookie is a session cookie which gets destroyed when browser is closed
+    rest.security.client.token.session.cookie=true
+
+    # SameSite attribute for the client token cookie.
+    # Used to control access to cookie from third-party sites. Possible values are Strict, Lax, none
+    # The default value is blank, which means that it would depend on the browser to determine third-party access behavior.
+    rest.security.client.token.cookie.samesite=
+
+    #Specifies the URL to redirect after the successful logout. When it is not specified, the server returns no content for the success logout.
+    rest.security.logout.success.url=
+    {{- if .Values.restApiRuntime.CookieConfiguration.enable }}
+    rest.security.client.token.cookie.samesite=none ;secure
+    rest.security.client.token.session.cookie=true
+    {{- end }}
+
+    # Name of the login application for product branding.
+    # The application name will be sent as request parameter for OTDS login URL if the value is not empty
+    {{- if not (empty (.Values.restApiRuntime.OTDS.enable | quote) | ternary .Values.global.otdsEnabled .Values.restApiRuntime.OTDS.enable) }}
+    rest.security.otds.login.appName=
+    {{- else }}
+    rest.security.otds.login.appName={{ .Values.restApiRuntime.OTDS.appName }}
+    {{- end }}
+
+    # The url of login entry point for otds_token/ct-otds_token/ct-otds_ticket-otds_token to indicate user where to send
+    # request.
+    # This value is used as a hint when oauth2 error occurs.
+    # The default value is empty.
+    # e.g. https://<ip>:<port>/otdsws/login?response_type=token&client_id=<client_id>
+    {{- if not (empty (.Values.restApiRuntime.OTDS.enable | quote) | ternary .Values.global.otdsEnabled .Values.restApiRuntime.OTDS.enable) }}
+    rest.security.otds.login.url=
+    {{- else }}
+    rest.security.otds.login.url={{ .Values.restApiRuntime.OTDS.authSvc | default (include "documentum.publicOtdsSvcUrl" .) }}/login?response_type=token&client_id={{ .Values.restApiRuntime.OTDS.clientId | default .Values.global.oauthClient }}
+    {{- end }}
+
+    # OTDS url for single sign out.
+    # To hint the client to log out of OTDS authentication session.
+    # The client must append the "redirect_uri" request parameter to the logout url. The requested redirect uri must be configured in OTDS.
+    # e.g https://<ip>:<port>/otdsws/logout?client_id=<client_id>
+    {{- if not (empty (.Values.restApiRuntime.OTDS.enable | quote) | ternary .Values.global.otdsEnabled .Values.restApiRuntime.OTDS.enable) }}
+    rest.security.otds.logout.url=
+    {{- else }}
+    rest.security.otds.logout.url={{ .Values.restApiRuntime.OTDS.authSvc | default (include "documentum.publicOtdsSvcUrl" .) }}/logout?client_id={{ .Values.restApiRuntime.OTDS.clientId | default .Values.global.oauthClient }}
+    {{- end }}
+
+    # Crypto salt for client token encryption and decryption
+    # For a multi-node deployment of REST servers, this property MUST be consistently set across all REST servers. For a
+    # single-node deployment of REST servers, this property is optional. The value CAN be any ascII characters. We recommend
+    # that you specify a text no less than 8 characters.
+    {{- if (default .Values.global.cryptoKeySalt .Values.restApiRuntime.cryptoKeySalt) }}
+    rest.security.crypto.key.salt={{ default .Values.global.cryptoKeySalt .Values.restApiRuntime.cryptoKeySalt }}
+    {{- else }}
+    rest.security.crypto.key.salt=
+    {{- end }}
+
+
+    # Setting this to 'self', allows embedding static resources from Admin Console to any application on the current origin.
+    # Additional comma separated <host-srouce> and/or <scheme-source> values could be added, to extend support to foreign origins.
+    rest.security.headers.csp.allowed_frame_ancestors=none
+
+    # Enables relative URIs in response links.
+    rest.use.relative.url=true
+
+    # Provides a facility to disallow dql execution on the configured documentum type objects.
+    # It is recommended to use this property to avoid DQL related security concerns on either documentum config
+    # objects (such as docbase config, serve config, bocs config etc) or the types on which an acl can not be defined.
+    # This property disallows DQL execution on the configured types only for the users who are neither having admin
+    # nor super user privileges.
+    dql.disallowed.types=dmr_content,dm_relation,dm_acs_config,dm_cont_transfer_config,dm_network_location_map,\
+                         dm_cache_config,dmc_mq_config,dm_bocs_config,dm_dms_config,dm_docbase_config,dm_server_config,\
+                         dm_user,dm_acl,dm_role,dm_group,dmr_containment,dm_assembly,dm_tasks_all,dmi_package,\
+                         dmi_queue_item,dm_format,dm_mount_point,dm_store,dm_type,dm_process,dm_workflow,dmi_audit_attrs,\
+                         dm_java,dm_basic,dm_public_key_certificate,dmi_type_info,dmc_java_library,dmi_change_record,\
+                         dm_func_expr,dm_location,dmi_dd_attr_info,dm_relation_ssa_policy,dm_aggr_domain,dmi_change_record,\
+                         dm_validation_descriptor,dm_client_registration,dm_replica_catalog,dmi_wf_attachment,dmi_registry,\
+                         dmc_aspect_type,dm_fulltext_index,dm_lifecycle,dmc_java_library
+
+    # Sets the package(s) for custom message files.
+    # Custom message files are added to the packages under 'src/main/resources' to provide message code to localizable
+    # message mapping. The message files must be in pattern of "rest-*messages*.properties". For instance, for the custom
+    # message file path 'src/main/resources/org/acme/messages/rest-admin-console-core-messages.properties', the custom package name is
+    # 'org.acme.messages'. Use comma (,) to separate multiple packages.
+    # Custom message files take precedence over the core default message files. Therefore, please keep caution that any
+    # overridden message code globally affects the message localization for all resources which use the same message code.
+    #
+    rest.extension.message.packages=com.opentext.dctm.admin.rest.messages
+    rest.ext.error.code.mapping.packages=com.opentext.dctm.admin.rest.messages
+
+    # Sets the package (folder location) for custom yaml file.
+    # Custom YAML files are added to your REST extension project's war overlay module under the path
+    # 'src/main/resources/<package_name_separated_by_slash>'.
+    # For instance, when custom YAML files are put under 'src/main/resources/org/acme/sample', the package should be set as
+    # rest.ext.yaml.package=org.acme.sample.
+    # REST runtime looks up the YAML file by the ANT pattern: {rest.ext.yaml.package}/{rest.ext.yaml.name}.
+    # The default package is 'com.emc.documentum.rest.script'.
+    #
+    rest.ext.yaml.package=com.opentext.dctm.admin.rest.script
+
+    rest.paging.max.size=10000
+
+    {{- if $configFileAppendsValues := .Values.restApiRuntime.rest_api_runtime_properties }}
+    {{ $configFileAppendsValues | indent 4 }}
+    {{- end }}
+
+{{- $configFileOverridesFile := printf "%s/%s" .Values.configFileOverrideFilesDir "rest-api-runtime.properties" }}
+{{- $configFileMsg0 := printf "\n\n##### Begin lines added from %s\n" $configFileOverridesFile }}
+{{- $configFileMsg1 := printf "##### End lines added from %s" $configFileOverridesFile }}
+{{- $configFileLinesToAppend := .Files.Get $configFileOverridesFile }}
+{{- if $configFileLinesToAppend }}
+{{ $configFileMsg0 | indent 4 }}
+{{ $configFileLinesToAppend | indent 4 }}
+{{ $configFileMsg1 | indent 4 }}
+{{- end }}
+{{- end }}

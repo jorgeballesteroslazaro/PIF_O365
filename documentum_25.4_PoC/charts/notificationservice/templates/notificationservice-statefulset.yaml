@@ -1,0 +1,247 @@
+
+
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  labels:
+    app: {{ .Values.prefix }}
+  name: {{ .Values.prefix }}
+  namespace: {{ .Values.namespace  | default .Release.Namespace }}
+spec:
+  serviceName: {{ .Values.prefix }}-service
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Values.prefix }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.prefix }}
+    spec:
+      securityContext:
+        fsGroup: {{ .Values.fsGroup }}    
+{{- if (empty (.Values.image.pullSecrets | quote) | ternary .Values.global.pullSecretName .Values.image.pullSecrets) }}
+      imagePullSecrets:
+      - name: {{ .Values.image.pullSecrets | default .Values.global.pullSecretName }}
+{{- end }}
+      initContainers:
+      - name: dbschema-{{ .Values.prefix }}
+        image: {{ .Values.image.repository |  default .Values.global.repository}}/{{ .Values.image.name }}:{{ .Values.image.tag }}
+        imagePullPolicy: {{ .Values.image.pullPolicy | default .Values.global.pullPolicyType}}
+        env:
+        - name: db_host
+          value: "{{ .Values.configMap.database.db_host |  default .Values.global.db_hostname }}"
+        - name: db_port
+          value: "{{ (.Values.configMap.database.db_port |  default .Values.global.dbport )  }}"
+        - name: db_usr
+          value: "{{ .Values.configMap.database.username |  default .Values.global.databaseusername }}"
+        - name: db_type
+          value: "{{ .Values.configMap.database.db_type |  default .Values.global.dbtype }}"  
+        - name: vaultEnabled
+          value: "{{ (empty (.Values.configMap.vault.enabled) | ternary .Values.global.isVaultEnabled .Values.configMap.vault.enabled)  }}"
+        - name: initContainer
+          value: "true"
+        - name: db_sslmode
+          value: "{{ .Values.configMap.database.db_sslmode |  default .Values.global.db_ssl_mode }}"
+        - name: db_ssl
+          value: "{{  (empty (.Values.configMap.database.db_ssl) | ternary .Values.global.db_ssl .Values.configMap.database.db_ssl)  }}"
+        - name: db_schemaname
+          value: "{{ .Values.configMap.database.dbSchemaName |  default .Values.global.dbSchema_Name }}"
+        - name: db_servicename
+          value: "{{ .Values.configMap.database.db_servicename  |  default .Values.global.db_service }}"
+        {{- if  and (eq (.Values.configMap.database.db_type | default .Values.global.dbtype) "oracle") (eq (empty (.Values.configMap.database.db_ssl) | ternary .Values.global.db_ssl .Values.configMap.database.db_ssl) true) }}
+        - name: P12_WALLET_FILE_NAME
+          value: {{ .Values.configMap.database.db_p12filename | quote }}     
+        - name: SSO_WALLET_FILE_NAME
+          value: {{ .Values.configMap.database.db_ssofilename | quote }} 
+        {{- end }}
+        {{- if eq (empty (.Values.configMap.vault.enabled) | ternary .Values.global.isVaultEnabled .Values.configMap.vault.enabled) false }}
+        - name: db_pass
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.prefix }}-db-secret
+              key: db-pass
+        {{- end }}
+        {{- if eq (empty (.Values.configMap.vault.enabled) | ternary .Values.global.isVaultEnabled .Values.configMap.vault.enabled) true }}
+        - name: vault_key
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.prefix }}-db-secret
+              key: vault-key
+        {{- end }}        
+        - name: db_name_notification
+          value: "{{ .Values.dbSchemaInit.dbname }}"
+        command: ["/bin/bash", "DbSchemaNotification.sh"]
+       
+        volumeMounts:
+        {{- if and (eq (empty (.Values.configMap.database.db_ssl) | ternary .Values.global.db_ssl .Values.configMap.database.db_ssl) true) (eq (.Values.configMap.database.db_type | default .Values.global.dbtype) "postgres") }}
+          - mountPath: /usr/src/M365/dbrootca.crt
+            subPath: dbrootca.crt
+            name: {{ .Values.prefix }}-db-secret-volume
+        {{- end}}
+        {{- if eq (empty (.Values.configMap.vault.enabled) | ternary .Values.global.isVaultEnabled .Values.configMap.vault.enabled) true }}
+          - mountPath: /opt/dctm_docker/vault_config
+            name: vault-volume
+          - mountPath: /opt/dctm_docker/dsis_binary_volume
+            name: dsis-binary-volume
+        {{- end }}
+        {{- if  and (eq (.Values.configMap.database.db_type |  default .Values.global.dbtype) "oracle") (eq (empty (.Values.configMap.database.db_ssl) | ternary .Values.global.db_ssl .Values.configMap.database.db_ssl) true) }}
+          - mountPath: /usr/lib/oracle/21/client64/lib/network/admin/tnsnames.ora          
+            name: {{ .Values.prefix }}-config-volume
+            subPath: tnsnames.ora
+          - mountPath: /opt/ccsmartview/data/oracle_wallet
+            name: dcs-pg-pvc  
+            subPath: data/dcs-pg/oracle_wallet
+        {{- end }}
+      serviceAccountName: {{ .Values.serviceAccount.serviceAccountName |  default .Values.global.documentumserviceaccount }}  
+      containers:
+        - name: {{ .Values.prefix }}
+          image: {{ .Values.image.repository |  default .Values.global.repository }}/{{ .Values.image.name }}:{{ .Values.image.tag }}
+          imagePullPolicy: {{ .Values.image.pullPolicy | default .Values.global.pullPolicyType }}
+          env:
+          - name: vaultEnabled
+            value: "{{ (empty (.Values.configMap.vault.enabled | quote) | ternary .Values.global.isVaultEnabled .Values.configMap.vault.enabled) }}"
+          - name: db_sslmode
+            value: "{{ .Values.configMap.database.db_sslmode |  default .Values.global.db_ssl_mode }}"
+          - name: db_ssl
+            value: "{{ (empty (.Values.configMap.database.db_ssl) | ternary .Values.global.db_ssl .Values.configMap.database.db_ssl) }}"
+          - name: db_schemaname
+            value: "{{ .Values.configMap.database.dbSchemaName  |  default .Values.global.dbSchema_Name }}"
+          - name: db_type
+            value: "{{ .Values.configMap.database.db_type |  default .Values.global.dbtype }}"  
+          - name: db_servicename
+            value: "{{ .Values.configMap.database.db_servicename |  default .Values.global.db_service }}"
+          - name: db_host
+            value: "{{ .Values.configMap.database.db_host |  default .Values.global.db_hostname }}"
+          - name: db_port
+            value: "{{ .Values.configMap.database.db_port |  default .Values.global.dbport }}"
+          - name: db_usr
+            value: "{{ .Values.configMap.database.username |  default .Values.global.databaseusername }}" 
+          {{- if  and (eq (.Values.configMap.database.db_type |  default .Values.global.dbtype) "oracle") (eq (empty (.Values.configMap.database.db_ssl) | ternary .Values.global.db_ssl .Values.configMap.database.db_ssl) true) }}
+          - name: P12_WALLET_FILE_NAME
+            value: {{ .Values.configMap.database.db_p12filename | quote }}     
+          - name: SSO_WALLET_FILE_NAME
+            value: {{ .Values.configMap.database.db_ssofilename | quote }} 
+          {{- end }}
+          command: ["/bin/sh","-c"]
+          readinessProbe:
+            grpc:
+              port: {{ .Values.configMap.extApiconfig.service_port }}
+            initialDelaySeconds: {{ .Values.readinessProbe.initialDelaySeconds }}
+            periodSeconds: 300
+          livenessProbe:
+            grpc:
+              port: {{ .Values.configMap.extApiconfig.service_port }}
+            initialDelaySeconds: {{ .Values.livenessProbe.initialDelaySeconds }}
+            periodSeconds: 300
+          startupProbe:
+            grpc:
+              port: {{ .Values.configMap.extApiconfig.service_port }}
+            initialDelaySeconds: {{ .Values.startupProbe.initialDelaySeconds }}
+            periodSeconds: 300
+        {{- if eq .Values.global.proxy.enabled true  }}
+          {{- if (eq (empty (.Values.newrelic.enabled) | ternary .Values.global.newrelic .Values.newrelic.enabled) true) }}        
+          args: ["sh vaultServiceUtil.sh && sh DbSchemaNotification.sh && java -javaagent:/opt/newrelic/newrelic.jar -Djava.io.tmpdir=/var/tmp -Djava.net.useSystemProxies=true -Dhttps.proxyHost={{ .Values.configMap.extApiconfig.proxyhost | default .Values.global.proxy.host }} -Dhttps.proxyPort={{ .Values.configMap.extApiconfig.proxyport | default .Values.global.proxy.port }} -Dlog4j.configurationFile=file:/usr/src/ccsmartview/NotificationService/config/log4j2.xml -jar /usr/src/ccsmartview/NotificationService/NotificationService.jar"]
+          {{ else }}
+          args: ["sh vaultServiceUtil.sh && sh DbSchemaNotification.sh && java -Djava.net.useSystemProxies=true -Dhttps.proxyHost={{ .Values.configMap.extApiconfig.proxyhost | default .Values.global.proxy.host }} -Dhttps.proxyPort={{ .Values.configMap.extApiconfig.proxyport | default .Values.global.proxy.port }} -Dlog4j.configurationFile=file:/usr/src/ccsmartview/NotificationService/config/log4j2.xml -jar /usr/src/ccsmartview/NotificationService/NotificationService.jar"]
+          {{- end }}
+        {{ else }}
+          {{- if (eq (empty (.Values.newrelic.enabled) | ternary .Values.global.newrelic .Values.newrelic.enabled) true) }}
+          args: ["sh vaultServiceUtil.sh && sh DbSchemaNotification.sh && java -javaagent:/opt/newrelic/newrelic.jar -Djava.io.tmpdir=/var/tmp -Dlog4j.configurationFile=file:/usr/src/ccsmartview/NotificationService/config/log4j2.xml -jar /usr/src/ccsmartview/NotificationService/NotificationService.jar"]
+          {{ else }}
+          args: ["sh vaultServiceUtil.sh && sh DbSchemaNotification.sh && java -Dlog4j.configurationFile=file:/usr/src/ccsmartview/NotificationService/config/log4j2.xml -jar /usr/src/ccsmartview/NotificationService/NotificationService.jar"]
+          {{- end }}
+        {{- end }}
+          volumeMounts:
+            {{- if and (eq .Values.configMap.extApiconfig.oesNSEnabled true) (eq .Values.global.proxy.enabled true) }}
+            - mountPath: /usr/src/ccsmartview/NotificationService/outpost-agent/outpost-agent.ini
+              subPath: outpost-agent.ini
+              name: {{ .Chart.Name }}-outpost-agent-ini
+            {{- end }}
+            - mountPath: /usr/src/ccsmartview/NotificationService/config
+              name: {{ .Values.prefix }}-config-volume
+            {{- if (eq (empty (.Values.newrelic.enabled) | ternary .Values.global.newrelic .Values.newrelic.enabled) true) }}
+            - mountPath: /opt/newrelic/newrelic.yml
+              subPath: newrelic.yml
+              name: {{ .Values.prefix }}-newrelic-secret-volume
+            {{- end}}
+            {{- if eq (empty (.Values.configMap.vault.enabled ) | ternary .Values.global.isVaultEnabled .Values.configMap.vault.enabled) true }}
+            - mountPath: /opt/dctm_docker/vault_config
+              name: vault-volume
+            - mountPath: /opt/dctm_docker/dsis_binary_volume
+              name: dsis-binary-volume
+            {{- end }}
+            {{- if and (eq (empty (.Values.configMap.database.db_ssl) | ternary .Values.global.db_ssl .Values.configMap.database.db_ssl) true) (eq (.Values.configMap.database.db_type | default .Values.global.dbtype) "postgres") }}
+            - mountPath: /usr/src/M365/dbrootca.crt
+              subPath: dbrootca.crt
+              name: {{ .Values.prefix }}-db-secret-volume
+            {{- end}}
+            {{ if (eq (empty (.Values.graylog.enable) | ternary .Values.global.grayLogEnable .Values.graylog.enable) false) }}
+            - mountPath: /usr/src/ccsmartview/logs/
+              name: shared-logs
+              subPath: NotificationService.log
+            {{- end}}
+            {{- if  and (eq (.Values.configMap.database.db_type |  default .Values.global.dbtype) "oracle") (eq (empty (.Values.configMap.database.db_ssl) | ternary .Values.global.db_ssl .Values.configMap.database.db_ssl) true) }}
+            - mountPath: /usr/lib/oracle/21/client64/lib/network/admin/tnsnames.ora          
+              name: {{ .Values.prefix }}-config-volume
+              subPath: tnsnames.ora
+            - mountPath: /opt/ccsmartview/data/oracle_wallet
+              name: dcs-pg-pvc  
+              subPath: data/dcs-pg/oracle_wallet
+        {{- end }}
+          resources:
+            requests:
+              memory: {{ .Values.resources.requests.memory | quote  }}
+              cpu: {{ .Values.resources.requests.cpu | quote  }}
+            limits:
+              memory: {{ .Values.resources.limits.memory | quote  }}
+              cpu: {{ .Values.resources.limits.cpu | quote  }}
+      volumes:
+        - name: {{ .Values.prefix }}-db-secret-volume
+          secret:
+            secretName: {{ .Values.prefix }}-db-secret
+        - name: {{ .Values.prefix }}-config-volume
+          configMap:
+            name: {{ .Values.prefix }}-configmap
+            items:
+              - key: database.properties
+                path: database.properties
+              - key: ExtApi.config
+                path: ExtApi.config
+              - key: log4j2.xml
+                path: log4j2.xml
+              {{- if  and (eq (.Values.configMap.database.db_type |  default .Values.global.dbtype) "oracle") (eq (empty (.Values.configMap.database.db_ssl) | ternary .Values.global.db_ssl .Values.configMap.database.db_ssl) true) }}
+              - key: tnsnames.ora
+                path: tnsnames.ora
+              {{- end }}
+        {{- if (eq (empty (.Values.newrelic.enabled) | ternary .Values.global.newrelic .Values.newrelic.enabled) true) }}
+        - name: {{ .Values.prefix }}-newrelic-secret-volume
+          secret:
+            secretName: {{ .Values.prefix }}-newrelic-secret
+            optional: false
+        {{- end}}
+        {{- if eq (empty (.Values.configMap.vault.enabled | quote) | ternary .Values.global.isVaultEnabled .Values.configMap.vault.enabled) true }}
+        - name: dsis-binary-volume
+          persistentVolumeClaim:
+            claimName: dsis-binary-pvc
+        - name: vault-volume
+          configMap:
+            name: dctm-vault-configmap
+        {{- end }}
+        {{- if (eq (empty (.Values.graylog.enable) | ternary .Values.global.grayLogEnable .Values.graylog.enable) false) }}
+        - name: shared-logs
+          persistentVolumeClaim:
+            claimName: {{ .Values.graylog.pvcName }} 
+        {{- end }}
+        {{- if  and (eq (.Values.configMap.database.db_type |  default .Values.global.dbtype)  "oracle") (eq (empty (.Values.configMap.database.db_ssl) | ternary .Values.global.db_ssl .Values.configMap.database.db_ssl) true) }}
+        - name: dcs-pg-pvc
+          persistentVolumeClaim:
+            claimName: dcs-pg-pvc
+        {{- end }}
+        {{- if and (eq .Values.configMap.extApiconfig.oesNSEnabled true) (eq .Values.global.proxy.enabled true) }}
+        - name: {{ .Chart.Name }}-outpost-agent-ini
+          projected:
+            sources:
+              - configMap:
+                  name: oesconnector-outpost-agent-ini
+        {{- end }}

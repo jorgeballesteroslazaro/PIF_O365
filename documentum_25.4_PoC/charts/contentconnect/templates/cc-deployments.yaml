@@ -1,0 +1,332 @@
+# Deployments for OpenText Content Connect
+# Access only available within kubernetes cluster
+# Update the docker image(s) below to the desired image
+##########################################################
+
+
+##########################################################
+# Postgres DB for OpenText Content Connect
+##########################################################
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.deployment.name }}
+  namespace: {{ .Values.namespace | default .Release.Namespace }}
+  labels: 
+    app: {{ .Values.deployment.app }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Values.deployment.app }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.deployment.app }}
+    spec: 
+{{- if (empty (.Values.images.pullSecrets | quote) | ternary .Values.global.pullSecretName .Values.images.pullSecrets) }}
+      imagePullSecrets:
+      - name: {{ .Values.images.pullSecrets | default .Values.global.pullSecretName }}
+{{ end }}
+
+{{- if eq .Values.contentconnectdb.value true }}        
+      initContainers: 
+      - name: {{ .Values.dbdeployment.name }}
+        image: {{ .Values.images.ccdb.repository | default .Values.global.repository }}/{{ .Values.images.ccdb.name }}:{{ .Values.images.ccdb.tag }}
+        imagePullPolicy: {{ .Values.images.ccdb.pullPolicy | default .Values.global.pullPolicyType }}
+        env:                
+         - name: DB_IP
+           value: {{ .Values.configmap.DB_IP |  default .Values.global.db_hostname  }}
+         - name: DB_PORT
+           value: {{   (.Values.configmap.DB_PORT | default .Values.global.dbport) | quote }}
+         - name: DB_DB
+           value: {{ .Values.configmap.DB_DB  }}
+         - name: DB_TYPE
+           value: {{ .Values.configmap.DB_TYPE | default .Values.global.dbtype }}
+         - name: DB_TABLESPACE_NAME
+           value: {{ .Values.configmap.DB_TABLESPACE_NAME }} 
+         - name: DB_SSL_ENABLED
+           value: {{ (empty (.Values.configmap.DB_SSL_ENABLED | quote) | ternary .Values.global.db_ssl .Values.configmap.DB_SSL_ENABLED)  | quote }}
+         - name: DB_SSL_MODE
+           value: {{  .Values.configmap.DB_SSL_MODE | default .Values.global.db_ssl_mode | quote }}  
+         - name: DB_SERVER_NAME
+           value: {{ .Values.configmap.DB_SERVER_NAME | quote  }}  
+         - name: CONTAINER_INSTANCE
+           value: ccdb
+{{- if eq (hasKey .Values "useCertificate" | ternary .Values.useCertificate .Values.global.useCertificate) true }}
+         - name: USE_CERTIFICATE
+           value: 'true' 
+{{ end }}   
+{{- if eq (empty (.Values.vault.VAULT_ENABLED) | ternary .Values.global.isVaultEnabled .Values.vault.VAULT_ENABLED)  false }}
+         - name: DB_PASSWORD
+           valueFrom:
+              secretKeyRef:
+                name: {{ .Values.secret.name }}
+                key: DB_PASSWORD
+{{ end }}
+         - name: DB_USERNAME
+           value: {{  .Values.configmap.DB_USERNAME | default .Values.global.databaseusername  }} 
+{{- if eq (empty (.Values.configmap.DB_SSL_ENABLED) | ternary .Values.global.db_ssl .Values.configmap.DB_SSL_ENABLED) true }}           
+         - name: SSL_VAR
+           valueFrom:
+             secretKeyRef:
+               name: {{ .Values.secret.name  }}
+               key: DB_SSLCERT 
+{{ end }}               
+         - name: VAULT_ENABLED
+           value: {{ (empty (.Values.vault.VAULT_ENABLED) | ternary .Values.global.isVaultEnabled .Values.vault.VAULT_ENABLED)  | quote }}  
+{{- if eq (empty (.Values.vault.VAULT_ENABLED) | ternary .Values.global.isVaultEnabled .Values.vault.VAULT_ENABLED) true }}  
+         - name: VAULT_SECRET
+           value: {{ .Values.vault.VAULT_SECRET | quote }}     
+         - name: VAULT_KEY
+           value: {{ .Values.vault.VAULT_KEY | quote }}  
+         
+{{ end }} 
+{{- if and (eq (.Values.configmap.DB_TYPE | default .Values.global.dbtype)  "oracle") (eq (empty (.Values.configmap.DB_SSL_ENABLED | quote) | ternary .Values.global.db_ssl .Values.configmap.DB_SSL_ENABLED) true) }} 
+
+         - name: P12_WALLET_FILE_NAME
+           value: {{ .Values.configmap.DB_P12_WALLET_FILE_NAME | quote }}     
+         - name: SSO_WALLET_FILE_NAME
+           value: {{ .Values.configmap.DB_SSO_WALLET_FILE_NAME | quote }} 
+         - name: DB_SERVICE_NAME
+           value: {{ .Values.configmap.DB_SERVICE_NAME  }}
+         - name: TNS_FILE_NAME
+           value: {{ .Values.configmap.DB_TNS_FILE_NAME  }}
+{{ end }}              
+{{- if and (eq ( .Values.configmap.DB_TYPE | default .Values.global.dbtype)  "oracle") (eq (empty (.Values.configmap.DB_SSL_ENABLED | quote) | ternary .Values.global.db_ssl .Values.configmap.DB_SSL_ENABLED) true) }}              
+{{- if eq (empty (.Values.vault.VAULT_ENABLED) | ternary .Values.global.isVaultEnabled .Values.vault.VAULT_ENABLED) true  }}        
+        command: ["/bin/sh","-c"," ./csdb_startup.sh  && node initialize.js dbconfig $${DB_IP} $${DB_PORT} $${DB_DB} $${DB_USERNAME} $${DB_TYPE} && node initialize.js dbconfigssl $${DB_SSL_ENABLED} $${DB_SERVICE_NAME} && node initialize.js database && sleep 1m && node initialize.js adminuser "]
+
+{{ else }}
+        command: ["/bin/sh","-c"," ./csdb_startup.sh && node initialize.js dbconfig $${DB_IP} $${DB_PORT} $${DB_DB} $${DB_USERNAME} $${DB_PASSWORD} $${DB_TYPE} && node initialize.js dbconfigssl $${DB_SSL_ENABLED} $${DB_SERVICE_NAME} && node initialize.js database && sleep 1m && node initialize.js adminuser"]
+{{ end }}
+{{ else }}
+{{- if eq (empty (.Values.vault.VAULT_ENABLED) | ternary .Values.global.isVaultEnabled .Values.vault.VAULT_ENABLED) true }}        
+        command: ["/bin/sh","-c"," ./csdb_startup.sh  && node initialize.js dbconfig $${DB_IP} $${DB_PORT} $${DB_DB} $${DB_USERNAME} $${DB_TYPE} && node initialize.js dbconfigssl $${DB_SSL_ENABLED} $${DB_TYPE} $${DB_SSL_MODE} $${DB_SERVER_NAME} && node initialize.js tablespace $${DB_TABLESPACE_NAME} && sleep 1m && node initialize.js adminuser "]
+
+{{ else }}
+        command: ["/bin/sh","-c"," ./csdb_startup.sh && node initialize.js dbconfig $${DB_IP} $${DB_PORT} $${DB_DB} $${DB_USERNAME} $${DB_PASSWORD} $${DB_TYPE} && node initialize.js dbconfigssl $${DB_SSL_ENABLED} $${DB_TYPE} $${DB_SSL_MODE} $${DB_SERVER_NAME} && node initialize.js tablespace  $${DB_TABLESPACE_NAME} && sleep 1m && node initialize.js adminuser"]
+{{ end }}
+{{ end }}
+        volumeMounts:
+{{- if eq (hasKey .Values "useCertificate" | ternary .Values.useCertificate .Values.global.useCertificate) true }}
+        - mountPath: /opt/dctm/certificate
+          name: {{ .Values.dbrpersistentVolume.dbrdataPVCName | default .Values.global.dbrdataPVCName }}
+          subPath: certificate/{{ .Values.dbrpersistentVolume.dbrdataPVCName | default .Values.global.dbrdataPVCName }}
+{{ end }}
+{{  if eq (empty (.Values.vault.VAULT_ENABLED) | ternary .Values.global.isVaultEnabled .Values.vault.VAULT_ENABLED) true}}  
+        - mountPath: /opt/dctm_docker/dsis_binary_volume
+          name: dsis-binary-volume
+        - mountPath: /opt/dctm_docker/vault_config
+          name: vault-volume
+{{ end }} 
+{{- if and (eq ( .Values.configmap.DB_TYPE | default .Values.global.dbtype)  "oracle") (eq (empty (.Values.configmap.DB_SSL_ENABLED | quote) | ternary .Values.global.db_ssl .Values.configmap.DB_SSL_ENABLED) true) }}   
+        - mountPath: /usr/src/app/Content_Connect_DB_Initialize/node_modules/oracledb/build/Release/network/admin/tnsnames.ora
+          name: cc-oracle-volume
+          subPath: tnsnames.ora
+        - mountPath: /opt/dctm/data/oracle_wallet
+          name: dcs-pg-pvc
+          subPath: data/dcs-pg/oracle_wallet 
+{{ end }}
+{{ end }} 
+      serviceAccountName: {{  .Values.serviceAccount.serviceAccountName | default .Values.global.documentumserviceaccount}}
+      containers:
+      
+      - name: {{ .Values.deployment.containername }}
+        image: {{ .Values.images.cc.repository | default .Values.global.repository }}/{{ .Values.images.cc.name }}:{{ .Values.images.cc.tag }}  
+        imagePullPolicy: {{ .Values.images.cc.pullPolicy | default .Values.global.pullPolicyType }}
+        env:                
+         - name: NEW_RELIC_APP_NAME
+           value: {{ .Values.newrelic.new_relic_app_name | quote }}
+         - name: NEW_RELIC_LICENSE_KEY
+           value: {{ .Values.newrelic.new_relic_license_key | quote }}         
+         - name: NEW_RELIC_NO_CONFIG_FILE
+           value: {{ .Values.newrelic.new_relic_no_config_file | quote }}
+         {{- if (.Values.newrelic.new_relic_proxy_host) | default (.Values.global.newrelicProxyHost) }}
+         - name: NEW_RELIC_PROXY_URL
+           value: {{ .Values.newrelic.new_relic_proxy_protocol | default  .Values.global.newrelicProxyProtocol}}://{{.Values.newrelic.new_relic_proxy_host | default .Values.global.newrelicProxyHost}}:{{.Values.newrelic.new_relic_proxy_port | default .Values.global.newrelicProxyPort}} 
+         {{- end }}
+         - name: NEW_RELIC_ENABLED
+           value: {{  (.Values.newrelic.new_relic_enabled | default .Values.global.newrelic) | quote }} 
+         - name: GRAYLOG_ENABLE
+           value: {{  .Values.graylog.enable | default .Values.global.grayLogEnable  | quote }}
+         - name: DB_IP
+           value: {{  .Values.configmap.DB_IP | default .Values.global.db_hostname}}
+         - name: DB_PORT
+           value: {{  (.Values.configmap.DB_PORT | default .Values.global.dbport) | quote }}
+         - name: DB_DB
+           value: {{ .Values.configmap.DB_DB }}
+         - name: DB_TYPE
+           value: {{  .Values.configmap.DB_TYPE | default .Values.global.dbtype}}          
+         - name: DB_SSL_ENABLED
+           value: {{  (empty (.Values.configmap.DB_SSL_ENABLED | quote) | ternary .Values.global.db_ssl .Values.configmap.DB_SSL_ENABLED) | quote }} 
+         - name: DB_SSL_MODE
+           value: {{  .Values.configmap.DB_SSL_MODE | default .Values.global.db_ssl_mode | quote }}  
+         - name: DB_SERVER_NAME
+           value: {{ .Values.configmap.DB_SERVER_NAME | quote  }}       
+         - name: CONTAINER_INSTANCE
+           value: cc
+{{- if eq (hasKey .Values "useCertificate" | ternary .Values.useCertificate .Values.global.useCertificate) true }}
+         - name: USE_CERTIFICATE
+           value: 'true' 
+{{ end }}  
+         - name: OTDSURL
+           value: {{ .Values.configmap.otdsUrl | default ( include "documentum.publicOtdsSvcUrl" . ) }}                            
+{{- if eq (empty (.Values.configmap.DB_SSL_ENABLED | quote) | ternary .Values.global.db_ssl .Values.configmap.DB_SSL_ENABLED) true }}           
+         - name: SSL_VAR
+           valueFrom:
+             secretKeyRef:
+               name: {{ .Values.secret.name  }}
+               key: DB_SSLCERT 
+{{ end }} 
+{{- if eq (empty (.Values.vault.VAULT_ENABLED) | ternary .Values.global.isVaultEnabled .Values.vault.VAULT_ENABLED) false }}
+         - name: DB_PASSWORD
+           valueFrom:
+              secretKeyRef:
+                name: {{ .Values.secret.name }}
+                key: DB_PASSWORD
+{{ end }}
+         - name: DB_USERNAME
+           value: {{  .Values.configmap.DB_USERNAME | default .Values.global.databaseusername}}
+         {{- if or .Values.configmap.https_proxy .Values.global.proxy.enabled }}
+         - name: HTTP_PROXY
+           value: {{ .Values.configmap.https_proxy  | default (printf "%s://%s:%s" .Values.global.proxy.protocol .Values.global.proxy.host (toString .Values.global.proxy.port)) | quote  }}
+         - name: http_proxy
+           value: {{ .Values.configmap.https_proxy  | default (printf "%s://%s:%s" .Values.global.proxy.protocol .Values.global.proxy.host (toString .Values.global.proxy.port)) | quote }}
+         - name: HTTPS_PROXY
+           value: {{ .Values.configmap.https_proxy  | default (printf "%s://%s:%s" .Values.global.proxy.protocol .Values.global.proxy.host (toString .Values.global.proxy.port)) | quote }}
+         - name: https_proxy
+           value: {{ .Values.configmap.https_proxy  | default (printf "%s://%s:%s" .Values.global.proxy.protocol .Values.global.proxy.host (toString .Values.global.proxy.port)) | quote }}
+         {{- end }}
+         {{- if or .Values.configmap.no_proxy .Values.global.proxy.noProxy }}
+         - name: no_proxy
+           value: {{ .Values.configmap.no_proxy | default .Values.global.proxy.noProxy | quote }}
+         - name: NO_PROXY
+           value: {{ .Values.configmap.no_proxy | default .Values.global.proxy.noProxy | quote }} 
+         {{- end }} 
+         - name: VAULT_ENABLED
+           value: {{ (empty (.Values.vault.VAULT_ENABLED) | ternary .Values.global.isVaultEnabled .Values.vault.VAULT_ENABLED)  | quote }}  
+{{- if eq (empty (.Values.vault.VAULT_ENABLED) | ternary .Values.global.isVaultEnabled .Values.vault.VAULT_ENABLED) true }}  
+         - name: VAULT_SECRET
+           value: {{ .Values.vault.VAULT_SECRET | quote }}     
+         - name: VAULT_KEY
+           value: {{ .Values.vault.VAULT_KEY | quote }} 
+{{ end }}          
+{{- if and (eq ( .Values.configmap.DB_TYPE | default .Values.global.dbtype) "oracle") (eq (empty (.Values.configmap.DB_SSL_ENABLED) | ternary .Values.global.db_ssl .Values.configmap.DB_SSL_ENABLED) true) }} 
+
+         - name: P12_WALLET_FILE_NAME
+           value: {{ .Values.configmap.DB_P12_WALLET_FILE_NAME | quote }}     
+         - name: SSO_WALLET_FILE_NAME
+           value: {{ .Values.configmap.DB_SSO_WALLET_FILE_NAME | quote }}  
+         - name: DB_SERVICE_NAME
+           value: {{ .Values.configmap.DB_SERVICE_NAME  }} 
+         
+         - name: TNS_FILE_NAME
+           value: {{ .Values.configmap.DB_TNS_FILE_NAME  }}
+{{ end }}          
+{{- if and (eq ( .Values.configmap.DB_TYPE | default .Values.global.dbtype)  "oracle") (eq (empty (.Values.configmap.DB_SSL_ENABLED | quote) | ternary .Values.global.db_ssl .Values.configmap.DB_SSL_ENABLED) true)  }}    
+{{- if eq (empty (.Values.vault.VAULT_ENABLED) | ternary .Values.global.isVaultEnabled .Values.vault.VAULT_ENABLED) true }}
+        command: ["/bin/sh","-c","./csdb_startup.sh && node initialize.js dbconfig $${DB_IP} $${DB_PORT} $${DB_DB} $${DB_USERNAME} $${DB_TYPE} && node initialize.js cloud true && node initialize.js dbconfigssl $${DB_SSL_ENABLED} $${DB_SERVICE_NAME} && node initialize.js adminservice {{ .Values.configmap.authType }} {{ .Values.configmap.otdsClientID  | default .Values.global.oauthClient }} $${OTDSURL} && node initialize.js graphconfig {{ .Values.configmap.clientId }} {{ .Values.configmap.clientSecret }} {{ .Values.configmap.tenantId }} && node initialize.js ccextension {{ .Values.configmap.extension | default .Values.global.ccExtension }} && node initialize.js updateprotocol {{ .Values.configmap.protocol }} && sleep 1m && node UsertableUpgrade.js  && node CloudDbMigration.js && mkdir -m777 /usr/src/app/Content_Connect/dist/   && npm run-script gulp ContentConnect && node postInstallScript.js && chmod -R 775 /usr/src/app/Content_Connect/dist && node postInstallScript.js && npm run-script gulp AdminConsoleCloudServiceData &&  npm run-script gulp cc_webserver"]
+{{ else }}   
+        command: ["/bin/sh","-c","./csdb_startup.sh && node initialize.js dbconfig $${DB_IP} $${DB_PORT} $${DB_DB} $${DB_USERNAME} $${DB_PASSWORD} $${DB_TYPE} && node initialize.js cloud true && node initialize.js dbconfigssl $${DB_SSL_ENABLED} $${DB_SERVICE_NAME} && node initialize.js adminservice {{ .Values.configmap.authType }} {{ .Values.configmap.otdsClientID  | default .Values.global.oauthClient }} $${OTDSURL} && node initialize.js graphconfig {{ .Values.configmap.clientId }} {{ .Values.configmap.clientSecret }} {{ .Values.configmap.tenantId }} && node initialize.js ccextension {{ .Values.configmap.extension  | default .Values.global.ccExtension}} && node initialize.js updateprotocol {{ .Values.configmap.protocol }} && sleep 1m && node UsertableUpgrade.js  && node CloudDbMigration.js && mkdir -m777 /usr/src/app/Content_Connect/dist/   && npm run-script gulp ContentConnect && node postInstallScript.js && chmod -R 775 /usr/src/app/Content_Connect/dist && node postInstallScript.js && npm run-script gulp AdminConsoleCloudServiceData &&  npm run-script gulp cc_webserver"]
+{{ end }}
+{{ else }}
+{{- if eq (empty (.Values.vault.VAULT_ENABLED) | ternary .Values.global.isVaultEnabled .Values.vault.VAULT_ENABLED) true}}
+        command: ["/bin/sh","-c","./csdb_startup.sh && node initialize.js dbconfig $${DB_IP} $${DB_PORT} $${DB_DB} $${DB_USERNAME} $${DB_TYPE} && node initialize.js cloud true && node initialize.js dbconfigssl $${DB_SSL_ENABLED} $${DB_TYPE} $${DB_SSL_MODE} $${DB_SERVER_NAME} && node initialize.js adminservice {{ .Values.configmap.authType }} {{ .Values.configmap.otdsClientID  | default .Values.global.oauthClient }} $${OTDSURL} && node initialize.js graphconfig {{ .Values.configmap.clientId }} {{ .Values.configmap.clientSecret }} {{ .Values.configmap.tenantId }} && node initialize.js ccextension {{ .Values.configmap.extension  | default .Values.global.ccExtension}} && node initialize.js updateprotocol {{ .Values.configmap.protocol }} && sleep 1m && node UsertableUpgrade.js  && node CloudDbMigration.js && mkdir -m777 /usr/src/app/Content_Connect/dist/   && npm run-script gulp ContentConnect && node postInstallScript.js && chmod -R 775 /usr/src/app/Content_Connect/dist && node postInstallScript.js &&   npm run-script gulp AdminConsoleCloudServiceData &&  npm run-script gulp cc_webserver "]
+{{ else }}   
+        command: ["/bin/sh","-c","./csdb_startup.sh && node initialize.js dbconfig $${DB_IP} $${DB_PORT} $${DB_DB} $${DB_USERNAME} $${DB_PASSWORD} $${DB_TYPE} && node initialize.js cloud true && node initialize.js dbconfigssl $${DB_SSL_ENABLED} $${DB_TYPE} $${DB_SSL_MODE} $${DB_SERVER_NAME} && node initialize.js adminservice {{ .Values.configmap.authType }} {{ .Values.configmap.otdsClientID  | default .Values.global.oauthClient }} $${OTDSURL} && node initialize.js graphconfig {{ .Values.configmap.clientId }} {{ .Values.configmap.clientSecret }} {{ .Values.configmap.tenantId }} && node initialize.js ccextension {{ .Values.configmap.extension  | default .Values.global.ccExtension}} && node initialize.js updateprotocol {{ .Values.configmap.protocol }} && sleep 1m && node UsertableUpgrade.js  && node CloudDbMigration.js && mkdir -m777 /usr/src/app/Content_Connect/dist/   && npm run-script gulp ContentConnect && node postInstallScript.js && chmod -R 775 /usr/src/app/Content_Connect/dist && node postInstallScript.js &&   npm run-script gulp AdminConsoleCloudServiceData  &&  npm run-script gulp cc_webserver "]
+{{ end }}
+{{ end }}
+        volumeMounts:
+{{- if eq (hasKey .Values "useCertificate" | ternary .Values.useCertificate .Values.global.useCertificate) true }}
+        - mountPath: /opt/dctm/certificate
+          name: {{ .Values.dbrpersistentVolume.dbrdataPVCName | default .Values.global.dbrdataPVCName }}
+          subPath: certificate/{{ .Values.dbrpersistentVolume.dbrdataPVCName | default .Values.global.dbrdataPVCName }}
+{{ end }}
+{{  if eq (empty (.Values.vault.VAULT_ENABLED) | ternary .Values.global.isVaultEnabled .Values.vault.VAULT_ENABLED) true}}  
+        - mountPath: /opt/dctm_docker/dsis_binary_volume
+          name: dsis-binary-volume
+        - mountPath: /opt/dctm_docker/vault_config
+          name: vault-volume
+{{ end }} 
+{{- if and (eq ( .Values.configmap.DB_TYPE | default .Values.global.dbtype)  "oracle") (eq (empty (.Values.configmap.DB_SSL_ENABLED | quote) | ternary .Values.global.db_ssl .Values.configmap.DB_SSL_ENABLED) true)}}   
+        - mountPath: /usr/src/app/Content_Connect/node_modules/oracledb/build/Release/network/admin/tnsnames.ora          
+          name: cc-oracle-volume
+          subPath: tnsnames.ora
+        - mountPath: /opt/dctm/data/oracle_wallet
+          name: dcs-pg-pvc  
+          subPath: data/dcs-pg/oracle_wallet
+{{ end }} 
+        
+        resources:
+{{ toYaml .Values.resources | indent 12 }}
+        readinessProbe:
+          httpGet:
+            path: "/{{   .Values.configmap.extension | default .Values.global.ccExtension }}/service/health-check"
+{{- if eq (hasKey .Values "useCertificate" | ternary .Values.useCertificate .Values.global.useCertificate) true }}
+            port: 1607   
+            scheme: HTTPS
+{{ else }}
+            port: 2500           
+{{ end }}             
+          initialDelaySeconds: {{ .Values.deployment.readinessProbe.initialDelaySeconds }}
+          periodSeconds: {{ .Values.deployment.readinessProbe.periodSeconds }}
+          failureThreshold: {{ .Values.deployment.readinessProbe.failureThreshold }}
+          successThreshold: {{ .Values.deployment.readinessProbe.successThreshold }}
+          timeoutSeconds: {{ .Values.deployment.readinessProbe.timeoutSeconds }}
+        livenessProbe:
+          httpGet:
+            path: "/{{  .Values.configmap.extension | default .Values.global.ccExtension }}/service/health-check"
+{{- if eq (hasKey .Values "useCertificate" | ternary .Values.useCertificate .Values.global.useCertificate) true }}
+            port: 1607    
+            scheme: HTTPS
+{{ else }}
+            port: 2500           
+{{ end }} 
+          initialDelaySeconds: {{ .Values.deployment.livenessProbe.initialDelaySeconds }}
+          periodSeconds: {{ .Values.deployment.livenessProbe.periodSeconds }}
+        startupProbe:
+          httpGet:
+            path: "/{{  .Values.configmap.extension | default .Values.global.ccExtension }}/service/health-check"           
+{{- if eq (hasKey .Values "useCertificate" | ternary .Values.useCertificate .Values.global.useCertificate) true }}
+            port: 1607  
+            scheme: HTTPS
+{{ else }}
+            port: 2500           
+{{ end }} 
+          initialDelaySeconds: {{ .Values.deployment.startupProbe.initialDelaySeconds }}
+          periodSeconds: {{ .Values.deployment.startupProbe.periodSeconds }}
+          failureThreshold: {{ .Values.deployment.startupProbe.failureThreshold }}
+          successThreshold: {{ .Values.deployment.startupProbe.successThreshold }}
+          timeoutSeconds: {{ .Values.deployment.startupProbe.timeoutSeconds }}
+        ports:
+{{- if eq (hasKey .Values "useCertificate" | ternary .Values.useCertificate .Values.global.useCertificate) true }}        
+        - containerPort: 8443
+        - containerPort: 1607
+{{ else }}
+        - containerPort: 8080
+        - containerPort: 2500
+{{ end }}    
+      volumes:    
+{{- if and (eq ( .Values.configmap.DB_TYPE | default .Values.global.dbtype)  "oracle") (eq (empty (.Values.configmap.DB_SSL_ENABLED | quote) | ternary .Values.global.db_ssl .Values.configmap.DB_SSL_ENABLED)  true) }}   
+        - name: cc-oracle-volume
+          configMap:
+            name: {{ .Values.configmap.DB_TYPE | default .Values.global.dbtype }}-cc-configmap
+        - name: dcs-pg-pvc
+          persistentVolumeClaim:
+            claimName: dcs-pg-pvc
+{{ end }}
+{{- if eq (empty (.Values.vault.VAULT_ENABLED) | ternary .Values.global.isVaultEnabled .Values.vault.VAULT_ENABLED) true}}        
+        - name: dsis-binary-volume
+          persistentVolumeClaim:
+            claimName: dsis-binary-pvc
+        - name: vault-volume
+          configMap:
+            name: {{ .Values.vault.VAULT_CONFIGMAP }}    
+{{ end }} 
+{{- if eq (hasKey .Values "useCertificate" | ternary .Values.useCertificate .Values.global.useCertificate) true }}
+        - name: {{ .Values.dbrpersistentVolume.dbrdataPVCName | default .Values.global.dbrdataPVCName }}
+          persistentVolumeClaim:
+            claimName: {{ .Values.dbr.dbrServiceName | default .Values.global.dbrServiceName }}-pvc
+{{- end }}

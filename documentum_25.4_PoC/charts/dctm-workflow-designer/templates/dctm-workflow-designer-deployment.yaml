@@ -1,0 +1,258 @@
+#Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.prefix }}
+  labels:
+    app: {{ .Values.prefix }}
+spec:
+  replicas: {{ default "1" .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Values.prefix }}
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.prefix }}      
+    spec:
+{{- if (empty (.Values.serviceAccount.serviceAccountName | quote) | ternary .Values.global.documentumserviceaccount .Values.serviceAccount.serviceAccountName) }}
+      serviceAccountName: {{ .Values.serviceAccount.serviceAccountName | default .Values.global.documentumserviceaccount }}
+{{- end }}
+{{- if .Values.fsGroup }}
+      securityContext:
+        fsGroup: {{ .Values.fsGroup }}
+{{- end }}
+{{- if (empty (.Values.image.pullSecrets  | quote) | ternary .Values.global.pullSecretName .Values.image.pullSecrets) }}
+      imagePullSecrets:
+      - name: {{ .Values.image.pullSecrets | default .Values.global.pullSecretName }}
+
+{{ end }}
+
+      initContainers:
+{{- if .Values.extraInitContainers }}
+{{ include "resolveInitContainers" (dict "initContainerLists" .Values.extraInitContainers "global" .Values.global "nindent" 6) }}
+{{- end }}      
+      containers:    
+      - name: {{ .Values.prefix }}
+        image: {{ .Values.image.repository | default .Values.global.repository }}/{{ .Values.image.name }}:{{ .Values.image.tag }}
+        imagePullPolicy: {{ .Values.image.pullPolicy | default .Values.global.pullPolicyType }}
+        resources:
+{{ toYaml .Values.resources | indent 12 }}
+        env:
+        - name: WFD_TRUSTSTORE_PASSWORD 
+          value: {{ .Values.docbaseConnection.truststorePassword | quote}}
+        - name: TOMCAT_CONNECTOR_PORT            
+          #value: {{ .Values.tomcat.httpsport | quote }} 
+          value: {{ eq .Values.global.internalTlsEnable true | ternary (.Values.tomcat.httpsPort | quote ) (.Values.tomcat.httpPort | quote ) }}          
+        - name: TOMCAT_PROTOCOL
+          value: {{ eq .Values.global.internalTlsEnable true | ternary "https" "http" }}        
+        - name: METHOD_SVR_HOST
+          value: {{ (.Values.docbaseConnection.jmsservicename | quote) | default (.Values.global.jmsServiceName | quote) }}
+        - name: METHOD_SVR_PROTOCOL
+          value: {{ .Values.docbaseConnection.jmsprotocol }}
+        - name: METHOD_SVR_PORT
+          value: {{ (.Values.docbaseConnection.jmsport | quote) | default (.Values.global.jmsPort | quote) }}
+        - name: TOMCAT_LOG_FILE_ROTATION
+          value: {{ .Values.tomcat.logfilerotation | quote }}
+        - name: TOMCAT_LOG_FILE_SIZE
+          value: {{ .Values.tomcat.logfilesize | quote }}
+        - name: TOMCAT_LOGROTATE_FREQUENCY
+          value: {{ .Values.tomcat.logrotateFrequency | quote }} 
+        - name: wfdurl
+          value: {{ .Values.workflowDesignercli.url }}
+        - name: FORCE
+          value: {{ .Values.workflowDesignerCliParam.force | quote}}
+        - name: WFDUSER 
+          value: {{ .Values.workflowDesignercli.username  | default .Values.global.installOwnerUsername }}
+        - name: WFDPASSWORD 
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.prefix }}-secret
+              key: wfdpassword  
+{{- if .Values.global.internalTlsEnable }}              
+        - name: WFD_INGRESS_PASSWORD 
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.prefix }}-secret
+              key: wfdingressPassword  
+{{- end }}               
+        - name: KUBERNETES
+          value: "true"
+        - name: CONTAINER_NAME
+          value: {{ .Values.prefix }}
+        - name: DOCBROKER_HOST
+          value: {{ .Values.docbaseConnection.docbroker | default .Values.global.dbrServiceName }}
+        - name: DOCBROKER_PORT
+          value: {{ (.Values.docbaseConnection.port | quote) | default (.Values.global.dbr_port | quote) }}
+        - name: DOCBASE_NAME
+          value: {{ .Values.docbaseConnection.docbase | default .Values.global.docbase }}
+        - name: DOCBASE_SUPER_USER
+          value: {{ .Values.docbaseConnection.superUser | default .Values.global.installOwnerUsername }}
+        - name: DOCBASE_SUPER_USER_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.prefix }}-secret
+              key: superUserPassword
+{{- if (empty (.Values.docbaseConnection.use_certificate | quote) | ternary .Values.global.useCertificate .Values.docbaseConnection.use_certificate) }}
+        - name: DOCBASE_USE_CERTIFICATES
+          value: {{ (.Values.docbaseConnection.use_certificate | quote) | default (.Values.global.useCertificate | quote) }}
+{{ end }}          
+        - name: VAULT_ENABLED
+          value: {{ (empty (.Values.vault.enable | quote) | ternary .Values.global.isVaultEnabled .Values.vault.enable) | quote }}
+          
+        - name: DSIS_BIN_ZIP_PVC_PATH
+          valueFrom:
+            configMapKeyRef:
+              name: {{ .Values.prefix }}-dctm-workflow-designer-config
+              key: DSIS_BIN_ZIP_PVC_PATH
+        - name: DSIS_APP_PROPERTIES_FILE_PVC_PATH
+          valueFrom:
+            configMapKeyRef:
+              name: {{ .Values.prefix }}-dctm-workflow-designer-config
+              key: DSIS_APP_PROPERTIES_FILE_PVC_PATH
+        - name: VAULT_TIMEOUT
+          value: {{ .Values.vault.vault_timeout | quote }}
+        - name: DSIS_STATUS_CHECK_RETRY_COUNT
+          value: {{ .Values.vault.statusCheckRetryCount | quote }}
+        - name: DSIS_STATUS_CHECK_TIME_INTERVAL
+          value: {{ .Values.vault.statusCheckTimeInterval | quote }}          
+          
+        - name: TOMCAT_JAVA_OPTS
+          value: {{ .Values.tomcat.javaOptions }}              
+{{- if (empty (.Values.newrelic.enable | quote) | ternary .Values.global.newrelic .Values.newrelic.enable) }}
+        - name: NEWRELIC_ENABLE
+          value: {{ (empty (.Values.newrelic.enable | quote) | ternary .Values.global.newrelic .Values.newrelic.enable) | quote }}
+        - name: NEWRELIC_APP_NAME
+          value: {{ .Values.newrelic.app_name }}.{{ .Release.Namespace }}
+        - name: NEWRELIC_PROXY_HOST
+          value: {{ .Values.newrelic.proxy_host  | default .Values.global.newrelicProxyHost }}
+        - name: NEWRELIC_PROXY_PORT
+          value: {{ (.Values.newrelic.proxy_port | quote) | default (.Values.global.newrelicProxyPort | quote) }}
+        - name: NEWRELIC_LICENSE_KEY
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.secret.name | default .Values.global.csSecrets }}
+              key: {{ .Values.newrelic.licenseKeyName }}
+{{- end }}              
+        ports:        
+        - containerPort: {{ eq .Values.global.internalTlsEnable true | ternary .Values.tomcat.httpsPort .Values.tomcat.httpPort }}
+          name: webdesignerport
+        livenessProbe:
+          httpGet:
+            path: /{{ .Values.contextPath }}
+            port: webdesignerport      
+            scheme: {{ eq .Values.global.internalTlsEnable true | ternary "HTTPS" "HTTP" }}         
+
+          initialDelaySeconds: {{ .Values.liveness.initialDelay }}
+          periodSeconds: {{ .Values.liveness.period }}
+          failureThreshold: {{ .Values.liveness.failure }}
+          successThreshold: 1
+          timeoutSeconds: {{ .Values.liveness.timeout }}
+        readinessProbe:
+          httpGet:
+            path: /{{ .Values.contextPath }}
+            port: webdesignerport 
+            scheme: {{ eq .Values.global.internalTlsEnable true | ternary "HTTPS" "HTTP" }}         
+
+          initialDelaySeconds: {{ .Values.readiness.initialDelay }}
+          periodSeconds: {{ .Values.readiness.period }}
+          failureThreshold: {{ .Values.readiness.failure }}
+          successThreshold: 1
+          timeoutSeconds: {{ .Values.readiness.timeout }}          
+        volumeMounts:
+          - mountPath: /opt/wfd_cli_shared_packages
+            name: {{ .Values.prefix }}-pvc
+            subPath: {{ .Values.persistentVolume.PVCSubPath | default "bpm" }}
+{{- if .Values.trustStore.enable }}
+          - mountPath: /opt/DocumentumWorkflowDesigner_CLI/secrets
+            name: {{ .Values.prefix }}-secret
+{{- end }}
+          - mountPath: /opt/DocumentumWorkflowDesigner_CLI/logs
+            name: shared-logs
+          - mountPath: /opt/DocumentumWorkflowDesigner_CLI/config
+            name: cli-conf-volume
+          - mountPath: /opt/tomcat/CustomConf
+            name: custom-conf-volume
+          - mountPath: /opt/tomcat/webapps/DocumentumWorkflowDesigner/WEB-INF/classes
+            name: custom-log-volume
+            subPath: dctm-workflow-designer_logs
+          - mountPath: /opt/tomcat/logs
+            name: shared-logs
+            subPath: dctm-workflow-designer_logs            
+{{- if (empty (.Values.docbaseConnection.use_certificate | quote) | ternary .Values.global.useCertificate .Values.docbaseConnection.use_certificate) }}
+          - mountPath: /opt/dctm/certificate
+            name: {{ .Values.dbrpersistentVolume.dbrdataPVCName | default .Values.global.dbrdataPVCName }}
+            subPath: certificate/{{ .Values.dbrpersistentVolume.dbrdataPVCName | default .Values.global.dbrdataPVCName }}
+{{ end }}
+{{- if (empty (.Values.vault.enable | quote) | ternary .Values.global.isVaultEnabled .Values.vault.enable) }}
+          - mountPath: {{ .Values.vault.vault_config_mount_path }}
+            name: vault-volume
+{{- end }}
+{{- if (empty (.Values.vault.enable | quote) | ternary .Values.global.isVaultEnabled .Values.vault.enable) }}
+          - mountPath: {{ .Values.vault.binary_volume_mount_path }}
+            name: dsis-binary-volume
+{{- end }}          
+      volumes:
+        - name: shared-logs
+          emptyDir: {}      
+{{- if (empty (.Values.vault.enable | quote) | ternary .Values.global.isVaultEnabled .Values.vault.enable) }}
+        - name: vault-volume
+          configMap:
+            name: {{ .Values.vault.vault_configmap }}
+{{- end }}
+        
+        - name: {{ .Values.prefix }}-pvc
+          persistentVolumeClaim:
+        {{- if .Values.persistentVolume.existingPVCName }}
+            claimName: {{ .Values.persistentVolume.existingPVCName }}
+        {{ else }}
+            claimName: {{ .Values.prefix }}-pvc
+        {{ end }}
+            
+        - name: custom-conf-volume
+          configMap:
+            name: {{ .Values.prefix }}-dctm-workflow-designer-config
+            items:
+              - key: dfc
+                path: dfc.properties
+              - key: rest-api-runtime
+                path: rest-api-runtime.properties       
+              - key: deployment
+                path: deployment.properties
+              - key: server_tls.xml
+                path: server.xml
+        - name: cli-conf-volume
+          configMap:
+            name: {{ .Values.prefix }}-dctm-workflow-designer-config
+            items:
+              - key: wfdcli-config
+                path: wfd.properties
+      
+        - name: custom-log-volume
+          configMap:
+            name: {{ .Values.prefix }}-dctm-workflow-designer-log-config
+            items:
+              - key: log4j2
+                path: log4j2.properties
+{{- if (empty (.Values.docbaseConnection.use_certificate | quote) | ternary .Values.global.useCertificate .Values.docbaseConnection.use_certificate) }}        
+        - name: {{ .Values.dbrpersistentVolume.dbrdataPVCName | default .Values.global.dbrdataPVCName }}
+          persistentVolumeClaim:
+            claimName: {{ .Values.docbaseConnection.docbroker | default .Values.global.dbrServiceName }}-pvc
+{{- end }}
+{{- if (empty (.Values.vault.enable | quote) | ternary .Values.global.isVaultEnabled .Values.vault.enable) }}
+        - name: dsis-binary-volume
+          persistentVolumeClaim:
+            claimName: {{ .Values.vault.PVCName }}
+{{- end }}
+{{- if .Values.trustStore.enable }}
+        - name: {{ .Values.prefix }}-secret
+          secret:
+            secretName: {{ .Values.prefix }}-secret
+            items:
+            - key: trustStoreFile
+              path: {{ .Values.trustStore.fileName }}
+{{- end }}
+
+      restartPolicy: Always

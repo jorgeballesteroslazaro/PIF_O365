@@ -1,0 +1,88 @@
+{{ if eq .Values.enabled true }}
+## Core Notification configmap ##
+apiVersion: v1
+data:
+  database.properties: |
+    db.reconnect-attempts=10
+    jdbc.dbSchemaName={{ .Values.configMap.database.dbSchemaName |  default .Values.global.dbSchema_Name}}
+    jdbc.driverClassName={{ .Values.configMap.database.driverClassName |  default .Values.global.driverClass_Name }}
+{{- if and (eq (empty (.Values.configMap.database.db_ssl) | ternary .Values.global.db_ssl .Values.configMap.database.db_ssl) true) (eq (.Values.configMap.database.db_type |  default .Values.global.dbtype) "postgres") }}
+    jdbc.url={{ .Values.configMap.database.url }}&ssl=true&sslmode={{ .Values.configMap.database.db_ssl_mode |  default .Values.global.db_ssl_mode }}&sslrootcert=/usr/src/M365/dbrootca.crt
+{{ else }}
+    jdbc.url={{ .Values.configMap.database.url }}
+{{end}}
+    quartz.dbDelegateClass=org.quartz.impl.jdbcjobstore.PostgreSQLDelegate
+    jdbc.username={{ .Values.configMap.database.username |  default .Values.global.databaseusername }}
+    jdbc.password={{ .Values.configMap.database.password  }}
+    databaseSecretKeyName={{ .Values.configMap.database.dbSecretKeyName  }}
+    dbcp.initialSize=20
+    dbcp.maxActive=30
+    vaultEnabled={{ (empty (.Values.configMap.vault.enabled) | ternary .Values.global.isVaultEnabled .Values.configMap.vault.enabled) }}
+  setup.properties: |
+    notificationserviceHost = {{ .Values.notificationServicePrefix }}-grpc-service
+    notificationservicePort = {{ .Values.configMap.setupConfig.notificationservicePort  }}
+  log4j2.xml: |
+    <?xml version="1.0" encoding="UTF-8"?>
+    <Configuration status ="debug" monitorInterval="5">
+      <Appenders>
+          <Console name="CONSOLE" target="SYSTEM_OUT">
+              <PatternLayout pattern="%-5p: [%t]: %c - %d{dd MMM yyy HH:mm:ss,SSS} - %m%n"/>
+          </Console>
+          <RollingFile name="RollingFile" fileName="//{{ .Values.tomcat.catalinaHome }}//webapps//{{ .Values.env.webappName }}//logs//oes-connector.log" filePattern="//opt/tomcat//webapps//oes-connector//logs//oes-connector%i.log">
+              <PatternLayout>
+                  <pattern>%-5p: [%t]: %c - %d{dd MMM yyy HH:mm:ss,SSS} - %m%n</pattern>
+              </PatternLayout>
+              <Policies>
+                  <SizeBasedTriggeringPolicy size="10 MB"/>
+              </Policies>
+              <DefaultRolloverStrategy max="5"/>
+          </RollingFile>
+      </Appenders>
+      <Loggers>
+          <!-- Application Loggers -->
+          <Logger name="com.opentext.oesConnector" level="{{ .Values.configMap.setupConfig.logLevel }}">
+              <AppenderRef ref="RollingFile"/>
+          </Logger>
+          <Logger name="org.apache.log4j.xml" level="{{ .Values.configMap.setupConfig.logLevel }}">
+              <AppenderRef ref="CONSOLE"/>
+          </Logger>
+          <Logger name="com.opentext.vaultConnector" level="{{ .Values.configMap.setupConfig.logLevel }}">
+              <AppenderRef ref="RollingFile"/>
+          </Logger>
+          <Logger name="com.opentext.dctmclient" level="{{ .Values.configMap.setupConfig.logLevel }}">
+              <AppenderRef ref="RollingFile"/>
+          </Logger>
+          <!-- Root Logger -->
+          <Root level="warn">
+              <AppenderRef ref="CONSOLE"/>
+          </Root>
+      </Loggers>
+    </Configuration>
+
+{{- if and  (eq (empty (.Values.configMap.database.db_ssl) | ternary .Values.global.db_ssl .Values.configMap.database.db_ssl) true) (eq (.Values.configMap.database.db_type | default .Values.global.dbtype) "oracle") }}
+  tnsnames.ora: |
+    {{ .Values.configMap.database.db_servicename  |  default .Values.global.db_service }} =
+     (DESCRIPTION =
+       (ADDRESS = (PROTOCOL = TCPS)(HOST = {{ .Values.configMap.database.db_host | default .Values.global.db_hostname }} )(PORT = {{ .Values.configMap.database.db_port | default .Values.global.dbport }}))
+       (CONNECT_DATA =
+          (SERVER = DEDICATED)
+          (SERVICE_NAME = {{ .Values.configMap.database.db_servicename | default .Values.global.db_service }})
+      )
+      (SECURITY =
+       (MY_WALLET_DIRECTORY = /opt/oesconnector/data/oracle_wallet)
+       (SSL_VERSION = 1.2)
+       (SSL_CLIENT_AUTHENTICATION = FALSE)
+      )
+    )
+{{end}}
+{{ if eq .Values.global.proxy.enabled true }}
+  catalina_opts: -Dhttp.proxyHost={{ .Values.proxyHost | default .Values.global.proxy.host }} -Dhttp.proxyPort={{ .Values.proxyPort | default .Values.global.proxy.port }} -Dhttps.proxyHost={{ .Values.proxyHost | default .Values.global.proxy.host }} -Dhttps.proxyPort={{ .Values.proxyPort | default .Values.global.proxy.port }} -Dhttps.nonProxyHosts="{{ .Values.noProxyHosts | default (include "formatNoProxy" . ) }}|{{ .Values.notificationServicePrefix }}-grpc-service|{{ .Values.global.ingressUrl | trimSuffix "/"  }}" -Dhttp.nonProxyHosts="{{ .Values.noProxyHosts | default (include "formatNoProxy" . ) }}|{{ .Values.notificationServicePrefix }}-grpc-service|{{ .Values.global.ingressUrl | trimSuffix "/"  }}" -Dlog4j.configurationFile=file:/opt/tomcat/webapps/oes-connector/WEB-INF/classes/log4j/log4j2.xml
+  httpsProxy: "http://{{ .Values.proxyHost | default .Values.global.proxy.host }}:{{ .Values.proxyPort | default .Values.global.proxy.port }}"
+  httpProxy: "http://{{ .Values.proxyHost | default .Values.global.proxy.host }}:{{ .Values.proxyPort | default .Values.global.proxy.port }}"
+  noProxy: '{{ .Values.noProxyHosts | default .Values.global.proxy.noProxy }},{{ .Values.notificationServicePrefix }}-grpc-service,{{ .Values.global.ingressUrl | trimSuffix "/" }}'
+{{end}}
+kind: ConfigMap
+metadata:
+  name: {{ .Values.prefix }}-configmap
+  namespace: {{  .Values.namespace  | default .Release.Namespace }}
+{{ end }}

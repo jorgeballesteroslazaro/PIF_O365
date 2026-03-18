@@ -1,0 +1,5 @@
+apiVersion: v2
+appVersion: 25.4.0
+description: A SFTP Helm chart for Kubernetes
+name: ls-sftp
+version: 25.4.0

@@ -1,0 +1,46 @@
+apiVersion: v2
+appVersion: 25.4.1
+dependencies:
+- condition: zookeeper.enabled
+  name: zookeeper
+  repository: ""
+  version: 3.8.1
+- condition: solr.enabled
+  name: solr
+  repository: ""
+  version: 9.5.0
+- condition: kafka.enabled
+  name: kafka
+  repository: ""
+  version: 2.8.1
+- condition: parser.enabled
+  name: parser
+  repository: ""
+  version: 25.4.1
+- condition: indexer.enabled
+  name: indexer
+  repository: ""
+  version: 25.4.1
+- condition: coresearch.enabled
+  name: coresearch
+  repository: ""
+  version: 25.4.1
+- condition: fetcher.enabled
+  name: fetcher
+  repository: ""
+  version: 25.4.1
+- condition: index-agent.enabled
+  name: index-agent
+  repository: ""
+  version: 25.4.1
+- condition: search-agent.enabled
+  name: search-agent
+  repository: ""
+  version: 25.4.1
+- condition: admin.enabled
+  name: admin
+  repository: ""
+  version: 25.4.1
+description: Documentum Search Helm chart
+name: documentum-search
+version: 25.4.1

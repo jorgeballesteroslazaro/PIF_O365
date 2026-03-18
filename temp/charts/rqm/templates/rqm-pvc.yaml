@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ .Values.persistentVolumeClaim.pvcName }}
+  namespace: {{ .Values.namespace | default .Release.Namespace}}
+spec:
+  accessModes:
+    - {{ .Values.persistentVolumeClaim.accessMode }}
+  storageClassName: {{ .Values.persistentVolumeClaim.storageClass | default .Values.global.rwmStorage}}
+ {{ if .Values.persistentVolumeClaim.awsEFSCSIHandle }}
+  volumeName: {{ .Values.persistentVolumeClaim.pvcName }}-pv
+{{ end }}  
+  resources:
+    requests:
+      storage: {{ .Values.persistentVolumeClaim.size }} 

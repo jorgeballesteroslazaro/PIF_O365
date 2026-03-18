@@ -1,0 +1,1281 @@
+################################################################################################
+#                                                                                              #
+#                                   This is a YAML-formatted file.                             #
+#                          Provide the values for variables to be passed to the templates.     #
+################################################################################################
+
+######################################Global Variables##########################################
+
+global:
+  # Description: Path of the repository.
+  #repository: &docker_repo registry.opentext.com
+  repository: &docker_repo 594171188460.dkr.ecr.eu-south-2.amazonaws.com
+
+  # Description: Fluentd image details with the complete name and tag.
+  fluentdImage: 594171188460.dkr.ecr.eu-south-2.amazonaws.com/aws-spa-ecr-pocdocumentum-02:ot-dctm-fluentd-25.4
+
+  # Description: Tag details of the application server image.
+  appserverImageTag: &appserverImageTag 'ot-dctm-tomcat-25.4.1'
+
+  # Description: Name of the application server image with the complete path.
+  appserverImageName: &appserverImageName aws-spa-ecr-pocdocumentum-02
+
+  # Description: Policy type to retrieve the image.
+  pullPolicyType: &pull_policy_type IfNotPresent
+
+  # Description: Pull secret name to pull the images.
+  pullSecretName: &pull_secret_name []
+
+  # Description: Image to verify the ZooKeeper status.
+  zkStatusImage: 594171188460.dkr.ecr.eu-south-2.amazonaws.com/aws-spa-ecr-pocdocumentum-02:ot-dctm-zk-status-checker-25.4
+
+######################################End of Global Variables###################################
+
+db:
+  images:
+    # Description: Repository location of the database image.
+    repository:
+    db:
+      # Description: Name of the database image.
+      # Note: You must provide appropriate values for all the database variables only when the database image is used.
+      name: aws-spa-ecr-pocdocumentum-02
+      # Description: Tag as a version-specific number.
+      tag: postgres-17.2
+
+docbroker:
+  images:
+    contentserver:
+      # Description: Name of the Documentum CM Server image.
+      name: aws-spa-ecr-pocdocumentum-02
+      # Description: Tag as a version-specific number.
+      tag: ot-dctm-server-25.4.1
+  # Description: Additional init containers information.
+  extraInitContainers:
+    - name: dsisinit
+      component: dsis
+      image: ot-dctm-dsis:25.4.1
+      command: [ '/bin/sh', '-c', 'sudo cp -pf /opt/dsis_binary/dsis.zip /opt/dctm_docker/dsis_binary_volume' ]
+      volumeMounts:
+        - name: dsis-binary-volume
+          mountPath: /opt/dctm_docker/dsis_binary_volume
+          subPath: dsis-binary
+
+content-server:
+  images:
+    contentserver:
+      # Description: Name of the Documentum CM Server container image.
+      name: aws-spa-ecr-pocdocumentum-02
+      # Description: Tag as a version-specific number.
+      tag: ot-dctm-server-25.4.1
+  custom:
+    versions: # Description: Provide the marker file names of client products in any order separated by comma.
+
+    # Before the Documentum CM Server pod copies the custom scripts, verify the availability of these marker files.
+    markerFiles: # Description: Additional init containers information.
+  extraInitContainers:
+    - name: dsisinit
+      component: dsis
+      image: aws-spa-ecr-pocdocumentum-02:ot-dctm-dsis-25.4
+      command: [ '/bin/sh', '-c', 'sudo cp -pf /opt/dsis_binary/dsis.zip /opt/dctm_docker/dsis_binary_volume' ]
+      volumeMounts:
+        - name: dsis-binary-volume
+          mountPath: /opt/dctm_docker/dsis_binary_volume
+          subPath: dsis-binary
+    - name: dctmclientinstallerinit
+      component: dctmclientinstaller
+      image: aws-spa-ecr-pocdocumentum-02:ot-dctm-client-installer-25.4.1
+      command: [ '/bin/sh', '-c', '. /customscripts/d2-startup.sh' ]
+      volumeMounts:
+        - name: dcs-data-pvc
+          mountPath: /opt/dctm_docker/customscriptpvc
+          subPath: initcontainercustomscripts/dcs-pg
+    - name: "peinstaller-init"
+      component: peinstaller
+      image: "aws-spa-ecr-pocdocumentum-02:ot-dctm-bpm-installer-25.4"
+      command: [ '/bin/sh', '-c', 'yes |sudo cp -pRf /pescripts/* /opt/dctm_docker/customscriptpvc/ && sudo rm -f /opt/dctm_docker/customscriptpvc/10peijmsdeploy.sh' ]
+      volumeMounts:
+        - name: dcs-data-pvc
+          mountPath: /opt/dctm_docker/customscriptpvc
+          subPath: initcontainercustomscripts/dcs-pg
+    - name: cc-dar-installer
+      component: contentconnect
+      image: aws-spa-ecr-pocdocumentum-02:ot-dctm-content-connect-25.4.1
+      volumeMounts:
+        - name: dcs-data-pvc
+          mountPath: /opt/dctm_docker/customscriptpvc
+          subPath: initcontainercustomscripts/dcs-pg
+    - name: smartviewm365-dar-installer
+      component: smartviewm365
+      image: aws-spa-ecr-pocdocumentum-02:ot-dctm-smartviewm365-25.4.1
+      command: [ '/bin/sh', '-c', '. /opt/ccsmartview/initstartup.sh' ]
+      volumeMounts:
+        - name: dcs-data-pvc
+          mountPath: /opt/dctm_docker/customscriptpvc
+          subPath: initcontainercustomscripts/dcs-pg
+    - name: oesconnector-dar-installer
+      component: oesconnector
+      image: aws-spa-ecr-pocdocumentum-02:ot-dctm-oesconnector-25.4.1
+      command: [ '/bin/sh', '-c', '. /opt/oesconnector/initstartup.sh' ]
+      volumeMounts:
+        - name: dcs-data-pvc
+          mountPath: /opt/dctm_docker/customscriptpvc
+          subPath: initcontainercustomscripts/dcs-pg
+    - name: dctm-records-darinstallation
+      component: records
+      image: aws-spa-ecr-pocdocumentum-02:ot-dctm-records-darinstallation-25.4.1
+      volumeMounts:
+        - name: dcs-data-pvc
+          mountPath: /opt/dctm_docker/customscriptpvc
+          subPath: initcontainercustomscripts/dcs-pg
+    - name: dctm-reports-installer
+      component: dtrbase
+      image: aws-spa-ecr-pocdocumentum-02:ot-dctm-reports-installer-25.4.1
+      command: [ '/bin/sh', '-c', 'yes |sudo cp -prf /opt/dtr_build/* /opt/dctm_docker/customscriptpvc/' ]
+      volumeMounts:
+        - name: dcs-data-pvc
+          mountPath: /opt/dctm_docker/customscriptpvc
+          subPath: initcontainercustomscripts/dcs-pg
+    - name: dcc-dar-installer
+      component: dctm-dcc
+      image: aws-spa-ecr-pocdocumentum-02:ot-dctm-dcc-darinitcontainer-25.4.1
+      command: [ '/bin/sh', '-c', 'yes |sudo cp -prf /opt/customscripts/* /opt/dctm_docker/customscriptpvc/' ]
+      volumeMounts:
+        - name: dcs-data-pvc
+          mountPath: /opt/dctm_docker/customscriptpvc
+          subPath: initcontainercustomscripts/dcs-pg
+    - name: dcme-installer-init
+      component: ao-installer
+      image: aws-spa-ecr-pocdocumentum-02:ot-dctm-dcme-installer-25.4.1
+      command: [ '/bin/sh', '-c', '/aoscripts/startup.sh CS' ]
+      volumeMounts:
+        - name: dcs-data-pvc
+          mountPath: /opt/dctm_docker/customscriptpvc
+          subPath: initcontainercustomscripts/dcs-pg
+      envFrom:
+        - configMapRef:
+            name: ao-configmap
+        - secretRef:
+            name: ao-supplierexchange
+
+    ##LSS extrainit containers ##
+    # Description: Name of the LSS custom container for Documentum CM Server custom configuration.
+    - name: lsinitcontainer
+      # Description: Name of the component (LSS) whose init container is being deployed.
+      component: lss
+      # Description: Indicates the location of the image repository.
+      image: aws-spa-ecr-pocdocumentum-02:ot-dctm-lscs-initcontainer-25.4.0
+      envFrom:
+        - configMapRef:
+            name: lscs-extra-env-configmap
+      env:
+        - name: SMTP_USER
+          valueFrom:
+            secretKeyRef:
+              name: cs-secret-config
+              key: smtpUser
+        - name: SMTP_PASS
+          valueFrom:
+            secretKeyRef:
+              name: cs-secret-config
+              key: smtpPass
+      # Description: Indicates the command executed as part of the init container.
+      command: [ '/bin/sh', '-c', '. /customscripts/LSS/lscs_initstartup.sh' ]
+      volumeMounts:
+        # Description: Indicates the name of the volume mount for the init container.
+        - name: dcs-data-pvc
+          # Description: Indicates the path of the volume mount for the init container.
+          mountPath: /opt/dctm_docker/customscriptpvc
+          # Description: Subpath of the volume mount for the init container.
+          subPath: initcontainer/customscripts/dcs-pg
+    - name: ls-reports-installer
+      # Description: Name of the component (dtrbase) whose init container is being deployed.
+      component: lss
+      # Description: Indicates the location of the image repository.
+      env:
+        - name: IS_REPORTS_ENABLED
+          valueFrom:
+            configMapKeyRef:
+              name: lscs-extra-env-configmap # ConfigMap name
+              key: isReportsEnabled # Key inside ConfigMap
+      image: aws-spa-ecr-pocdocumentum-02:ot-dctm-lsdtrbase-initcontainer-25.4.0
+      # Description: Indicates the command executed as part of the init container.
+      command: [ '/bin/sh', '-c', '. /customscripts/lsdtrbase_initstartup.sh' ]
+      volumeMounts:
+        # Description: Indicates the name of the volume mount for the init container.
+        - name: dcs-data-pvc
+          # Description: Indicates the path of the volume mount for the init container.
+          mountPath: /opt/dctm_docker/customscriptpvc
+          # Description: Subpath of the volume mount for the init container.
+          subPath: initcontainercustomscripts/dcs-pg
+
+    # Description: Indicates the DAR installation of the init containers for the following components:
+    # 1. OpenText Documentum Archive Services for SAP Solutions
+    # 2. OpenText Documentum Archive Services for SAP Solutions ILM
+    # 3. OpenText Documentum Content Services for SAP Solutions
+    - name: dctm-sapc-initcontainer
+
+      # Description: Indicates the name of the init container that is being deployed.
+      component: sapconnector-init
+
+      # Description: Indicates the path of the image repository.
+      image: aws-spa-ecr-pocdocumentum-02:ot-dctm-sapc-initcontainer-25.4
+
+      # Description: Indicates the command executed as part of the init container.
+      command: [ '/bin/sh', '/opt/SAPC-install/start.sh' ]
+      volumeMounts:
+        # Description: Name of the volume mount for the init container.
+        - name: dcs-data-pvc
+
+          # Description: Path of the volume mount for the init container.
+          mountPath: /opt/dctm_docker/customscriptpvc
+
+          # Description: Subpath of the volume mount for the init container.
+          subPath: initcontainercustomscripts/dcs-pg
+      env:
+        # Description: Indicates the variables to install the DAR files for the following components:
+        # 1. OpenText Documentum Archive Services for SAP Solutions
+        # 2. OpenText Documentum Archive Services for SAP Solutions ILM
+        # 3. OpenText Documentum Content Services for SAP Solutions
+        - name: INSTALL_ASSAP_DARS
+          value: "true"
+        - name: INSTALL_ILM_DARS
+          value: "true"
+        - name: INSTALL_CSSAP_DARS
+          value: "true"
+          # Description: Reinstalls the DAR files for the preceding components forcefully.
+        - name: REINSTALL_DARS_WITH_FORCE
+          value: "false"
+      # Description: Name of the LSS HFX container for Documentum CM Server custom configuration.
+    - name: hfxinitcontainer
+
+      # Description: Name of the component (LSS) whose init container is being deployed.
+      component: lss
+
+      # Description: Indicates the location of the image repository.
+      image: aws-spa-ecr-pocdocumentum-02:ot-dctm-ls-hfx-initcontainer-25.4.0
+
+      # Description: Indicates the command executed as part of the init container.
+      command: [ '/bin/sh', '-c', ' BASE_PATH=/opt/dctm_docker/customscriptpvc; yes |sudo cp -pRf /customscripts/* $BASE_PATH/LSS/ls-hfx/;' ]
+      volumeMounts:
+        # Description: Indicates the name of the volume mount for the init container.
+        - name: dcs-data-pvc
+
+          # Description: Indicates the path of the volume mount for the init container.
+          mountPath: /opt/dctm_docker/customscriptpvc
+
+          # Description: Subpath of the volume mount for the init container.
+          subPath: initcontainercustomscripts/dcs-pg
+
+dctm-rest:
+  restInitContainers:
+    # Description: Name of the Foundation REST API init container.
+    name: rest-init-container
+
+    # Description: Name of the Foundation REST API product image.
+    imageName: aws-spa-ecr-pocdocumentum-02
+
+    # Description: Tag as version-specific number.
+    imageTag: ot-dctm-rest-25.4.1
+
+  # Description: Additional init containers information.
+  extraInitContainers:
+    # Description: Name of the custom init container.
+    name: rest-custom
+
+    # Description: Path of the repository.
+    repository:
+
+    # Description: Name of the custom image.
+    imageName:
+
+    # Description: Tag details of the application server image.
+    imageTag:
+
+    # Description: This variable uses the value that you specified for pullPolicyType in Global Variables.
+    imagePullPolicy: *pull_policy_type
+    volumeMounts:
+      # Description: Name of the volume mount for the init container. Do not change this value.
+      name: custom-script-pvc
+
+      # Description: Path of the volume mount for the init container.
+      # This must be created in init container Docker file, and init container startup script must copy the customization files from init container image to this mount path.
+      mountPath: /opt/customscriptpvc
+
+      # Description: Subpath of the volume mount for the init container. Do not change this value.
+      subPath: initcontainercustomscripts/dctm-rest-custom
+
+dtrbase:
+  images:
+    dtrbase:
+      # Description: Name of the Reports image.
+      name: aws-spa-ecr-pocdocumentum-02
+
+      # Description: Tag as a version-specific number.
+      tag: ot-dctm-reports-base-25.4
+
+dctm-cmis:
+  cmisInitContainers:
+    # Description: Name of the Foundation CMIS API init container.
+    name: cmis-init-container
+    image:
+      # Description: Name of the Foundation CMIS API container image.
+      name: aws-spa-ecr-pocdocumentum-02
+
+      # Description: Tag as a version-specific number.
+      tag: ot-dctm-cmis-25.4
+
+dctm-workflow-designer:
+  image:
+    # Description: Workflow Designer image name.
+    name: aws-spa-ecr-pocdocumentum-02
+
+    # Description: Tag as a version-specific number.
+    tag: ot-dctm-workflow-designer-25.4.1
+
+  # Description: Additional init containers information.
+  extraInitContainers:
+    # Uncomment the following section if you want to install process templates and make sure indentation is correct:
+    # - name: <image_name>
+    # image: <image_path>
+    # imagePullPolicy: *pull_policy_type
+    # command: ['/bin/sh', '-c', 'yes |sudo cp -prf <process_template_file_path> /opt/wfd_cli_shared_packages/<process_template_file>']
+    # volumeMounts:
+    # - name: dctm-workflow-designer-pvc
+    # mountPath: /opt/wfd_cli_shared_packages
+    # subPath: bpm
+    - name: dcme-installer-init
+      component: ao-installer
+      image: aws-spa-ecr-pocdocumentum-02:ot-dctm-dcme-installer-25.4.1
+      imagePullPolicy: *pull_policy_type
+      command: [ '/bin/sh', '-c', 'yes |sudo cp -prf /aoscripts/AO/ao_bpm.zip /opt/wfd_cli_shared_packages/ao_bpm.zip' ]
+      volumeMounts:
+        - name: dctm-workflow-designer-pvc
+          mountPath: /opt/wfd_cli_shared_packages
+          subPath: bpm
+      # Description: Name of the LSS Workflow Designer custom configuration for Business Process Manager.
+    - name: lswfdinstallerinit
+
+      # Description: Name of the component (LSS) whose init container is being deployed.
+      component: lss
+
+      # Description: Indicates the location of the image repository.
+      image: aws-spa-ecr-pocdocumentum-02:ot-dctm-lswfd-initcontainer-25.4.1
+
+      # Description: Indicates the command executed as part of the init container.
+      command: [ '/bin/sh', '-c', '. /ls-workflow-packages/lswfd-initstartup.sh' ]
+      volumeMounts:
+        # Description: Indicates the name of the volume mount for the init container.
+        - name: dctm-workflow-designer-pvc
+
+          # Description: Indicates the path of the volume mount for the init container.
+          mountPath: /opt/wfd_cli_shared_packages
+
+          # Description: Subpath of the volume mount for the init container.
+          subPath: bpm
+
+contentconnect:
+  images:
+    # Description: This variable uses the value that you specified for pullSecretName in Global Variables.
+    pullSecrets: *pull_secret_name
+    cc:
+      # Description: Name of the OpenText Content Connect image.
+      name: aws-spa-ecr-pocdocumentum-02
+
+      # Description: Tag as a version-specific number.
+      tag: ot-dctm-content-connect-25.4.1
+    ccdb:
+      # Description: Name of the OpenText Content Connect database image.
+      name: aws-spa-ecr-pocdocumentum-02
+
+      # Description: Tag as a version-specific number.
+      tag: ot-dctm-content-connect-dbinit-25.4.1
+
+da:
+  images:
+    da:
+      # Description: Name of the Documentum Administrator image. Retain the default value.
+      name: aws-spa-ecr-pocdocumentum-02
+
+      # Description: Tag as a version-specific number.
+      tag: ot-dctm-admin-tomcat-25.4.1
+    extensionImage:
+      # Description: Name of the Documentum Administrator image.
+      name: aws-spa-ecr-pocdocumentum-02
+
+      # Description: Tag as a version-specific number.
+      tag: ot-dctm-admin-25.4.1
+
+dfs:
+  containers:
+    initcontainer:
+      image:
+        # Description: Name of the container image.
+        name: aws-spa-ecr-pocdocumentum-02
+
+        # Description: Tag as a version-specific number.
+        tag: ot-dctm-dfs-25.4.1
+
+records:
+  images:
+    extensionImage:
+      # Description: Name of the Records image.
+      name: aws-spa-ecr-pocdocumentum-02
+
+      # Description: Tag as a version-specific number.
+      tag: ot-dctm-records-25.4.1
+
+rqm:
+  images:
+    rqm:
+      # Description: Name of the Records Queue Manager image.
+      name: aws-spa-ecr-pocdocumentum-02
+
+      # Description: Tag as a version-specific number.
+      tag: ot-dctm-rqm-25.4.1
+
+dctm-dcc:
+  consul:
+    image:
+      # Description: Name of the consul image.
+      name: aws-spa-ecr-pocdocumentum-02
+
+      # Description: Tag as a version-specific number.
+      tag: ot-dctm-dcc-consul-25.4
+
+  metadata:
+    image:
+      # Description: Name of the metadata image.
+      name: aws-spa-ecr-pocdocumentum-02
+
+      # Description: Tag as a version-specific number.
+      tag: ot-dctm-dcc-metadataservice-25.4
+
+  syncagent:
+    image:
+      # Description: Name of the syncagent image.
+      name: aws-spa-ecr-pocdocumentum-02
+
+      # Description: Tag as a version-specific number.
+      tag: ot-dctm-dcc-syncagent-25.4.1
+
+  syncnshareManual:
+    image:
+      # Description: Name of the syncnshareManual image.
+      name: aws-spa-ecr-pocdocumentum-02
+
+      # Description: Tag as a version-specific number.
+      tag: ot-dctm-dcc-syncnshare-manual-25.4.1
+
+  coreNotification:
+    image:
+      # Description: Name of the coreNotificaiton image.
+      name: aws-spa-ecr-pocdocumentum-02
+
+      # Description: Tag as a version-specific number.
+      tag: ot-dctm-dcc-corenotificationservice-25.4
+
+  mailService:
+    image:
+      # Description: Name of the mailService image.
+      name: aws-spa-ecr-pocdocumentum-02
+
+      # Description: Tag as a version-specific number.
+      tag: ot-dctm-dcc-mailservice-25.4
+
+  database:
+    dbSchemaInit:
+      image:
+        # Description: Name of the database schema image.
+        name: aws-spa-ecr-pocdocumentum-02
+
+        # Description: Tag as a version-specific number.
+        tag: ot-dctm-dcc-dbschema-25.4.1
+
+otds:
+  otdsws:
+    image:
+      # Description: This variable uses the value that you specified for repository in Global Variables.
+      source: 594171188460.dkr.ecr.eu-south-2.amazonaws.com
+
+      # Description: Name of the OTDS image.
+      name: aws-spa-ecr-pocdocumentum-02
+      # Description: Tag as a version-specific number.
+      tag: otds-server-25.4.1
+
+      # Description: This variable uses the value that you specified for pullPolicyType in Global Variables.
+      pullPolicy: *pull_policy_type
+
+      # Description: This variable uses the value that you specified for pullSecretName in Global Variables.
+      pullSecret: *pull_secret_name
+    otdsdb:
+      ## dbImage.* Defines database image to run the psql client for the automatic database creation. Specific version/tag should be used in production.
+      dbImage:
+        # Description: Repository location of the database image.
+        source: otds
+
+        # Description: Name of the database image.
+        name: aws-spa-ecr-pocdocumentum-02
+
+        # Description: Tag as a version-specific number.
+        tag: postgres-17.2
+
+        # Description: This variable uses the value that you specified for pullPolicyType in Global Variables.
+        pullPolicy: *pull_policy_type
+
+d2config:
+  extensionImage:
+    # Description: Indicates the name of the client configuration image.
+    name: aws-spa-ecr-pocdocumentum-02
+
+    # Description: Tag as a version-specific number.
+    tag: ot-dctm-client-config-25.4.1
+
+  # Description: Additional init containers information.
+  extraInitContainers:
+    # Description: Name of Reports custom configuration.
+    - name: dctm-reports-client
+
+      # Description: Name of the component (dtrbase) whose init container is being deployed.
+      component: dtrbase
+
+      # Description: Indicates the location of the image repository.
+      image: aws-spa-ecr-pocdocumentum-02:ot-dctm-reports-client-25.4
+
+      # Description: Indicates the command executed as part of the init container.
+      command: [ '/bin/sh', '-c', 'yes |cp -prf /opt/D2-install/custom/dtr_config/* /customdir/' ]
+      volumeMounts:
+        # Description: Indicates the name of the volume mount for the init container.
+        - name: customconfig
+
+          # Description: Indicates the path of the volume mount for the init container.
+          mountPath: /customdir
+          # Uncomment subPath if hook_approach enabled for customization, required for Lifescience deployment
+          # Description: Subpath of the volume mount for the init container.
+          #subPath: d2config
+          # Description: Name of OpenText Documentum CM for Engineering custom configuration.
+    - name: dcme-installer-init
+
+      # Description: Name of OpenText Documentum CM for Engineering custom configuration.
+      component: ao-installer
+
+      # Description: Image of the OpenText Documentum CM for Engineering installer custom configuration.
+      image: aws-spa-ecr-pocdocumentum-02:ot-dctm-dcme-installer-25.4
+
+      # Description: Indicates the command executed as part of the init container.
+      command: [ '/bin/sh', '-c', '/aoscripts/startup.sh D2CF' ]
+      volumeMounts:
+        # Description: Indicates the path of the volume mount for the init container.
+        - mountPath: /opt/D2-install/custom
+
+          # Description: Indicates the name of the volume mount for the init container.
+          name: customconfig
+      envFrom:
+        - configMapRef:
+            # Description: This variable is used for managing the environment variables in the form of key-values pairs.
+            name: ao-configmap
+      # Description: Name of LSS HFX installer custom configuration.
+    - name: lsd2configinstaller
+
+      # Description: Name of the component (LSS) whose init container is being deployed.
+      component: lss
+
+      # Description: Indicates the location of the image repository.
+      image: aws-spa-ecr-pocdocumentum-02:ot-dctm-lsd2config-initcontainer-25.4.0
+
+      # Description: Indicates the command executed as part of the init container.
+      command: [ '/bin/sh', '-c', '. /d2configcustomscripts/lsd2config_initstartup.sh' ]
+
+      # Description: Indicates the location of the image repository.
+      env:
+        - name: IS_REPORTS_ENABLED
+          valueFrom:
+            configMapKeyRef:
+              name: lscs-extra-env-configmap # ConfigMap name
+              key: isReportsEnabled # Key inside ConfigMap
+
+      volumeMounts:
+        # Description: Indicates the name of the volume mount for the init container.
+        - name: customconfig
+
+          # Description: Indicates the path of the volume mount for the init container.
+          mountPath: /opt/D2-install/custom
+
+          # Description: Subpath of the volume mount for the init container.
+          subPath: d2config
+      # Description: Name of the LSS HFX installer custom configuration.
+    - name: hfxinitcontainer
+
+      # Description: Name of the component (LSS) whose init container is being deployed.
+      component: lss
+
+      # Description: Indicates the location of the image repository.
+      image: aws-spa-ecr-pocdocumentum-02:ot-dctm-ls-hfx-initcontainer-25.4.0
+
+      # Description: Indicates the command executed as part of the init container.
+      command: [ '/bin/sh', '-c', 'BASE_PATH=/opt/D2-install/custom; yes |sudo cp -pRf /d2configcustomscripts/* $BASE_PATH/; sudo chown -R 1000:1000 $BASE_PATH/*;' ]
+      volumeMounts:
+        # Description: Indicates the name of the volume mount for the init container.
+        - name: customconfig
+
+          # Description: Indicates the path of the volume mount for the init container.
+          mountPath: /opt/D2-install/custom
+
+          # Description: Subpath of the volume mount for the init container.
+          subPath: d2config
+d2classic:
+  extensionImage:
+    # Description: Indicates the name of the Classic View image.
+    name: aws-spa-ecr-pocdocumentum-02
+
+    # Description: Tag as a version-specific number.
+    tag: ot-dctm-client-classic-25.4.1
+
+  # Description: Additional init containers information.
+  extraInitContainers:
+    # Description: Name of the Reports custom configuration.
+    - name: dctm-reports-client
+
+      # Description: Name of the component (dtrbase) whose init container is being deployed.
+      component: dtrbase
+
+      # Description: Indicates the location of the image repository.
+      image: aws-spa-ecr-pocdocumentum-02:ot-dctm-reports-client-25.4.1
+
+      # Description: Indicates the command executed as part of the init container.
+      command: [ '/bin/sh', '-c', 'yes |cp -prf /opt/D2-install/custom/dtr_build/* /customdir/' ]
+      volumeMounts:
+        # Description: Indicates the name of the volume mount for the init container.
+        - name: d2report
+
+          # Description: Indicates the path of the volume mount for the init container.
+          mountPath: /customdir
+        # Description: Name of the OpenText Documentum CM for Engineering custom configuration.
+    - name: dcme-installer-init
+
+      # Description: Name of the OpenText Documentum CM for Engineering custom configuration.
+      component: ao-installer
+
+      # Description: Image of the OpenText Documentum CM for Engineering installer custom configuration.
+      image: aws-spa-ecr-pocdocumentum-02:ot-dctm-dcme-installer-25.4
+
+      # Description: Indicates the command executed as part of the init container.
+      command: [ '/bin/sh', '-c', '/aoscripts/startup.sh D2CL' ]
+      volumeMounts:
+        # Description: Indicates the path of the volume mount for the init container.
+        - mountPath: /opt/D2-install/custom
+
+          # Description: Indicates the name of the volume mount for the init container.
+          name: customconfig
+
+          # Description: Subpath of the volume mount for the init container.
+          subPath: d2classic
+      # Description: Name of the LSS installer custom configuration.
+    - name: lsd2installerinit
+
+      # Description: Name of the component (LSS) whose init container is being deployed.
+      component: lss
+
+      # Description: Indicates the location of the image repository.
+      image: aws-spa-ecr-pocdocumentum-02:ot-dctm-lsd2classic-initcontainer-25.4.0
+
+      # Description: Indicates the command executed as part of the init container.
+      command: [ '/bin/sh', '-c', '. /d2customscripts/lsd2classic_initstartup.sh' ]
+      volumeMounts:
+        # Description: Indicates the name of the volume mount for the init container.
+        - name: customconfig
+
+          # Description: Indicates the path of the volume mount for the init container.
+          mountPath: /opt/D2-install/custom
+
+          # Description: Subpath of the volume mount for the init container.
+          subPath: d2classic
+      # Description: Name of the LSS HFX installer custom configuration.
+    - name: hfxinitcontainer
+
+      # Description: Name of the component (LSS) whose init container is being deployed.
+      component: lss
+
+      # Description: Indicates the location of the image repository.
+      image: aws-spa-ecr-pocdocumentum-02:ot-dctm-ls-hfx-initcontainer-25.4.0
+
+      # Description: Indicates the command executed as part of the init container.
+      command: [ '/bin/sh', '-c', 'yes |sudo cp -pRf /d2customscripts/* /opt/D2-install/custom/' ]
+      volumeMounts:
+        # Description: Indicates the name of the volume mount for the init container.
+        - name: customconfig
+
+          # Description: Indicates the path of the volume mount for the init container.
+          mountPath: /opt/D2-install/custom
+
+          # Description: Subpath of the volume mount for the init container.
+          subPath: d2classic
+
+ijms:
+  images:
+    ijms:
+      # Description: Name of the Independent Java Method Server image.
+      name: aws-spa-ecr-pocdocumentum-02
+
+      # Description: Tag as a version-specific number.
+      tag: ot-dctm-ijms-25.4.1
+
+  # Description: Additional init containers information.
+  extraInitContainers:
+    # Description: Name of the Process Engine container for Independent Java Method Server.
+    - name: "peijmsinstaller-init"
+
+      # Description: Name of the component (Process Engine installer) whose init container is being deployed.
+      component: peinstaller
+
+      # Description: Image of the Process Engine installer for Independent Java Method Server.
+      image: "aws-spa-ecr-pocdocumentum-02:ot-dctm-bpm-installer-25.4"
+
+      # Description: Indicates the command executed as part of the init container.
+      command: [ '/bin/sh', '-c', 'yes |sudo cp -Rf /pescripts/* /opt/dctm_docker/customscriptpvc/ && rm -f /opt/dctm_docker/customscriptpvc/10pedeploy.sh' ]
+      volumeMounts:
+        # Description: Indicates the name of the volume mount for the init container.
+        - name: ijms-data-pvc
+
+          # Description: Indicates the path of the volume mount for the init container.
+          mountPath: /opt/dctm_docker/customscriptpvc
+
+          # Description: Subpath of the volume mount for the init container.
+          subPath: ijmscustomscripts/ijms
+        # Description: Name of the  client installer container for Independent Java Method Server.
+    - name: dctmclientijmsinit
+
+      # Description: Name of the component (client installer) whose init container is being deployed.
+      component: dctmclientinstaller
+
+      # Description: Image of the client installer for Independent Java Method Server.
+      image: aws-spa-ecr-pocdocumentum-02:ot-dctm-client-ijms-25.4.1
+
+      # Description: Indicates the command executed as part of the init container.
+      command: [ '/bin/sh', '-c', 'yes | cp -rf /customscripts/* /opt/dctm_docker/customscriptpvc/' ]
+      volumeMounts:
+        # Description: Indicates the name of the volume mount for the init container.
+        - name: ijms-data-pvc
+
+          # Description: Indicates the path of the volume mount for the init container.
+          mountPath: /opt/dctm_docker/customscriptpvc
+
+          # Description: Subpath of the volume mount for the init container.
+          subPath: ijmscustomscripts/ijms
+
+d2smartview:
+  extensionImage:
+    # Description: Indicates the name of the Smart View image.
+    name: aws-spa-ecr-pocdocumentum-02
+
+    # Description: Tag as a version-specific number.
+    tag: ot-dctm-client-smartview-25.4.1
+
+  # Description: Additional init containers information.
+  extraInitContainers:
+    # Description: Name of the OpenText Documentum CM for Engineering custom configuration.
+    - name: dcme-installer-init
+
+      # Description: Name of the OpenText Documentum CM for Engineering custom configuration.
+      component: ao-installer
+
+      # Description: Image of the OpenText Documentum CM for Engineering installer custom configuration.
+      image: aws-spa-ecr-pocdocumentum-02:ot-dctm-dcme-installer-25.4
+
+      # Description: Indicates the mount path of the volume mount.
+      command: [ '/bin/sh', '-c', '/aoscripts/startup.sh D2SV' ]
+      volumeMounts:
+        # Description: Indicates the path of the volume mount for the init container.
+        - mountPath: /opt/D2-install/custom
+
+          # Description: Indicates the name of the volume mount for the init container.
+          name: customconfig
+
+          # Description: Subpath of the volume mount for the init container.
+          subPath: d2smartview
+      # Description: Name of the client installer container for LS Smart View custom configuration.
+    - name: lsd2svinstaller
+
+      # Description: Name of the component (LSS) whose init container is being deployed.
+      component: lss
+
+      # Description: Indicates the location of the image repository.
+      image: aws-spa-ecr-pocdocumentum-02:ot-dctm-lsd2sv-initcontainer-25.4.0
+
+      # Description: Indicates the command executed as part of the init container.
+      command: [ '/bin/sh', '-c', '. /d2svcustomscripts/lsd2sv_initstartup.sh' ]
+      volumeMounts:
+        # Description: Indicates the name of the volume mount for the init container.
+        - name: customconfig
+
+          # Description: Indicates the path of the volume mount for the init container.
+          mountPath: /opt/D2-install/custom
+
+          # Description: Subpath of the volume mount for the init container.
+          subPath: d2smartview
+      # Description: Name of the client installer container for LS Smart View custom configuration.
+    - name: hfxinitcontainer
+
+      # Description: Name of the component (LSS) whose init container is being deployed.
+      component: lss
+
+      # Description: Indicates the location of the image repository.
+      image: aws-spa-ecr-pocdocumentum-02:ot-dctm-ls-hfx-initcontainer-25.4.0
+
+      # Description: Indicates the command executed as part of the init container.
+      command: [ '/bin/sh', '-c', 'yes |sudo cp -prf /lsd2svcustomscripts/* /opt/D2-install/custom/' ]
+      volumeMounts:
+        # Description: Indicates the name of the volume mount for the init container.
+        - name: customconfig
+
+          # Description: Indicates the path of the volume mount for the init container.
+          mountPath: /opt/D2-install/custom
+
+          # Description: Subpath of the volume mount for the init container.
+          subPath: d2smartview
+
+d2rest:
+  extensionImage:
+    # Description: Indicates the name of the Client REST API image.
+    name: aws-spa-ecr-pocdocumentum-02
+
+    # Description: Tag as a version-specific number.
+    tag: ot-dctm-client-rest-25.4.1
+
+  # Description: Additional init containers information.
+  extraInitContainers:
+    # Description: Name of the OpenText Documentum CM for Microsoft 365 custom configuration.
+    - name: dctm-smartviewm365customjar
+
+      # Description: Name of the component (OpenText Documentum CM for Microsoft 365) custom configuration.
+      component: smartviewm365
+
+      # Description: Image of the OpenText Documentum CM for Microsoft 365 custom configuration.
+      image: aws-spa-ecr-pocdocumentum-02:ot-dctm-smartviewm365customjar-25.4
+
+      # Description: Indicates command executed as part of the init container.
+      command: [ '/bin/sh', '-c', 'yes | cp -prf /opt/D2-install/custom/* /customdir/' ]
+      volumeMounts:
+        # Description: Indicates the name of the volume mount for the init container.
+        - name: customconfig
+
+          # Description: Indicates the path of the volume mount for the init container.
+          # This should be created in init container Docker file and init container startup script should copy the customization files from init container image to this mount path.
+          mountPath: /customdir
+
+    # Description: Name of the client installer container for LS D2 Rest custom configuration.
+    - name: lsd2restinstaller
+
+      # Description: Name of the component (LSS) whose init container is being deployed.
+      component: lss
+
+      # Description: Indicates the location of the image repository.
+      image: aws-spa-ecr-pocdocumentum-02:ot-dctm-lsd2rest-initcontainer-25.4.0
+
+      # Description: Indicates the command executed as part of the init container.
+      command: [ '/bin/sh', '-c', '. /d2restcustomscripts/lsd2rest_initstartup.sh' ]
+      volumeMounts:
+        # Description: Indicates the name of the volume mount for the init container.
+        - name: customconfig
+
+          # Description: Indicates the path of the volume mount for the init container.
+          mountPath: /opt/D2-install/custom
+
+          # Description: Subpath of the volume mount for the init container.
+          subPath: d2rest
+    # Description: Name of the client installer container for LS Rest custom configuration.
+    - name: hfxinitcontainer
+
+      # Description: Name of the component (LSS) whose init container is being deployed.
+      component: lss
+
+      # Description: Indicates the location of the image repository.
+      image: aws-spa-ecr-pocdocumentum-02:ot-dctm-ls-hfx-initcontainer-25.4.0
+
+      # Description: Indicates the command executed as part of the init container.
+      command: [ '/bin/sh', '-c', 'yes |sudo cp -prf /lsd2restcustomscripts/* /opt/D2-install/custom/' ]
+      volumeMounts:
+        # Description: Indicates the name of the volume mount for the init container.
+        - name: customconfig
+
+          # Description: Indicates the path of the volume mount for the init container.
+          mountPath: /opt/D2-install/custom
+
+          # Description: Subpath of the volume mount for the init container.
+          subPath: d2rest
+
+adminconsole:
+  extensionImage:
+    # Description: Indicates the name of the Admin Console image.
+    name: aws-spa-ecr-pocdocumentum-02
+
+    # Description: Tag as a version-specific number.
+    tag: ot-dctm-admin-console-25.4
+
+  # Description: Additional init containers.
+  extraInitContainers: []
+
+appworks-gateway:
+  global:
+    # Description: This variable uses the value that you specified for repository in Global Variables.
+    imageSource: *docker_repo
+
+    # Description: This variable uses the value that you specified for pullPolicyType in Global Variables.
+    imagePullPolicy: *pull_policy_type
+
+    # Description: Tag as a version-specific number.
+    imageTag: 25.4.3
+  #  (Optional)-specify the name of secret created to pull private images.
+  #  imagePullSecrets: [ "name": "" ]
+
+  image:
+    # Description: Path of the repository.
+    repository: otawg
+
+    # Description: Name of the Appworks Gateway init container.
+    awgInitContainer:
+      # Description: Path of the repository.
+      repository: otawg-init
+
+    appsInitContainer:
+      # Description: This variable uses the value that you specified for repository in Global Variables.
+      repository: ot-dctm-client-mobile
+
+      # Description: Tag as a version-specific number.
+      tag: 25.4
+
+xPlore-OneD:
+  image:
+    indexserver:
+      name: aws-spa-ecr-pocdocumentum-02
+      tag: dctm-xplore-indexserver-22.1.14
+    indexagent:
+      name: aws-spa-ecr-pocdocumentum-02
+      tag: dctm-xplore-indexagent-22.1.14
+    cps:
+      name: aws-spa-ecr-pocdocumentum-02
+      tag: dctm-xplore-cps-22.1.14
+  dcis-text-extractor:
+    fetcher:
+      image:
+        # Description: Name of the fetcher image.
+        name: aws-spa-ecr-pocdocumentum-02
+
+        # Description: Tag as a version-specific number.
+        tag: ot-dctm-content-fetcher-25.4
+
+    parser:
+      image:
+        # Description: Name of the parser image.
+        name: aws-spa-ecr-pocdocumentum-02
+
+        # Description: Tag as a version-specific number.
+        tag: ot-dctm-search-parser-25.4
+
+  indexserver:
+    # Description: Additional init containers information.
+    extraInitContainers:
+      # Description: Name of the LSS search custom container for LSS Xplore custom configuration.
+      - name: lssearchinitcontainer
+
+        # Description: Name of the component (LSS) whose init container is being deployed.
+        component: lss
+
+        # Description: Indicates the location of the image repository.
+        image: cs-dctm-docker-dev/ot-dctm-ls-search-initcontainer:26.4.0
+
+        # Description: Indicates the command executed as part of the init container.
+        command: [ '/bin/sh', '-c', 'sudo cp /ls-search-customscripts/xplore/* /root/xPlore/rtdata/' ]
+        volumeMounts:
+          # Description: Indicates the name of the volume mount for the init container.
+          - name: xplore-data
+
+            # Description: Indicates the path of the volume mount for the init container.
+            mountPath: /root/xPlore/rtdata
+
+            # Description: Subpath of the volume mount for the init container.
+            subPath: .
+otiv:
+  global:
+    # Description: Tag as a version-specific number.
+    imageBaseTag: 25.4.0
+
+    # Description: Path of the repository.
+    imageSource: registry.opentext.com
+
+    # Description:
+    # This variable uses the value that you specified for pullPolicyType in Global Variables.
+    # This can be overridden as per service by setting <service>.image.pullPolicy.
+    imagePullPolicy: *pull_policy_type
+
+    # Description: This variable uses the value that you specified for pullSecretName in Global Variables.
+    imagePullSecret: *pull_secret_name
+    secretlink:
+      image:
+        name: secretlink
+        source:
+
+        # Description: Tag as a version-specific number.
+        tag: latest
+
+  # Description: Container properties relevant to chart initialization of pods.
+  initialization:
+    image:
+      # Description: Name of the OpenText Intelligent Viewing Configuration Service image.
+      name: otiv-config
+      source:
+
+      # Description: Tag as a version-specific number.
+      tag: 25.4.0
+  amqp:
+    image:
+      # Description: Name of the OpenText Intelligent Viewing Viewer Service image.
+      name: otiv-amqp
+
+      # Description: Tag as a version-specific number.
+      tag: 25.4.0
+  viewer:
+    image:
+      # Description: Name of the OpenText Intelligent Viewing Asset Service image.
+      name: otiv-viewer
+
+      # Description: Tag as a version-specific number.
+      tag: 25.4.0
+  markup:
+    image:
+      # Description: Name of the OpenText Intelligent Viewing Markup Service image.
+      name: otiv-markup
+
+      # Description: Tag as a version-specific number.
+      tag: 25.4.0
+  config:
+    image:
+      # Description: Name of the OpenText Intelligent Viewing Configuration Service image.
+      name: otiv-config
+
+      # Description: Tag as a version-specific number.
+      tag: 25.4.0
+  highlight:
+    image:
+      # Description: Name of the OpenText Intelligent Viewing Highlight Service image.
+      name: otiv-highlight
+
+      # Description: Tag as a version-specific number.
+      tag: 25.4.0
+  publication:
+    image:
+      # Description: Name of the OpenText Intelligent Viewing Publication Service image.
+      name: otiv-publication
+
+      # Description: Tag as a version-specific number.
+      tag: 25.4.0
+  publisher:
+    image:
+      # Description: Name of the  OpenText Intelligent Viewing Publishing Agent image.
+      name: otiv-publisher
+
+      # Description: Tag as a version-specific number.
+      tag: 25.4.0
+  asset:
+    image:
+      # Description: Name of the OpenText Intelligent Viewing Asset Service image.
+      name: otiv-asset
+
+      # Description: Tag as a version-specific number.
+      tag: 25.4.0
+
+smartviewm365:
+  extensionImage:
+    # Description: Name of the OpenText Documentum Content Management for Microsoft 365 image.
+    name: aws-spa-ecr-pocdocumentum-02
+
+    # Description: Tag as a version-specific number.
+    tag: ot-dctm-smartviewm365-25.4.1
+
+  # Description: Additional init containers information.
+  extraInitContainers: []
+
+notificationservice:
+  image:
+    # Description: Name of the OpenText Documentum Content Management for Microsoft 365 notification service image.
+    name: aws-spa-ecr-pocdocumentum-02
+
+    # Description: Tag as a version-specific number.
+    tag: ot-dctm-smartviewm365-ns-25.4.1
+
+oesconnector:
+  extensionImage:
+    # Description: Name of the OpenText Documentum Content Management Online Editing Service image.
+    name: aws-spa-ecr-pocdocumentum-02
+
+    # Description: Tag as a version-specific number.
+    tag: ot-dctm-oesconnector-25.4.1
+    # Description: Additional init containers information.
+  extraInitContainers: []
+
+bps:
+  image:
+    # Description: Image name.
+    name: aws-spa-ecr-pocdocumentum-02
+
+    # Description: Tag as a version-specific number.
+    tag: ot-dctm-bps-25.4.1
+
+xda:
+  image:
+    # Description: Image name.
+    name: aws-spa-ecr-pocdocumentum-02
+
+    # Description: Tag as a version-specific number.
+    tag: ot-dctm-xda-25.4.1
+
+documentum-search:
+  zookeeper:
+    image:
+      # Description: Path of the repository.
+      repository: <zookeeper_image_repository>
+
+      # Description: Name of the ZooKeeper image.
+      name: <zookeeper_image_name>
+
+      # Description: Tag as a version-specific number.
+      tag: <zookeeper_tag>
+
+  solr:
+    image:
+      # Description: Name of the Solr image.
+      name: ot-dctm-solr
+
+      # Description: Tag as a version-specific number.
+      tag: 25.4
+
+  parser:
+    image:
+      # Description: Name of the parser image.
+      name: ot-dctm-search-parser
+
+      # Description: Tag as a version-specific number.
+      tag: 25.4
+
+  indexer:
+    image:
+      # Description: Name of the indexer image.
+      name: ot-coresearch-indexer
+
+      # Description: Tag as a version-specific number.
+      tag: 25.4
+
+  coresearch:
+    image:
+      # Description: Name of the coresearch image.
+      name: ot-coresearch-api
+
+      # Description: Tag as a version-specific number.
+      tag: 25.4
+
+  fetcher:
+    image:
+      # Description: Name of the fetcher image.
+      name: ot-dctm-content-fetcher
+
+      # Description: Tag as a version-specific number.
+      tag: 25.4
+
+  index-agent:
+    image:
+      # Description: Name of the index-agent image.
+      name: ot-dctm-index-agent
+
+      # Description: Tag as a version-specific number.
+      tag: 25.4
+
+  search-agent:
+    image:
+      # Description: Name of the search-agent image.
+      name: ot-dctm-search-agent
+
+      # Description: Tag as a version-specific number.
+      tag: 25.4
+
+  admin:
+    image:
+      # Description: Name of the admin image.
+      name: ot-dctm-search-admin
+
+      # Description: Tag as a version-specific number.
+      tag: 25.4
+
+amq:
+  image:
+    # Description: Path to the repository.
+    repository: ActiveMQ
+
+    # Description: Name of the ActiveMQ image.
+    name: aws-spa-ecr-pocdocumentum-02
+
+    # Description: Tag as a version-specific number.
+    tag: postgres-17.2
+
+dctm-dcis:
+  image:
+    # Name of the OpenText Content Aviator image.
+    name: aws-spa-ecr-pocdocumentum-02
+
+    # Description: Tag as a version-specific number.
+    tag: ot-dctm-dcis-25.4
+
+lss:
+  ls-print:
+    extensionImage:
+      # Description: Name of the LS Print image.
+      name: aws-spa-ecr-pocdocumentum-02
+
+      # Description: Tag as a version-specific number.
+      tag: ot-dctm-ls-print-25.4.0
+
+  ls-sftp:
+    image:
+      # Description: Name of the LS SFTP image.
+      name: aws-spa-ecr-pocdocumentum-02
+
+      # Description: Tag as a version-specific number.
+      tag: ot-dctm-ls-sftp-25.4.0
+
+dctm-dms:
+  dmsInitContainers:
+    image:
+      # Description: Name of the init container image.
+      name: aws-spa-ecr-pocdocumentum-02
+
+      # Description: Tag as a version-specific number.
+      tag: ot-dctm-dms-25.4
+
+dctm-assap:
+  images:
+    assap:
+      # Description: Name of the image repository.
+      name: ot-dctm-assap
+
+      # Description: Tag as a version-specific number.
+      tag: 25.4
+
+    pullSecret:
+dctm-assap-ilm:
+  images:
+    assapilm:
+      # Description: Name of the image repository.
+      name: ot-dctm-assap-ilm
+
+      # Description: Tag as a version-specific number.
+      tag: 25.4
+
+    pullSecret:
+dctm-cssap:
+  images:
+    cssap:
+      # Description: Name of the image repository.
+      name: ot-dctm-cssap
+
+      # Description: Tag as a version-specific number.
+      tag: 25.4
+
+    pullSecret:

@@ -1,0 +1,38 @@
+# Define the replicas and resources for a small OTOM container deployment
+#
+########################################################################  
+#storage defines the storage size for the volume
+#storage amounts in M, Mi, G or Gi are supported
+#
+storage:
+  pvvalue: 240Gi  
+  osprimary: 118Gi
+  osscale: 118Gi
+
+########################################################################
+#memory amounts in M, Mi, G or Gi are supported
+#   
+memory:
+  osprimary: 4Gi
+  osscale: 2Gi
+  osclient: 2Gi  
+  oshaproxy: 1Gi  
+
+########################################################################  
+#Enter the cpu requirement for each component below
+#
+cpu:
+  osprimary: 2
+  osscale: 1
+  osclient: 0.2  
+  oshaproxy: 0.2 
+
+########################################################################
+#Enter the number of replica pods to be created for each component below
+#  
+replicaCount:
+  osprimary: 1
+  osscale: 1
+  osclient: 1  
+  oshaproxy: 1
+

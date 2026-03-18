@@ -1,0 +1,281 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+   name: {{ .Values.service.name }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: {{ .Values.service.name }}
+      name: {{ .Chart.Name }}
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.service.name }}
+        name: {{ .Chart.Name }}
+        release: {{ .Release.Name }}
+    spec:
+      {{- if (empty (.Values.global.pullSecrets | quote) | ternary .Values.global.pullSecretName .Values.global.pullSecrets) }}
+      imagePullSecrets:
+        - name: {{ .Values.global.pullSecrets | default .Values.global.pullSecretName }}
+      {{ end }}
+      serviceAccountName: {{ .Values.serviceAccount.serviceAccountName | default .Values.global.documentumserviceaccount }}
+      initContainers:
+        - name: check-zk
+          image:  {{ .Values.global.zkstatus_image | default .Values.global.zkStatusImage }}
+          imagePullPolicy: {{ .Values.image.pullPolicy | default .Values.global.pullPolicyType }}
+          env:
+           - name: ZK_HOST
+             valueFrom:
+               configMapKeyRef:
+                 name: zoo-search-configmap
+                 key: zk.host
+          command:
+            - 'sh'
+            - '-c'
+            - |
+              ZKHOST=`echo ${ZK_HOST%%:*}`
+              java -jar zk-status-checker.jar $ZKHOST
+              STATUS="${?}"
+              echo "$STATUS"
+              if [ $STATUS -ne 0 ] ; then
+                 exit 1;
+              else
+                 exit 0;
+              fi
+        - name: check-index-agent
+          image: {{ .Values.image.repository | default .Values.global.repository }}/{{ .Values.image.name }}:{{ .Values.image.tag }}
+          imagePullPolicy: {{ .Values.image.pullPolicy | default .Values.global.pullPolicyType }}
+          env:
+            - name: INDEX_AGENT_URL_CHECK
+              valueFrom:
+                configMapKeyRef:
+                  name: index-agent-configmap
+                  key:  index.agent.server.url.check
+          command:
+            - 'sh'
+            - '-c'
+            - |
+              COUNTER=0;
+              while [  $COUNTER -lt 180 ]; do
+                cmd=$(wget --server-response $INDEX_AGENT_URL_CHECK  2>&1| grep -oic 'HTTP.* 200')
+                if [ $cmd == 1 ]; then
+                  echo "Readiness check for Index Agent URL passed!";
+                  exit 0;
+                fi;
+                let COUNTER=COUNTER+1;
+                sleep 5;
+              done;
+              echo "Did NOT see the available Index Agent after 900 secs!";
+              exit 1;
+      containers:
+      - name: {{ .Values.service.name }}
+        image: {{ .Values.image.repository | default .Values.global.repository }}/{{ .Values.image.name }}:{{ .Values.image.tag }}
+        imagePullPolicy: {{ .Values.image.pullPolicy | default .Values.global.pullPolicyType }}
+        env:
+        - name: dfc.properties.file
+          value: '/home/{{ .Values.global.searchContainerUsername | default "searchsvc" }}/dfc/dfc.properties'
+        - name: dfc.data.dir
+          value: '/home/{{ .Values.global.searchContainerUsername | default "searchsvc" }}/dfc/data'
+        - name: dfc.security.keystore.file
+          value: '/home/{{ .Values.global.searchContainerUsername | default "searchsvc" }}/dfc/dfc.keystore'
+        - name: ZK_REGISTER_INSTANCE_ADDRESS
+          value: {{ .Values.service.name | quote }}
+        - name: IS_VAULT_ENABLED
+          value: {{ .Values.vault.enable | default .Values.global.isVaultEnabled | quote  }}
+        {{- range $key, $value := .Values.env }}
+        - name: {{ $key }}
+          value: {{ $value | quote }}
+        {{- end }}
+        {{- if or .Values.ssl.enabled .Values.global.useCertificate }}
+        - name: SEARCH_AGENT_SSL_ENABLED
+          value: "true"
+        - name: ZK_REGISTER_HTTP_SCHEMA
+          value: "https"
+        - name: AGENT_ENGINE_PROTOCOL
+          value: "https"
+        - name: SEARCH_AGENT_SSL_PROTOCOL
+          value: '{{ .Values.ssl.protocol | default "TLS" }}'
+        - name: SEARCH_AGENT_ENABLED_PROTOCOLS
+          value: '{{ .Values.ssl.enabledProtocols | default "TLSv1.3" }}'
+        - name: SEARCH_COMMON_CERT_MOUNT_PATH
+          value: {{ .Values.ssl.certificateMountPath | quote }}
+        - name: SEARCH_AGENT_KEYSTORE_FILE
+          value: '{{ .Values.ssl.certificateMountPath | default "/opt/dctm/certificate" }}/{{ .Values.ssl.keyStore | default "common-keystore.p12" }}'
+        - name: SEARCH_AGENT_SSL_STORE_PWD
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.secrets.cs.name | default .Values.global.csSecrets }}
+              key: commontruststorepassword
+        - name: SEARCH_AGENT_KEY_STORE_TYPE
+          value: '{{ .Values.ssl.keyStoreType | default "pkcs12" }}'
+        - name: SEARCH_AGENT_KEY_ALIAS
+          value: {{ .Values.ssl.keyAlias | quote }}
+        - name: SEARCH_AGENT_SSL_KEY_PWD
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.secrets.cs.name | default .Values.global.csSecrets }}
+              key: commontruststorepassword
+        - name: RUNTIME_OPTS
+          value: >-
+            -Djavax.net.ssl.trustStore={{ .Values.ssl.certificateMountPath | default "/opt/dctm/certificate" }}/{{ .Values.ssl.trustStore | default "common-truststore.p12" }}
+            -Djavax.net.ssl.trustStorePassword=$(SEARCH_AGENT_SSL_KEY_PWD)
+            -Djdk.tls.client.protocols={{ .Values.jdk.tlsClientProtocols | default "TLSv1.3" | quote }}
+            -Dzookeeper.client.secure={{ .Values.zookeeper.clientSecure | default "true" | quote }}
+            -Dzookeeper.clientCnxnSocket=org.apache.zookeeper.ClientCnxnSocketNetty
+            -Dzookeeper.ssl.protocol={{ .Values.zookeeper.sslProtocol | default "TLSv1.3" | quote }}
+            -Dzookeeper.ssl.hostnameVerification=false
+            -Dzookeeper.ssl.trustStore.type=PKCS12
+            -Dzookeeper.ssl.trustStore.location={{ .Values.ssl.certificateMountPath | default "/opt/dctm/certificate" }}/{{ .Values.ssl.trustStore | default "common-truststore.p12" }}
+            -Dzookeeper.ssl.trustStore.password=$(SEARCH_AGENT_SSL_KEY_PWD)
+        {{- end }}
+        - name: ZK_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: zoo-search-configmap
+              key: zk.host
+        - name: JUPITER_SERVER_URL
+          valueFrom:
+            configMapKeyRef:
+              name: {{ .Values.configMap.jupiter.name }}
+              key: jupiter.server.url
+        - name: JUPITER_SERVER_URL_CHECK
+          valueFrom:
+            configMapKeyRef:
+              name: {{ .Values.configMap.jupiter.name }}
+              key: jupiter.server.url.check
+        - name: FETCHER_SERVER_URL
+          valueFrom:
+            configMapKeyRef:
+              name: {{ .Values.configMap.fetcher.name }}
+              key: fetcher.server.url
+        - name: FETCHER_SERVER_URL_CHECK
+          valueFrom:
+            configMapKeyRef:
+              name: {{ .Values.configMap.fetcher.name }}
+              key: fetcher.server.url.check
+        - name: DOCBASE_NAMES
+          value: {{ ( include "docbase.names" .) }}
+        - name: DOCBASE_{{ .Values.docbase.name | default .Values.global.docbase }}_USER
+          value: {{ .Values.docbase.user | default .Values.global.installOwnerUsername }}
+        - name: DOCBASE_{{ .Values.docbase.name | default .Values.global.docbase }}_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.secrets.cs.name | default .Values.global.csSecrets }}
+              key: installOwnerPassword
+        {{- range $i, $docbase := .Values.global.extraDocbases }}
+        {{- if  and $docbase.name  $docbase.user }}
+        - name: DOCBASE_{{ $docbase.name }}_USER
+          value: {{ $docbase.user | quote}}
+        - name: DOCBASE_{{ $docbase.name }}_PASSWORD
+          {{- if eq $.Values.useSecrets true }}
+          valueFrom:
+            secretKeyRef:
+              name: {{ $.Values.secrets.cs.name | default $.Values.global.csSecrets }}
+              key: {{ $.Values.secrets.cs.key.docbasePassword | quote}}
+          {{- else }}
+          value: {{ $docbase.password | quote}}
+          {{- end }}
+        {{- end}}
+        {{- end }}
+        - name: AGENT_ENGINE_PORT
+          value: {{ .Values.service.port | quote}}
+        {{- if (empty (.Values.newrelic.enable | quote) | ternary .Values.global.newrelic .Values.newrelic.enable) }}
+        - name: NEWRELIC_ENABLE
+          value: {{ .Values.newrelic.enable | default .Values.global.newrelic | quote  }}
+        - name: NEWRELIC_APP_NAME
+          value: {{ .Values.newrelic.app_name }}.{{ .Release.Namespace }}
+        - name: NEWRELIC_PROXY_HOST
+          value: {{ .Values.global.newrelic_proxy_host | default .Values.global.newrelicProxyHost }}
+        - name: NEWRELIC_PROXY_PROTOCOL
+          value: {{ .Values.global.newrelic_proxy_protocol | default .Values.global.newrelicProxyProtocol }}
+        - name: NEWRELIC_PROXY_PORT
+          value: {{ .Values.global.newrelic_proxy_port | default .Values.global.newrelicProxyPort | quote  }}
+        - name: NEWRELIC_LICENSE_KEY
+          value: {{ .Values.global.newrelic_license_key | default .Values.global.licenseKeyName }}
+        {{- end }}
+        ports:
+        - containerPort: {{ .Values.service.targetPort }}
+          name: port
+        resources:
+          requests:
+            memory: {{ .Values.resources.requests.memory | quote  }}
+            cpu: {{ .Values.resources.requests.cpu | quote  }}
+          limits:
+            memory: {{ .Values.resources.limits.memory | quote  }}
+            cpu: {{ .Values.resources.limits.cpu | quote  }} 
+        volumeMounts:
+        - name: shared-logs
+          mountPath: /home/{{ .Values.global.searchContainerUsername | default "searchsvc" }}/logs
+          subPath: logs
+        - name: search-dfc-configmap
+          mountPath: /home/{{ .Values.global.searchContainerUsername | default "searchsvc" }}/dfc/dfc.properties
+          subPath: dfc.properties
+        {{- if or .Values.ssl.enabled .Values.global.useCertificate }}
+        - name: common-certificate-volume
+          mountPath: '{{ .Values.ssl.certificateMountPath | default "/opt/dctm/certificate" }}'
+          subPath: 'certificate/{{ .Values.global.dbrdataPVCName | default "certdbr-data-pvc" }}'
+        {{- end }}
+        {{- if (empty (.Values.newrelic.enable | quote) | ternary .Values.global.newrelic .Values.newrelic.enable) }}
+        - name: newrelic-config-map
+          mountPath: /opt/newrelic/external/newrelic.yml
+          subPath: newrelic.yml
+        {{- end }}
+        {{- if (empty (.Values.vault.enable | quote) | ternary .Values.global.isVaultEnabled .Values.vault.enable) }}
+        - mountPath: /opt/dctm_docker/vault_config
+          name: vault-volume
+        - mountPath: /opt/dctm_docker/dsis_binary_volume
+          name: dsis-binary-volume
+          subPath: dsis-binary
+        {{- end }}
+        livenessProbe:
+          initialDelaySeconds: {{ .Values.livenessProbe.initialDelaySeconds }}
+          periodSeconds: {{ .Values.livenessProbe.periodSeconds }}
+          httpGet:
+            scheme: {{ if or .Values.ssl.enabled .Values.global.useCertificate }}"HTTPS"{{ else }}"HTTP"{{ end }}
+            path: /actuator/info
+            port: {{ .Values.service.targetPort }}
+        readinessProbe:
+          initialDelaySeconds: {{ .Values.readinessProbe.initialDelaySeconds }}
+          periodSeconds: {{ .Values.readinessProbe.periodSeconds }}
+          httpGet:
+            scheme: {{ if or .Values.ssl.enabled .Values.global.useCertificate }}"HTTPS"{{ else }}"HTTP"{{ end }}
+            path: /actuator/health
+            port: {{ .Values.service.targetPort }}
+      volumes:
+      - name: search-dfc-configmap
+        configMap:
+          name: {{ .Values.configMap.cs.name | default .Values.global.dbrConfigmapName }}
+          items:
+          - key: dfc.properties
+            path: dfc.properties
+      - name: shared-logs
+        emptyDir: {}
+      {{- if or .Values.ssl.enabled .Values.global.useCertificate }}
+      - name: common-certificate-volume
+        persistentVolumeClaim:
+          claimName: '{{ .Values.global.dbrServiceName | default "dbr" }}-pvc'
+      {{- end }}
+      {{- if (empty (.Values.newrelic.enable | quote) | ternary .Values.global.newrelic .Values.newrelic.enable) }}
+      - name: newrelic-config-map
+        configMap:
+          name: search-agent-newrelic-config
+          items:
+            - key: newrelic.yml
+              path: newrelic.yml
+      {{- end }}
+      {{- if (empty (.Values.vault.enable | quote) | ternary .Values.global.isVaultEnabled .Values.vault.enable) }}
+      - name: dsis-binary-volume
+        persistentVolumeClaim:
+          claimName: dsis-binary-pvc
+      - name: vault-volume
+        configMap:
+          name: {{ .Values.vault.vault_configmap }}
+      {{- end }}
+
+
+            
+  

@@ -1,0 +1,25 @@
+{{- if eq (empty (.Values.configmap.DB_SSL_ENABLED) | ternary .Values.global.db_ssl .Values.configmap.DB_SSL_ENABLED) true }}
+{{- if eq ( .Values.configmap.DB_TYPE | default .Values.global.dbtype) "oracle" }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{  .Values.configmap.DB_TYPE | default .Values.global.dbtype }}-cc-configmap
+  namespace: {{ .Values.namespace | default .Release.Namespace }}
+data:
+  tnsnames.ora: |
+    {{ .Values.configmap.DB_SERVICE_NAME }} =
+     (DESCRIPTION =
+       (ADDRESS = (PROTOCOL = TCPS)(HOST = {{  .Values.configmap.DB_IP | default .Values.global.db_hostname}} )(PORT = {{   .Values.configmap.DB_PORT | default .Values.global.dbport  }}))
+       (CONNECT_DATA =
+          (SERVER = DEDICATED)
+          (SERVICE_NAME = {{ .Values.configmap.DB_SERVICE_NAME }})
+      )
+      (SECURITY =
+       (MY_WALLET_DIRECTORY = /opt/dctm/data/oracle_wallet)   
+       (SSL_VERSION = 1.2)
+       (SSL_CLIENT_AUTHENTICATION = FALSE)
+      )
+    )
+
+{{- end }}
+{{- end }}

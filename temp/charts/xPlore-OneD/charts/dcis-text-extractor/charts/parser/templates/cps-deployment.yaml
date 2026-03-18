@@ -1,0 +1,200 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+   name: {{ .Values.service.name }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Values.service.name }}
+      name: {{ .Chart.Name }}
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.service.name }}
+        name: {{ .Chart.Name }}
+        release: {{ .Release.Name }}
+    spec:
+      {{- if (empty (.Values.global.pullSecrets | quote) | ternary .Values.global.pullSecretName .Values.global.pullSecrets) }}
+      imagePullSecrets:
+        - name: {{ .Values.global.pullSecrets | default .Values.global.pullSecretName }}
+      {{ end }}
+      serviceAccountName: {{ .Values.serviceAccount.serviceAccountName | default .Values.global.documentumserviceaccount }}
+      containers:
+      - name: {{ .Values.service.name }}
+        image: {{ .Values.image.repository | default .Values.global.repository }}/{{ .Values.image.name }}:{{ .Values.image.tag }}
+        imagePullPolicy: {{ .Values.image.pullPolicy | default .Values.global.pullPolicyType }}
+        env:        
+          - name: ZK_REGISTER_INSTANCE_ADDRESS
+            value: {{ .Values.service.name | quote }}
+          - name: IS_VAULT_ENABLED
+            value: "false"
+          {{- if or .Values.ssl.enabled .Values.global.useCertificate }}
+          - name: CPS_URL
+            value: https://{{ .Values.service.name }}:{{.Values.service.targetPort}}
+          {{- else }}
+          - name: CPS_URL
+            value: http://{{ .Values.service.name }}:{{.Values.service.targetPort}}
+          {{- end }}
+
+          - name: JMS_HOST
+            valueFrom:
+              configMapKeyRef:
+                name: {{ .Values.configMap.amq.name | default .Values.global.amqConfigmap }}
+                key: jms.host
+          - name: JMS_PASSWORD
+            {{- if (empty (.Values.vault.enable | quote) | ternary .Values.global.isVaultEnabled .Values.vault.enable) }}
+            value: {{ .Values.amq.password}}
+            {{- else }}
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.secrets.amq.name | default .Values.global.amqSecret }}
+                key: password
+            {{- end }}
+          - name: JMS_USER
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.secrets.amq.name | default .Values.global.amqSecret }}
+                key: user
+          - name: JMS_URL
+            valueFrom:
+              configMapKeyRef:
+                name: {{ .Values.configMap.amq.name | default .Values.global.amqConfigmap }}
+                key: jms.url
+          {{- if or .Values.ssl.enabled .Values.global.useCertificate }}
+          - name: RUNTIME_OPTS
+            value: -Dlogging.level.org.apache.zookeeper=OFF -Dlogging.level.org.apache.curator=OFF
+          - name: CPS_SSL_ENABLED
+            value: "true"
+          - name: ZK_REGISTER_HTTP_SCHEMA
+            value: "https"
+          - name: CPS_SSL_PROTOCOL
+            value: '{{ .Values.ssl.protocol | default "TLS" }}'
+          - name: CPS_ENABLED_PROTOCOLS
+            value: '{{ .Values.ssl.enabledProtocols | default "TLSv1.3" }}'
+          - name: CPS_COMMON_CERT_MOUNT_PATH
+            value: {{ .Values.ssl.certificateMountPath | quote }}
+          - name: CPS_KEYSTORE_FILE
+            value: '{{ .Values.ssl.certificateMountPath | default "/opt/dctm/certificate" }}/{{ .Values.ssl.keyStore | default "common-keystore.p12" }}'
+          - name: CPS_SSL_STORE_PWD
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.secrets.cs.name | default .Values.global.csSecrets }}
+                key: commontruststorepassword
+          - name: CPS_KEY_STORE_TYPE
+            value: '{{ .Values.ssl.keyStoreType | default "pkcs12" }}'
+          - name: CPS_KEY_ALIAS
+            value: {{ .Values.ssl.keyAlias | quote }}
+          - name: CPS_SSL_KEY_PWD
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.secrets.cs.name | default .Values.global.csSecrets }}
+                key: commontruststorepassword
+          - name: RUNTIME_OPTS
+            value: >-
+              -Djavax.net.ssl.trustStore={{ .Values.ssl.certificateMountPath | default "/opt/dctm/certificate" }}/{{ .Values.ssl.trustStore | default "common-truststore.p12" }}
+              -Djavax.net.ssl.trustStorePassword=$(CPS_SSL_KEY_PWD)
+              -Djdk.tls.client.protocols={{ .Values.jdk.tlsClientProtocols | default "TLSv1.3" | quote }}
+              -Dzookeeper.client.secure={{ .Values.zookeeper.clientSecure | default "true" | quote }}
+              -Dzookeeper.clientCnxnSocket={{ .Values.zookeeper.clientCnxnSocket | default "org.apache.zookeeper.ClientCnxnSocketNetty" | quote }}
+              -Dzookeeper.ssl.protocol={{ .Values.zookeeper.sslProtocol | default "TLSv1.3" | quote }}
+              -Dzookeeper.ssl.trustStore.location={{ .Values.ssl.certificateMountPath | default "/opt/dctm/certificate" }}/{{ .Values.ssl.trustStore | default "common-truststore.p12" }}
+              -Dzookeeper.ssl.trustStore.password=$(CPS_SSL_KEY_PWD)
+          {{- end }}
+          {{- if (empty (.Values.newrelic.enable | quote) | ternary .Values.global.newrelic .Values.newrelic.enable) }}
+          - name: NEWRELIC_ENABLE
+            value: {{ .Values.newrelic.enable | default .Values.global.newrelic | quote  }}
+          - name: NEWRELIC_APP_NAME
+            value: {{ .Values.newrelic.app_name }}.{{ .Release.Namespace }}
+          - name: NEWRELIC_PROXY_HOST
+            value: {{ .Values.global.newrelic_proxy_host | default .Values.global.newrelicProxyHost }}
+          - name: NEWRELIC_PROXY_PROTOCOL
+            value: {{ .Values.global.newrelic_proxy_protocol | default .Values.global.newrelicProxyProtocol }}
+          - name: NEWRELIC_PROXY_PORT
+            value: {{ .Values.global.newrelic_proxy_port | default .Values.global.newrelicProxyPort | quote  }}
+          - name: NEWRELIC_LICENSE_KEY
+            value: {{ .Values.global.newrelic_license_key | default .Values.global.licenseKeyName }}
+          {{- end }}
+        {{- if gt .Values.replicaCount 1.0 }}
+          - name: ZK_REGISTER_REPLICA
+            value: "true"
+        {{- end }}
+        {{- range $key, $value := .Values.env }}
+          - name: {{ $key }}
+            value: {{ $value | quote }}
+        {{- end }}
+        ports:
+        - containerPort: {{ .Values.service.targetPort }}
+          name: port
+        livenessProbe:
+          initialDelaySeconds: {{ .Values.livenessProbe.initialDelaySeconds }}
+          periodSeconds: {{ .Values.livenessProbe.periodSeconds }}
+          httpGet:
+            scheme: {{ if or .Values.ssl.enabled .Values.global.useCertificate }}"HTTPS"{{ else }}"HTTP"{{ end }}
+            path: actuator/info            
+            port: {{ .Values.service.targetPort }}
+        readinessProbe:
+          initialDelaySeconds: {{ .Values.readinessProbe.initialDelaySeconds }}
+          periodSeconds: {{ .Values.readinessProbe.periodSeconds }}
+          httpGet:
+            scheme: {{ if or .Values.ssl.enabled .Values.global.useCertificate }}"HTTPS"{{ else }}"HTTP"{{ end }}
+            path: actuator/health            
+            port: {{ .Values.service.targetPort }}
+        resources:
+          requests:
+            memory: {{ .Values.resources.requests.memory | quote  }}
+            cpu: {{ .Values.resources.requests.cpu | quote  }}
+          limits:
+            memory: {{ .Values.resources.limits.memory | quote  }}
+            cpu: {{ .Values.resources.limits.cpu | quote  }} 
+        volumeMounts:
+          - mountPath: /home/{{ .Values.global.searchContainerUsername | default "searchsvc" }}/logs
+            name: shared-logs
+            subPath: logs
+        {{- if or .Values.ssl.enabled .Values.global.useCertificate }}
+          - name: common-certificate-volume
+            mountPath: '{{ .Values.ssl.certificateMountPath | default "/opt/dctm/certificate" }}'
+            subPath: 'certificate/{{ .Values.global.dbrdataPVCName | default "certdbr-data-pvc" }}'
+        {{- end }}
+          - mountPath: {{ .Values.env.TEMP_DIR }}
+            name: temp-files
+          {{- if (empty (.Values.newrelic.enable | quote) | ternary .Values.global.newrelic .Values.newrelic.enable) }}
+          - name: newrelic-config-map
+            mountPath: /opt/newrelic/external/newrelic.yml
+            subPath: newrelic.yml
+          {{- end }}
+          {{- if (empty (.Values.vault.enable | quote) | ternary .Values.global.isVaultEnabled .Values.vault.enable) }}
+          - mountPath: /opt/dctm_docker/vault_config
+            name: vault-volume
+          - mountPath: /opt/dctm_docker/dsis_binary_volume
+            name: dsis-binary-volume
+            subPath: dsis-binary
+          {{- end }}
+      volumes:
+      - name: temp-files
+        persistentVolumeClaim:
+          claimName: {{ .Values.persistence.pvcName }}
+      - name: shared-logs
+        emptyDir: {}
+      {{- if or .Values.ssl.enabled .Values.global.useCertificate }}
+      - name: common-certificate-volume
+        persistentVolumeClaim:
+          claimName: '{{ .Values.global.dbrServiceName | default "dbr" }}-pvc'
+      {{- end }}
+      {{- if (empty (.Values.newrelic.enable | quote) | ternary .Values.global.newrelic .Values.newrelic.enable) }}
+      - name: newrelic-config-map
+        configMap:
+          name: parser-newrelic-config
+          items:
+            - key: newrelic.yml
+              path: newrelic.yml
+      {{- end }}
+      {{- if (empty (.Values.vault.enable | quote) | ternary .Values.global.isVaultEnabled .Values.vault.enable) }}
+      - name: dsis-binary-volume
+        persistentVolumeClaim:
+          claimName: dsis-binary-pvc
+      - name: vault-volume
+        configMap:
+          name: {{ .Values.vault.vault_configmap }}
+      {{- end }}

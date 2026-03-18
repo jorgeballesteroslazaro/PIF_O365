@@ -1,0 +1,55 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:  
+  name: {{ .Values.deployment.name }}-logging-configmap
+data:
+  log4j2.properties: |
+    rootLogger.level={{ .Values.logging.rootloggerLevel }}
+    monitorInterval={{ .Values.logging.monitorInterval }}
+    appenders=console,file,hvp
+    appender.console.type=Console
+    appender.console.name=STDOUT
+    appender.console.filter.threshold.type=ThresholdFilter
+    appender.console.filter.threshold.level={{ .Values.logging.appenderConsoleFilterThresholdLevel }}
+    appender.console.layout.type=PatternLayout
+    appender.console.layout.pattern=%d{ABSOLUTE} %5p [%t] %c - %m%n
+    |
+    appender.file.type=RollingFile
+    appender.file.name=fileRoll
+    appender.file.fileName=${sys:catalina.home}/logs/hvpWorker.log
+    appender.file.filePattern=${sys:catalina.home}/logs/hvpWorker-backup-%d{MM-dd-yy-HH-mm-ss}-%i.log
+    appender.file.layout.type=PatternLayout
+    appender.file.layout.pattern=%d{ABSOLUTE} %5p [%t] %c - %m%n
+    appender.file.policies.type=Policies
+    appender.file.policies.size.type=SizeBasedTriggeringPolicy
+    appender.file.policies.size.size={{ .Values.logging.appenderFilePoliciesSizeSize }}
+    appender.file.strategy.type=DefaultRolloverStrategy
+    appender.file.strategy.max={{ .Values.logging.appenderFileStrategyMax }}
+    |
+    appender.hvp.type=RollingFile
+    appender.hvp.name=hvpRoll
+    appender.hvp.fileName=/var/documentum/logs/hvps.log
+    appender.hvp.filePattern=/var/documentum/logs/hvps-backup-%d{MM-dd-yy-HH-mm-ss}-%i.log
+    appender.hvp.layout.type=PatternLayout
+    appender.hvp.layout.pattern=%d{ABSOLUTE} %5p [%t] %c - %m%n
+    appender.hvp.policies.type=Policies
+    appender.hvp.policies.size.type=SizeBasedTriggeringPolicy
+    appender.hvp.policies.size.size={{ .Values.logging.appenderHvpPoliciesSizeSize }}
+    appender.hvp.strategy.type=DefaultRolloverStrategy
+    appender.hvp.strategy.max={{ .Values.logging.appenderHvpStrategyMax }}
+    |
+    #Defining Loggers
+    loggers=eilog,tracelog,hvplog
+    |
+    logger.eilog.name=com.documentum.ei
+    logger.eilog.level={{ .Values.logging.loggerEilogLevel }}
+    |
+    logger.tracelog.name=tracing
+    logger.tracelog.level={{ .Values.logging.loggerTracelogLevel }}
+    logger.tracelog.additivity={{ .Values.logging.loggerTracelogAdditivity }}
+    |
+    logger.hvplog.name=com.emc.hvp
+    logger.hvplog.level={{ .Values.logging.loggerHvplogLevel }}
+    logger.hvplog.appenderRef.hvp.ref=hvpRoll
+    rootLogger.appenderRef.console.ref=STDOUT
+    rootLogger.appenderRef.file.ref=fileRoll

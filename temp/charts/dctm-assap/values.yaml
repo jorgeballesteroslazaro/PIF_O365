@@ -1,0 +1,148 @@
+#######################################################
+# Documentum ASSAP default values.                    #
+# This is a YAML-formatted file.                      #
+# Declare variables to be passed into your templates. #
+#######################################################
+
+# Persistent Volume Claim details.
+persistentVolumeClaim:
+  pvcName: assap-pvc
+  accessMode: ReadWriteMany
+  size: 1Gi
+  storageClass:
+  awsEFSCSIDriver: efs.csi.aws.com
+  awsEFSCSIHandle:
+# Service details
+service:
+  name: assap-svc
+  type: ClusterIP
+  port: 8080
+  serviceAnnotations: {}
+  # Comment out the above line and Uncomment the following 2 lines for AWS Deployment
+  # serviceAnnotations:
+  #   alb.ingress.kubernetes.io/healthcheck-path: /assap
+  #   alb.ingress.kubernetes.io/healthcheck-interval-seconds: '120'
+#For secure connection with Content Server
+certificate:
+  use_certificate:
+  #Give the service name of dockbroker here
+  dbrserviceName:
+# Deployment details
+deployment:
+  name: assap
+  appName: assap
+  replicaCount: 1
+  strategyType: RollingUpdate
+  openshift: false
+# VE# 4852332 - Added the documentum useCSDfcConfigMap support
+cs:
+  useCSDfcConfigMap: true
+  configMapName:
+  csSecretConfigName:
+  allowTrustedLogin: false
+  custom:
+    scriptinPVC: true
+    ##In the case of  hybrid installers approach, volumeMountName value should be custom-script-pvc and scriptPVCname value should be shared-pvc
+    volumeMountName: dcs-data-pvc
+    scriptPVCname: dcs-pg-pvc
+    PVCSubPath: initcontainercustomscripts/dcs-pg
+    sapcSubPath: initcontainercustomscripts/dcs-pg/SAPC/logs
+####################################################################################
+# Suppose Content Server config map not used                                       #
+# then uncomment and update the below listed parameters with appropriate values of #
+# dfc.properties and ensure to toggle the flag useDfcConfigMap to false.           #
+####################################################################################
+# dfc:
+#   properties:
+#     - dfc.data.dir=/var/documentum
+#     - dfc.docbroker.host[0]=<DOCBROKER_POD>.<DOCBROKER_CONTAINER>.<NAMESPACE>.svc.cluster.local
+#     - dfc.docbroker.port[0]=<DFC_DOCBROKER_PORT>
+#     - dfc.globalregistry.repository=<DFC_BOFREGISTRY_REPOSITORY>
+#     - dfc.globalregistry.username=<DFC_BOFREGISTRY_USERNAME>
+#     - dfc.globalregistry.password=<DFC_BOFREGISTRY_PASSWORD>
+#     - dfc.diagnostics.resources.enable=true
+#     - dfc.security.ssl.truststore=/opt/assap_config/secure/dfc.keystore
+#     - dfc.security.ssl.truststore_password=<DFC_SSL_TRUSTSTORE_PASSWORD>
+#     - dfc.security.ssl.use_existing_truststore=false
+#     - dfc.session.secure_connect_default=try_secure_first
+#     - dfc.dsis.enabled=false
+#     - dfc.dsis.daemon.url=http\://localhost\:8200/dsis
+#     - dfc.dsis.daemon.token=
+logging:
+  rootloggerLevel: WARN
+  appenderFilePoliciesSizeSize: 100MB
+  appenderFileStrategyMax: 10
+  loggerEilogLevel: WARN
+  loggerDfclogLevel: OFF
+  monitorInterval: 30
+alproperties:
+  signatureCheck: "on"
+  docbasesNumberOfConnections: 9
+  docbasesConnectionsTimeout: 540
+  docbasesConnectionRecycleInterval: 10000
+  archivingInMemoryMaxSize: 10
+  archivingFileOpenConfirmation: false
+  archivingCompIdDecode: false
+  archvingAcceleratedDownload: true
+  archivingStatistcsCollectionEnabled: false
+  archivingEnableACS: false
+  archivingEnabled: true
+  archiveGetBytesEnabled: false
+  archivingEnableLongCompIdRetrieval: false
+  archivingUseCustomFormats: "null"
+  archivingUseFileExtension: false
+  archivingUseFileExtensionHttpParamName: filename
+  archivingReadDocsNoCompIdData: false
+  archivingReadDocs53SP2ASSAP901: true
+  archivingUseFormatsCaching: true
+# Service Account section
+assap:
+  serviceAccount:
+    createserviceaccount:
+    serviceAccountName:
+# Vault Properties
+vault:
+  enable:
+  serviceAccountName:
+  daemonurl: http://localhost:8200/dsis
+  vault_configmap: dctm-vault-configmap
+  createPVC: false
+  PVCName: dsis-binary-pvc
+  volumeName: dsis-binary-volume
+  configMapVolName: vault-volume
+  pvcAccessModes: ReadWriteMany
+  size: 100Mi
+  storageClass: trident-nfs
+  existVolumePv:
+  # Docker images details
+  # Change docker image properties according your repository/artifactory.
+images:
+  assap:
+    repository:
+    name:
+    tag: ""
+    pullPolicy:
+  #VE 4852332 - name changed from pullSecrets to pullSecret
+  pullSecret:
+# User provided services
+userProvidedServices:
+  newrelic:
+    enable: false
+    # Description: Descriptive application name. It is mandatory to rrovide descriptive name if this service is used.
+    appName: DOCUMENTUM_ASSAP-PROD-OT2_CFCR_BP2-ECD
+    licenseKey: newrelicLicensekey
+    proxyHost:
+    proxyPort:
+    proxyCredentials:
+    proxyScheme:
+# Specify resources.
+resources:
+  limits:
+    cpu: 400m
+    memory: 4Gi
+  requests:
+    cpu: 400m
+    memory: 4Gi
+nodeSelector: {}
+tolerations: []
+affinity: {}

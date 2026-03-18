@@ -1,0 +1,218 @@
+{{- if eq .Values.services.otds "true" }}
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-{{ .Values.global.namespace }}-{{ .Values.components.otds }}-env
+  namespace: {{ .Values.global.namespace }}
+data:
+  OTDS_URL: "{{ .Values.otdsparameters.url }}"
+  OTDS_TYPE: "0"
+  OTDS_LICENSE_ID: "{{ .Values.otdsparameters.licenseid }}"
+  {{- if (eq .Values.secretmanager.secret_manager_enabled "0") }}
+  OTDS_OAUTH_CLIENT_ID: "{{ .Release.Name }}-{{ .Values.global.namespace }}"
+  {{- end }}
+  {{- if (eq .Values.secretmanager.secret_manager_enabled "0") }}
+  OTDS_USERNAME: "{{ .Values.otdsparameters.username }}"
+  {{- end }}
+  AUTOMATE_OTDS: "{{ .Values.otdsparameters.automate_otds }}"
+  {{- if or (eq .Values.otdsparameters.automate_otds "1") (eq .Values.otdsparameters.automate_otds "2") }}
+  OTDS_RESOURCE: "{{ .Values.otdsparameters.resource }}" 
+  {{- if (eq .Values.secretmanager.secret_manager_enabled "0") }}
+  OTOS_ADMIN_USER: "{{ .Release.Name }}-{{ .Values.otdsparameters.admin_user }}"
+  {{- end }}
+  OTDS_PARTITION: "{{ .Release.Name }}-{{ .Values.otdsparameters.partition }}"
+  OTDS_GROUP: "{{ .Release.Name }}-{{ .Values.otdsparameters.group }}"  
+  OTOS_HTTP_PROTOCOL: "{{ .Values.otdsparameters.protocol }}"
+  {{- end }}
+{{- end }} 
+---
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-{{ .Values.global.namespace }}-ossecretmanager-env
+  namespace: {{ .Values.global.namespace }}
+data:
+  SECRET_MANAGER_ENABLED: "{{ .Values.secretmanager.secret_manager_enabled }}"
+  {{- if eq .Values.secretmanager.secret_manager_enabled "1" }}
+  SECRET_MANAGER_URL: "{{ .Values.secretmanager.secret_manager_url }}"
+  SECRET_MANAGER_API_PATH: "{{ .Values.secretmanager.secret_manager_api_path }}"
+  {{- end }}
+---
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-{{ .Values.global.namespace }}-{{ .Values.components.oshaproxy }}-env
+  namespace: {{ .Values.global.namespace }}
+data:
+  OTOS_SVC_osprimary: {{ .Release.Name }}-{{ .Values.global.namespace }}-{{ .Values.components.osprimary }}
+  OTOS_SVC_osscale: {{ .Release.Name }}-{{ .Values.global.namespace }}-{{ .Values.components.osscale }}
+  OAUTH_CLIENT_ID: {{ .Release.Name }}-{{ .Values.global.namespace }}
+
+---
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-{{ .Values.global.namespace }}-osdbparameters-env
+  namespace: {{ .Values.global.namespace }}
+data: 
+  DATABASE_TYPE: "{{ .Values.osdatabaseparameters.DATABASETYPE }}" 
+  AUTOMATE_DATABASE: "{{ .Values.osdatabaseparameters.AUTOMATE_DATABASE }}"
+  LOGIN_DB_PORT: "{{ .Values.osdatabaseparameters.LOGIN_DB_PORT }}"
+  DATABASE_SERVER_HOSTNAME: "{{ .Values.osdatabaseparameters.DATABASE_SERVER_HOSTNAME }}"
+  ALTER_DATABASE_NAME: "{{ .Values.osdatabaseparameters.ALTER_DATABASE_NAME }}"
+  {{- if (eq .Values.secretmanager.secret_manager_enabled "0") }}
+  DATABASE_SERVER_USER: "{{ .Values.osdatabaseparameters.DATABASE_SERVER_USER }}"  
+  {{- end }}
+  {{- if eq .Values.osdatabaseparameters.DATABASETYPE "1" }}
+  DATABASE_NAME_PREFIX: "{{ .Values.osdatabaseparameters.DATABASE_NAME_PREFIX }}" 
+  {{- end }}
+  {{- if eq .Values.osdatabaseparameters.DB_CONNECT_IDENTIFIER "SID" }}
+  DB_SERVICE_NAME: "{{ .Values.osdatabaseparameters.DB_SERVICE_NAME }}" 
+  IS_TNS_NAMES: "0"
+  {{- end }}
+  {{- if and (eq .Values.osdatabaseparameters.DATABASETYPE "3") (eq .Values.osdatabaseparameters.DB_CONNECT_IDENTIFIER "TNS") }}
+  DB_SERVICE_NAME: "{{ .Values.osdatabaseparameters.DB_SERVICE_NAME }}"
+  IS_TNS_NAMES: "1"
+  TNS_NAMES_PATH: "/opt/om/external/osdb"
+  {{- end }}
+  {{- if eq .Values.osdatabaseparameters.AUTOMATE_DATABASE "1" }}
+  LOGIN_DATABASE: "{{ .Values.osdatabaseparameters.LOGIN_DATABASE }}"
+  {{- if (eq .Values.secretmanager.secret_manager_enabled "0") }}
+  LOGIN_DB_USER: "{{ .Values.osdatabaseparameters.LOGIN_DB_USER }}"
+  {{- end }} 
+  LOGIN_DB_HOST: "{{ .Values.osdatabaseparameters.DATABASE_SERVER_HOSTNAME }}"
+  {{- end }}
+---
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-{{ .Values.global.namespace }}-helm-hook
+  namespace: {{ .Values.global.namespace }}
+  annotations:
+    "helm.sh/hook": "pre-install"
+    "helm.sh/hook-weight": "-10"
+    "helm.sh/hook-delete-policy": before-hook-creation
+data:
+  OPERATION: "1"
+
+---
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-{{ .Values.global.namespace }}-helm-hook
+  namespace: {{ .Values.global.namespace }}
+  annotations:
+    "helm.sh/hook": "pre-upgrade"
+    "helm.sh/hook-weight": "-10"
+    "helm.sh/hook-delete-policy": before-hook-creation
+data:
+  OPERATION: "2"
+
+---
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-{{ .Values.global.namespace }}-helm-hook
+  namespace: {{ .Values.global.namespace }}
+  annotations:
+    "helm.sh/hook": "pre-rollback"
+    "helm.sh/hook-weight": "-10"
+    "helm.sh/hook-delete-policy": before-hook-creation
+data:
+  OPERATION: "3"
+
+---
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-{{ .Values.global.namespace }}-osprimarycommonparameter-env
+  namespace: {{ .Values.global.namespace }}
+data:
+  RPC_SSL_ENABLED: {{ .Values.global.rpcsslenabled | quote  }}  
+  DAZEL_NS: "DAZELNS=DAZEL:{{ .Values.components.osprimary }}.d,{{ .Values.components.osprimary }}[4009]"
+  
+---
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-{{ .Values.global.namespace }}-oscommonparameter-env
+  namespace: {{ .Values.global.namespace }}
+data:
+  RPC_SSL_ENABLED: {{ .Values.global.rpcsslenabled | quote  }}  
+  DAZEL_NS: "DAZELNS=DAZEL:{{ .Values.components.osprimary }}.d,{{ .Release.Name }}-{{ .Values.global.namespace }}-{{ .Values.components.osprimary }}[4009]" 
+
+---
+{{- if eq .Values.services.osprimary "true" }}
+
+{{- if eq .Values.envvariables.osprimary.CONFIGURE_SAP_OMSCB "1" }}
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-{{ .Values.global.namespace }}-{{ .Values.components.osprimary }}-sap-configmap
+  namespace: {{ .Values.global.namespace }}
+binaryData:
+  sapnwrfc.ini: |-
+    {{ .Files.Get "conf/files/sap/sapnwrfc.ini" | b64enc }}
+
+{{- end }}
+    
+---
+{{- if eq .Values.envvariables.osprimary.ENABLE_INTERNATIONAL_PRINTING "1" }}
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+ name: {{ .Release.Name }}-{{ .Values.global.namespace }}-{{ .Values.components.osprimary }}-ip-configmap
+ namespace: {{ .Values.global.namespace }}
+data:
+  {{ tpl (.Files.Glob "conf/files/ip/*").AsConfig . | indent 2  }}
+
+
+{{- end }}    
+---
+{{- if or (eq .Values.otdsparameters.automate_otds "1") (eq .Values.otdsparameters.automate_otds "2") }} 
+apiVersion: v1
+kind: ConfigMap
+metadata:
+ name: {{ .Release.Name }}-{{ .Values.global.namespace }}-{{ .Values.components.osprimary }}-licensefile-configmap
+ namespace: {{ .Values.global.namespace }}
+data:
+  {{ tpl (.Files.Glob "conf/files/oslicense/*").AsConfig . | indent 2  }}
+{{- end }}
+
+---
+{{- if and (eq .Values.osdatabaseparameters.DATABASETYPE "3") (eq .Values.osdatabaseparameters.DB_CONNECT_IDENTIFIER "TNS") }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+ name: {{ .Release.Name }}-{{ .Values.global.namespace }}-{{ .Values.components.osprimary }}-tnsnames-configmap
+ namespace: {{ .Values.global.namespace }}
+binaryData:
+  tnsnames.ora: |-
+    {{ .Files.Get "conf/files/osdb/tnsnames.ora" | b64enc }}
+{{- end }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+ name: {{ .Release.Name }}-{{ .Values.global.namespace }}-{{ .Values.components.oshaproxy }}-configmap
+ namespace: {{ .Values.global.namespace }}
+binaryData:
+  haproxy.cfg: |-
+    {{ .Files.Get "conf/files/haproxy/haproxy.cfg" | b64enc }}
+    
+  pubkey.pem: |-
+    {{ .Files.Get "conf/files/haproxy/pubkey.pem" | b64enc }}
+{{- end }}
+
+

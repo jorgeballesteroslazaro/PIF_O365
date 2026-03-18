@@ -1,0 +1,5 @@
+apiVersion: v2
+appVersion: 25.4.0
+description: A Helm chart for secrets of LS print
+name: ls-print
+version: 25.4.0

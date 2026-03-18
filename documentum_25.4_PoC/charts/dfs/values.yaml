@@ -1,0 +1,191 @@
+#######################################################
+# Documentum Foundation Services default values.      #
+# This is a YAML-formatted file.                      #
+# Declare variables to be passed into your templates. #
+#######################################################
+
+serviceName: <sname>dfs-server
+    
+#Replica count
+replicaCount: 1
+installOwner:
+secretsChange:
+imagePullSecrets:
+internalTlsEnable:
+webappServiceType:
+
+serviceAccount:
+  serviceAccountName:
+  createServiceAccount: false
+
+cs:
+  #configmap for dfc.properties file. Dockbroker config map can be used here
+  useCSDfcConfigMap: true
+  configMapName:
+  secretName:
+
+single_helm:
+  enable: true
+
+acsService:
+  serviceName:
+  servicePort:
+
+dms:
+  dmsServiceName:
+  dmsHttpPort:
+
+serviceAnnotations: {}
+
+containers:
+  initcontainer:
+    name: dfsinit
+    image:
+      repository:
+      name: ot-dctm-dfs
+      tag:
+      pullPolicy:
+
+  ### DFS Container ###
+  dfs:
+    name: dfs
+    kubernetes: true
+    #DFS Docker image
+    image:
+      repository:
+      name:
+      tag:
+      pullPolicy:
+
+    containerHttpPort: 8080
+    containerSslPort: 8443
+    probing:
+      url: /dfs/services/core/QueryService?wsdl 
+      port: 8080
+      failureThreshold: 2
+      successThreshold: 1
+      timeoutSeconds: 120
+      readinessProbe:
+        enable: true
+        initialDelaySeconds: 60
+        periodSeconds: 60        
+      livenessProbe:
+        enable: true
+        initialDelaySeconds: 180
+        periodSeconds: 120
+
+
+#Tomcat Admin credentials:
+tomcat:
+  # Tomcat manager username
+  #username: admin
+  # Tomcat manager password
+  #password: password 
+  # Enabling Tomcat Clusering in case of multiple DFS pods 
+  tomcatClusterEnabled: true
+  home: /opt/tomcat
+  connectionTimeout:
+  maxHttpHeaderSize:
+  maxThreads:
+  keepAliveTimeout:
+  acceptCount:
+  customJavaOpts:
+
+certificate:
+  use_certificate:
+  dbrserviceName:
+  dfcTrustStorePassword: password
+  
+dbrpersistentVolume:
+  dbrdataPVCName: certdbr-data-pvc
+
+##########################################################################################
+# dfc.properties configurations in the case of Content Server config map not used.       #
+# In the case of useCSDfcConfigMap=false The below values will be used to populate       #
+# dfc.properties file. Update or uncomment the below listed parameters with appropriate  # 
+#  values of dfc.properties and ensure to toggle the flag useDfcConfigMap to false.      #
+# The values mentioned in addtionalProperties parameter will be added into dfc.properties# 
+# file as it is.                                                                         #
+##########################################################################################
+dfc:
+  docbroker:
+  docbase:
+  port:
+  globalRegistryRepository:
+  globalRegistryUsername:
+  globalRegistryPassword: password
+  connectionMode: try_native_first
+  cryptoRepository:
+
+  # DFC data directory. Need not be changed
+  dataDir: /var/documentum
+  #End User details
+  client:
+    should_use_enduserinfo: false
+    should_use_eventhub: false
+    eventhub:
+      #Event Log level values 0 - 5 , 
+      # 0 - NO LOG, 1 - ERROR, 2 - WARN, 3 - INFO, 4 - DEBUG, 5 - TRACE
+      log_level: 4
+      #The size of the events buffered at DFC layer. 
+      queue_size: 1000
+    #UNCOMMENT THE BELOW OR ADD ANY ADDITIONAL dfc properties to use in dfc.properties file
+    additionalProperties:
+    #- dfc.tokenstorage.enable=false
+    #- dfc.security.ssl.use_anonymous_cipher=true
+
+
+log4j:
+  # Log Level for DFS packages
+  rootLogLevel: WARN
+  rtLogLevel: WARN
+  datamodelLogLevel: WARN
+  servicesLogLevel: WARN
+  toolsLogLevel: WARN
+  traceLogLevel: WARN
+
+service:
+  ports:
+    httpPort: 8080
+    sslPort: 8443
+
+### resources ###
+resources:
+  limits:
+    cpu: 4000m
+    memory: 8Gi
+  requests:
+    cpu: 100m
+    memory: 400Mi
+
+newrelic:
+  enable:
+  licenseKeyName: newrelicLicensekey
+  #follow the naming convention as <MacroService*>_<MicroService>-<ENV>-<Platform_DC>-<BU>-<Customer*>
+  dfs_application_name: DFS-PROD-OT2_CFCR_LI3-EIM-TenantName_SubscriptionID
+  proxy_host:
+  proxy_port:
+  newrelic_home_folder: /opt/newrelic
+
+
+vault:
+  enable:
+  vaultConfigmap: dctm-vault-configmap
+  vault_config_mount_path: /opt/dctm_docker/vault_config
+  PVCName: dsis-binary-pvc
+  binary_volume_mount_path: /opt/dctm_docker/dsis_binary_volume
+
+### Volume Claim Template###
+volumeClaimTemplate:
+  logVctAccessModes: ReadWriteOnce
+  size: 1Gi
+  # storage class for the volumeClaimTemplates Ex : azurefile
+  logVctStorageClass:
+  logVctSize: 2Gi
+extensionPVC:
+  createPVC: true
+  PVCAccessMode: ReadWriteMany
+  PVCStorageClass:
+  PVCSize: 2Gi
+  useCommonPVC:
+  commonPVCName:

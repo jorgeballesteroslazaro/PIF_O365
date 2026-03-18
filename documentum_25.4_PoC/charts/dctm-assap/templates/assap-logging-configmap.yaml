@@ -1,0 +1,38 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:  
+  name: {{ .Values.deployment.name }}-logging-configmap
+data:
+  log4j2.properties: |
+    rootLogger.level={{ .Values.logging.rootloggerLevel }}
+    monitorInterval={{ .Values.logging.monitorInterval }}
+    appenders=console,file
+    appender.console.type=Console
+    appender.console.name=STDOUT
+    appender.console.layout.type=PatternLayout
+    appender.console.layout.pattern=[%d{ISO8601}|%-5p|%-22t|%-25c{1}|%-19M|%-4L] %m%n
+    |
+    appender.file.type=RollingFile
+    appender.file.name=fileRoll
+    appender.file.fileName=${sys:catalina.home}/logs/alserver.log
+    appender.file.filePattern=${sys:catalina.home}/logs/alserver-backup-%d{MM-dd-yy-HH-mm-ss}-%i.log
+    appender.file.layout.type=PatternLayout
+    appender.file.layout.pattern=[%d{ISO8601}|%-5p|%-22t|%C|%M|%-4L] %m%n
+    appender.file.policies.type=Policies
+    appender.file.policies.size.type=SizeBasedTriggeringPolicy
+    appender.file.policies.size.size={{ .Values.logging.appenderFilePoliciesSizeSize }}
+    appender.file.strategy.type=DefaultRolloverStrategy
+    appender.file.strategy.max={{ .Values.logging.appenderFileStrategyMax }}
+    |
+    #Defining Loggers
+    loggers=eilog,dfclog
+    |
+    logger.eilog.name=com.documentum.ei
+    logger.eilog.level={{ .Values.logging.loggerEilogLevel }}
+    |
+    # Enable dfc logs by changing level below:
+    logger.dfclog.name=com.documentum.fc
+    logger.dfclog.level={{ .Values.logging.loggerDfclogLevel }}
+    |
+    rootLogger.appenderRef.console.ref=STDOUT
+    rootLogger.appenderRef.file.ref=fileRoll

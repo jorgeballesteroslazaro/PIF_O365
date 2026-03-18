@@ -1,0 +1,148 @@
+################################################################################################
+#                                                                                              #
+#                                This is a YAML-formatted file.                                #
+#                        Helm Chart for Output Server environment in OTK.                      #
+#                       Declare the variables to be passed to the templates.                   #
+################################################################################################
+
+###################################### G L O B A L S ###########################################
+
+    global:
+    
+      # Enter the path of Docker images in the Docker registry
+      # Example: "registry.opentext.com/"
+      artifactorypath: "artifactory.otxlab.net/ot2-paas/otom/25.2/"
+      
+###################################### G L O B A L S   E N D S ################################# 
+
+###################################### S E R V I C E S #########################################
+
+    ##################################################### 
+    # Enter the value to enable the services 
+    # We are using Anchor to change right hand side value. 
+    # Example: true
+    enabled: &service_enabled "true"
+      
+    # Enter the value to disable the services 
+    # We are using Anchor to change right hand side value. 
+    # Example: true
+    disabled: &service_disabled "false"      
+    #####################################################  
+    
+    services:
+      
+      #Log Server should be ready in OTK Environment   
+      graylog: *service_enabled      
+      
+      #This Variable is not applicable in OTK Environment      
+      pv: *service_disabled
+      
+###################################### S E R V I C E S    E N D ################################
+
+######################################## G R A Y L O G    P A R A M E T E R S ##############################################
+   
+    #Enter the below mentioned Graylog parameters
+    graylogparameters:
+
+      #Enter the IP address of Graylog server
+      #Example: "10.9.50.2"  
+      GRAYLOG_SERVER: ""
+      
+      #Enter the protocol used to access Graylog server
+      #Example: "http"  
+      GRAYLOG_HTTP_HTTPS: "http"
+      
+      #Enter the Graylog port number
+      #Example: "9000"
+      GRAYLOG_PORT: "9000"
+      
+      #Enter the tag. The default value is "[\"OTOM\"]"
+      TAGS: "[\"OTOM\"]"
+      
+###################################### G R A Y L O G    P A R A M E T E R S    E N D #######################################
+ 
+###################################### R E A D I N E S S    P R O B E S  #######################  
+    #Readiness probes are designed to let Kubernetes know when 
+    #your app is ready to serve traffic 
+    #initialDelaySeconds: Enter the time in seconds after the container
+    #or pod has started before the readiness probe is initiated.
+    #Example: 150
+    #periodSeconds: Enter the time interval between the readiness probes.
+    #Example: 30   
+    readinessProbe:
+    
+      osprimary:
+      
+        #Example: 100
+        initialDelaySeconds: 100        
+        #Example: 30
+        periodSeconds: 30
+        
+        
+      osscale:
+      
+        #Example: 100
+        initialDelaySeconds: 100        
+        #Example: 30
+        periodSeconds: 30
+        
+        
+      osclient:
+      
+        #Example: 60
+        initialDelaySeconds: 60        
+        #Example: 30
+        periodSeconds: 30 
+        
+        
+      oshaproxy:
+      
+        #Example: 50
+        initialDelaySeconds: 50        
+        #Example: 30
+        periodSeconds: 30
+        
+###################################### R E A D I N E S S    P R O B E S    E N D ###############
+
+###################################### L I V E N E S S    P R O B E S  #########################
+    #The kubelet uses liveness probes to know when to restart a container
+    #Liveness probes let Kubernetes know if your app is alive or dead
+    #initialDelaySeconds: Enter the time in seconds after the container
+    #or pod has started before the readiness probe is initiated.
+    #Example: 300
+    #periodSeconds: Enter the time interval between the readiness probes.
+    #Example: 30
+    livenessProbe:
+
+      osprimary:
+      
+        #Example: 300
+        initialDelaySeconds: 300        
+        #Example: 30
+        periodSeconds: 30
+        
+        
+      osscale:
+      
+        #Example: 300
+        initialDelaySeconds: 300        
+        #Example: 30    
+        periodSeconds: 30
+        
+        
+      osclient:
+      
+        #Example: 300
+        initialDelaySeconds: 300        
+        #Example: 30
+        periodSeconds: 30 
+        
+        
+      oshaproxy:
+      
+        #Example: 50
+        initialDelaySeconds: 50        
+        #Example: 30
+        periodSeconds: 30   
+        
+###################################### L I V E N E S S    P R O B E S    E N D #################

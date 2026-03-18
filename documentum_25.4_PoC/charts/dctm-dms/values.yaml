@@ -1,0 +1,224 @@
+#######################################################
+# DMS default values.                                 #
+# This is a YAML-formatted file.                      #
+# Declare variables to be passed into your templates. #
+#######################################################
+
+serviceName:
+customLabels:
+  app: dctm-dms
+replicaCount: 2
+webappServiceType:
+
+secret:
+  name: dms-secret-config
+  namespace:
+
+#Service Account is required for vault log in
+serviceAccount:
+  serviceAccountName:
+  createServiceAccount: false
+
+serviceAnnotations: {}
+
+cs:
+  # Config map for dfc.properties file. Dockbroker config map can be used here
+  useCSDfcConfigMap: true
+  configMapName:
+  secretName:
+
+#######################################################
+# Containers                                          #
+#######################################################
+
+ingress:
+  url:
+
+imagePullSecrets:
+
+dmsMainContainer:
+  containerName: dms-container
+  image:
+    repository:
+    name:
+    tag:
+    pullPolicy:
+
+dmsInitContainers:
+  name: dms-init-container
+  image:
+    repository:
+    name: ot-dctm-dms
+    tag:
+    pullPolicy:
+
+##########################################################################################
+# dfc.properties configurations in the case of Content Server config map not used.       #
+# In the case of useCSDfcConfigMap=false The below values will be used to populate       #
+# dfc.properties file. Update or uncomment the below listed parameters with appropriate  #
+#  values of dfc.properties and ensure to toggle the flag useDfcConfigMap to false.      #
+# The values mentioned in addtionalProperties parameter will be added into dfc.properties#
+# file as it is.                                                                         #
+##########################################################################################
+
+dfc:
+  docbroker:
+  clusterSpace:
+  port:
+  globalRegistryRepository:
+  globalRegistryUsername:
+  connectionMode:
+  cryptoRepository:
+
+  # DFC data directory. Need not be changed
+  dataDir: /opt/
+  #End User details
+  client:
+    should_use_enduserinfo: false
+    should_use_eventhub: false
+    eventhub:
+      #Event Log level values 0 - 5 ,
+      # 0 - NO LOG, 1 - ERROR, 2 - WARN, 3 - INFO, 4 - DEBUG, 5 - TRACE
+      log_level: 4
+      #The size of the events buffered at DFC layer.
+      queue_size: 1000
+  certificate:
+    use_certificate:
+    use_existing_truststore: false
+    dbrServiceName:
+    truststore: /opt/dctm/certificate/dfc.keystore
+    dbrdataPVCName:
+    pvcCertSubPath: certificate/certdbr-data-pvc
+    #UNCOMMENT THE BELOW OR ADD ANY ADDITIONAL dfc properties to use in dfc.properties file
+  additionalProperties:
+    #- dfc.tokenstorage.enable=false
+    #- dfc.security.ssl.use_anonymous_cipher=true
+
+dms:
+  pvcName: dms-pvc
+  pvcSize: 1Gi
+  pvcAccessModes: ReadWriteMany
+  storageClass:
+  existVolumePv:
+  useCommonPVC:
+  commonPVCname:
+  logs:
+    pvcAccessModes: ReadWriteMany
+    storageClass:
+    existVolumePv:
+    pvcSize:
+  probing:
+    url: /dms-ws
+    failureThreshold: 2
+    successThreshold: 1
+    timeoutSeconds: 120
+    readinessProbe:
+      enable: true
+      initialDelaySeconds: 60
+      periodSeconds: 60
+    livenessProbe:
+      enable: true
+      initialDelaySeconds: 180
+      periodSeconds: 120
+    startupProbe:
+      enabled: true
+      initialDelaySeconds: 360
+      periodSeconds: 240
+
+
+resources:
+  limits:
+    cpu: 1500m
+    memory: 4Gi
+  requests:
+    cpu: 800m
+    memory: 2Gi
+
+log4j2:
+  # Log Level for DMS packages
+  rootLogLevel: INFO
+  dmsLogLevel: INFO
+  traceLogLevel: INFO
+  rollingLogLevel: INFO
+
+  #Customers can add their own java options below
+java:
+  #adding dev/./urandom parameter by deafult to improve the application performace wrt to random number generation
+  javaOptions: -Djava.security.egd=file:/dev/./urandom
+
+database:
+  # Database properties
+  type:
+  host:
+  port:
+  id:
+  schema_name:
+  username:
+  sql_instance:
+
+docbase:
+  name:
+
+validateSignature:
+  enabled: true
+
+jmx:
+  # JMX properties
+  host: localhost
+  password:
+  rmiRegistryPort:  8490
+  rmiServerPort: 32324
+
+  rmiRegistryNodePort:
+  rmiServerNodePort:
+
+httpPort:
+httpsPort: 8443
+internalTlsEnable:
+
+tomcat:
+  connectionTimeout:
+  maxHttpHeaderSize:
+  maxThreads:
+  keepAliveTimeout:
+  acceptCount:
+
+
+vault:
+  enable:
+  vaultConfigmap: dctm-vault-configmap
+  vault_config_mount_path: /opt/dctm_docker/vault_config
+  PVCName: dsis-binary-pvc
+  binary_volume_mount_path: /opt/dctm_docker/dsis_binary_volume
+
+
+newrelic:
+  enabled:
+  configurationFile: newrelic.yml
+  addNodeNamePrefix: false
+  proxy_host:
+  proxy_port:
+  app_name: DOCUMENTUM-DMS-SERVICES
+  licenseKeyName: newrelicLicensekey
+
+extraConfigMountPath: /opt/newrlic-config
+
+single_helm:
+  enable: true
+
+acsService:
+  serviceName:
+  servicePort:
+
+certificates:
+  bocsssl: |
+    -----BEGIN CERTIFICATE-----
+    -----END CERTIFICATE-----
+    -----BEGIN CERTIFICATE-----
+    -----END CERTIFICATE-----
+
+proxy:
+  enabled: false
+  protocol: http
+  host:
+  port:

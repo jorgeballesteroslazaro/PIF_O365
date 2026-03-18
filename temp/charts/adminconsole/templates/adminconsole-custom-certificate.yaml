@@ -1,0 +1,11 @@
+{{- if .Values.global.dctmclientinstaller.enabled }}
+{{- if .Values.customcert.enable }}
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ .Chart.Name }}-custom-certs
+type: Opaque
+data:
+{{ (.Files.Glob "certificates/*").AsSecrets | indent 2 }}
+{{end}}
+{{- end }}

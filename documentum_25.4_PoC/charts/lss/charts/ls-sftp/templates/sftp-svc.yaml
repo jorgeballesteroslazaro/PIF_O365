@@ -1,0 +1,18 @@
+# Please edit the object below. Lines beginning with a '#' will be ignored,
+# and an empty file will abort the edit. If an error occurs while saving this file will be
+# reopened with the relevant failures.
+#
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.userName }}-svc
+  {{- with .Values.serviceAnnotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}  
+spec:
+  ports:
+    - port: {{ template "lss.servicePort" . }}    
+  selector:
+    app: {{ .Values.userName }}  
+  type: {{ .Values.serviceType | default .Values.global.webappServiceType  }}

@@ -1,0 +1,8 @@
+apiVersion: v2
+appVersion: 2.41.0-10
+description: A Helm chart Providing Apache ActiveMQ.
+keywords:
+- activemq
+- message broker
+name: amq
+version: 2.41.0-10

@@ -1,0 +1,232 @@
+#RQM StatefulSet
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+   name: {{ .Values.serviceName }}
+spec:
+  {{- if eq .Values.containers.rqm.recordsaws true}}
+    runAsUser: 1001
+    runAsGroup: 2001
+    fsGroup: 2001  
+  {{ end }}        
+  serviceName: {{ .Values.serviceName }}
+  replicas: {{ .Values.containers.rqm.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Values.serviceName }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.serviceName }}
+    spec:
+      securityContext:
+      serviceAccountName: {{ .Values.serviceAccount.serviceAccountName | default .Values.global.documentumserviceaccount}}
+      {{- if or .Values.images.rqm.pullSecrets .Values.global.pullSecretName }}
+      imagePullSecrets:
+        - name: {{ .Values.images.rqm.pullSecrets | default .Values.global.pullSecretName}}
+      {{ end }}
+      containers:      
+      - name: {{ .Values.serviceName }}
+        image: {{ .Values.images.rqm.repository | default .Values.global.repository}}/{{ .Values.images.rqm.name }}:{{ .Values.images.rqm.tag }}
+        imagePullPolicy: {{ .Values.images.rqm.pullPolicy | default .Values.global.pullPolicyType}}
+        readinessProbe:
+          exec: {
+            command: [
+              sh,
+                -c,
+               ./check_cs_availability.sh
+            ]
+          }
+          initialDelaySeconds: {{ .Values.containers.rqm.probing.readinessProbe.initialDelaySeconds }}
+          periodSeconds: {{ .Values.containers.rqm.probing.readinessProbe.periodSeconds }}
+        livenessProbe:
+          exec: {
+            command: [
+              sh,
+                -c,
+               ./livenessProbe_check.sh
+            ]
+          } 
+          initialDelaySeconds: {{ .Values.containers.rqm.probing.livenessProbe.initialDelaySeconds }}
+          periodSeconds: {{ .Values.containers.rqm.probing.livenessProbe.periodSeconds }}
+        lifecycle:
+            preStop:
+                exec: {
+                  command: [
+                    sh,
+                      -c,
+                    ./RQMUnInstaller.sh
+                  ]
+                 }
+        env:
+        - name: SINGLEHELM
+          value: {{ quote .Values.containers.rqm.rqmSingleHelm  }}
+        - name: KUBERNETES
+          value: "true"
+        - name: DFC_GLOBALREGISTRY_PASSWORD
+          valueFrom:
+            secretKeyRef:              
+              name: {{ .Values.cs.csSecretConfigName | default .Values.global.csSecrets}}
+              key: globalRegistryPassword               
+        - name: RQM_INSTALLATION_DIR
+          value: {{ quote .Values.containers.rqm.rqmInstallationDir }}        
+        - name: INSTALL_FILES
+          value: {{ quote .Values.containers.rqm.installFiles  }}
+        - name: DOCBASE_NAME
+          value: {{ quote .Values.containers.rqm.docbaseName | default .Values.global.docbase }}
+        - name: INSTALL_OWNER_USER
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.cs.csSecretConfigName | default .Values.global.csSecrets}}
+              key: installOwner
+        - name: INSTALL_OWNER_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.cs.csSecretConfigName | default .Values.global.csSecrets }}
+              key: installOwnerPassword        
+        - name: RQM_DOCBASE_USER
+          value: {{ (quote .Values.containers.rqm.rqmDocbaseUser) | default .Values.global.installOwnerUsername}}
+        - name: RQM_SYS_ADMIN_NAME
+          value: {{ quote .Values.containers.rqm.rqmSysAdminName  }}
+        - name: RQM_SYS_ADMIN_PASS
+          value: {{ quote .Values.containers.rqm.rqmSysAdminPass  }}
+        - name: GLOBAL_REGISTRY_REPOSITORY
+          value: {{ (quote .Values.containers.rqm.globalRegistryRepository)| default .Values.global.docbase}}
+        - name: BOF_REGISTRY_USER
+          value: {{ (quote .Values.containers.rqm.bofRegistryUser) | default .Values.global.globalRegistryUsername}}
+        - name: DOCBROKERS_COUNT
+          value: {{ .Values.docbroker.replicaCount | quote}}
+        - name: DOCBROKER_SERVICE_NAME
+          value: {{ .Values.userName | default .Values.global.installOwnerUsername}}{{ .Values.docbroker.serviceName | default .Values.global.dbrServiceName}}
+        - name: DOCBROKER_CLUSTER_SPACE
+          value: {{ .Values.env.domain | default .Values.global.env}}
+        - name: DOCBROKER_PORT
+          value: {{ (.Values.docbroker.port | quote) | default .Values.global.dbr_port | quote}}
+        - name: DOCBROKER_HOST
+          value: {{ .Values.docbroker.serviceName | default .Values.global.dbrServiceName}}   
+        - name: BOF_REGISTRY_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.cs.csSecretConfigName | default .Values.global.csSecrets }}
+              key: globalRegistryPassword 
+        - name: RQM_ADMIN_PORT
+          value: {{ quote .Values.containers.rqm.rqmadminport  }}
+        - name: RQM_JETTY_PORT
+          value: {{ quote .Values.containers.rqm.rqmjettyport  }}
+        - name: ALLOW_TRUSTED_LOGIN
+          value: {{ quote .Values.cs.allowTrustedLogin }}
+        {{- if (empty (.Values.certificate.useCertificate | quote) | ternary .Values.global.useCertificate .Values.certificate.useCertificate) }}      
+        - name: USE_CERTIFICATE
+          value: {{ (empty (.Values.certificate.useCertificate | quote) | ternary .Values.global.useCertificate .Values.certificate.useCertificate) | quote}}
+        - name: TRUST_STORE_PASSWORD        
+          valueFrom: 
+            secretKeyRef:
+              name: {{ .Values.cs.csSecretConfigName | default .Values.global.csSecrets}}
+              key: dbrCertpassword
+        {{ end }}
+        {{- if (empty (.Values.vault.enable | quote) | ternary .Values.global.isVaultEnabled .Values.vault.enable) }}
+        - name: DFC_DSIS_ENABLED
+          value: {{ (empty (.Values.vault.enable | quote) | ternary .Values.global.isVaultEnabled .Values.vault.enable) | quote}}  
+        - name: DFC_DSIS_DAEMON_URL
+          value: {{ .Values.vault.daemonurl | default "http://localhost:8200/dsis" | quote }}
+        {{ end }}
+        # newrelic env parameters
+        {{- if (empty (.Values.userProvidedServices.newrelic.enable | quote) | ternary .Values.global.newrelic .Values.userProvidedServices.newrelic.enable) }}              
+        - name: NEW_RELIC_AGENT_ENABLED
+          value: {{ (empty (.Values.userProvidedServices.newrelic.enable | quote) | ternary .Values.global.newrelic .Values.userProvidedServices.newrelic.enable) | quote}}
+        - name: NEW_RELIC_APP_NAME
+          value: {{ quote .Values.userProvidedServices.newrelic.appName }}
+        - name: NEW_RELIC_LICENSE_KEY
+          valueFrom:
+            secretKeyRef:
+              name: {{.Values.cs.csSecretConfigName | default .Values.global.csSecrets}}
+              key: newrelicLicensekey
+        {{- if (empty (.Values.userProvidedServices.newrelic.proxyHost | quote) | ternary .Values.global.newrelicProxyHost .Values.userProvidedServices.newrelic.proxyHost) }}
+        - name: NEW_RELIC_PROXY_HOST
+          value: {{ (quote .Values.userProvidedServices.newrelic.proxyHost) | default .Values.global.newrelicProxyHost | quote }}
+        {{ end }}
+        {{- if (empty (.Values.userProvidedServices.newrelic.proxyPort | quote) | ternary .Values.global.newrelicProxyPort .Values.userProvidedServices.newrelic.proxyPort) }}
+        - name: NEW_RELIC_PROXY_PORT
+          value: {{ (empty (.Values.userProvidedServices.newrelic.proxyPort | quote) | ternary .Values.global.newrelicProxyPort .Values.userProvidedServices.newrelic.proxyPort) | quote }}
+        {{ end }}
+        {{- if (empty (.Values.userProvidedServices.newrelic.proxyScheme | quote) | ternary .Values.global.newrelicProxyProtocol .Values.userProvidedServices.newrelic.proxyScheme) }}
+        - name: NEW_RELIC_PROXY_SCHEME
+          value: {{ (quote .Values.userProvidedServices.newrelic.proxyScheme) | default .Values.global.newrelicProxyProtocol | quote}}
+        {{ end }}
+        {{ end }}        
+        volumeMounts: 
+        {{- if (empty (.Values.images.fluentd.enabled | quote) | ternary .Values.global.fluentd .Values.images.fluentd.enabled)}}
+        - name: shared-logs 
+          mountPath: {{ .Values.containers.rqm.rqmHomeDir }}/dctm/CTS/logs  
+        - name: shared-logs
+          mountPath: {{ .Values.containers.rqm.rqmHomeDir }}/documentum/logs
+        {{ end }}  
+        - mountPath: /opt/external-configurations
+          name: nfs-data
+          subPath: {{ .Values.statefulset }}
+        - mountPath: /opt/external-configurations/dfc.properties
+          name: dfc-config-map
+          subPath: dfc.properties
+        - mountPath: /opt/d2extension/RQMlogs
+          name: logging-config-map          
+        - mountPath: /opt/d2extension/RQMlogs/logs
+          name: rqm-logs          
+        - name: custom-script-pvc
+          mountPath: /opt/custompvc          
+          subPath: {{ .Values.custom.PVCSubPath }}
+        {{- if (empty (.Values.vault.enable | quote) | ternary .Values.global.isVaultEnabled .Values.vault.enable) }}
+        - mountPath: /opt/dctm_docker/vault_config
+          name: vault-volume
+        {{ end }}
+        {{- if (empty (.Values.vault.enable | quote) | ternary .Values.global.isVaultEnabled .Values.vault.enable) }}
+        - mountPath: /opt/dctm_docker/dsis_binary_volume
+          name: dsis-binary-volume
+        {{ end }}
+        {{- if (empty (.Values.certificate.useCertificate | quote) | ternary .Values.global.useCertificate .Values.certificate.useCertificate) }}
+        - name: {{ .Values.certificate.dbrDataPVCName }}
+          mountPath: /opt/dctm/certificate
+          subPath: certificate/{{ .Values.certificate.dbrDataPVCName }}
+        {{ end }}     
+        
+      volumes:
+        {{- if (empty (.Values.images.fluentd.enabled | quote) | ternary .Values.global.fluentd .Values.images.fluentd.enabled)}}
+      - name: shared-logs
+        emptyDir: {}
+      - name: {{ .Values.images.fluentd.servicedataPVCName }}-logs
+        emptyDir: {}      
+      {{ end }}       
+      - name: dfc-config-map
+      {{- if eq .Values.cs.useCSDfcConfigMap true }}      
+        configMap:
+          name: {{ .Values.cs.configMapName | default .Values.global.dbrConfigmapName}}
+      {{ else }}    
+        configMap:
+          name: rqm-dfcproperties-configmap
+      {{ end }}
+      - name: logging-config-map
+        configMap:
+          name: rqm-logging-configmap
+      - name: rqm-logs
+        emptyDir: { }
+      {{- if (empty (.Values.vault.enable | quote) | ternary .Values.global.isVaultEnabled .Values.vault.enable) }}
+      - name: vault-volume
+        configMap:
+          name: {{ .Values.vault.vault_configmap }}
+      {{ end }}
+      - name: nfs-data
+        persistentVolumeClaim:
+          claimName: {{ .Values.persistentVolumeClaim.pvcName }}  
+       {{- if (empty (.Values.certificate.useCertificate | quote) | ternary .Values.global.useCertificate .Values.certificate.useCertificate) }}
+      - name: {{ .Values.certificate.dbrDataPVCName }}
+        persistentVolumeClaim:
+          claimName: {{ .Values.certificate.dbrServiceName | default .Values.global.dbrServiceName}}-pvc
+       {{ end }}
+      - name: custom-script-pvc
+        persistentVolumeClaim:
+          claimName: {{ .Values.custom.scriptPVCname }}
+      {{- if (empty (.Values.vault.enable | quote) | ternary .Values.global.isVaultEnabled .Values.vault.enable) }}
+      - name: dsis-binary-volume
+        persistentVolumeClaim:
+          claimName: dsis-binary-pvc
+      {{ end }}
+      restartPolicy: Always

@@ -1,0 +1,199 @@
+# Default values for ijms.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+###User Name/ID
+serviceName: <sname>ijms
+serviceAnnotations: {}
+  
+### ijms ###  
+ijms:
+  replicaCount: 2
+  host: <sname>ijms.docu.cfcr-lab.bp-paas.otxlab.net
+  ### IJMS Configuring Content Server Name or specify ALL to configure in ALL the content servers  ###  
+  ijmsConfiguringContentServer: ALL
+  #Below proxy configuration is used for rest store configuration, can be reused for other use cases if needed
+  proxyHost:
+  proxyPort:
+  liveness:
+    enable: true
+    livenessScript: /opt/dctm_docker/ijms-liveness.sh    
+    initialDelaySeconds: 960   
+    periodSeconds: 120    
+    failureThreshold: 3
+  readiness:
+    readinessScript: /opt/dctm_docker/ijms-readiness.sh
+    initialDelaySeconds: 180
+    periodSeconds: 120
+    failureThreshold: 6
+  
+tomcat:
+  maxThreads: 
+  connectionTimeout: 
+  
+### Docker Images ###  
+images:
+  repository :
+  ijms :
+    name : ot-dctm-ijms
+    tag : <dctm-ijms>
+  pullPolicy :
+  pullSecrets :
+
+### Docbase ###
+docbase:
+  name: 
+  
+### CS Secret ###
+secret:
+  name: 
+
+vault:
+  enable: 
+  vault_configmap: dctm-vault-configmap
+  PVCName: dsis-binary-pvc
+
+### Docbroker ###
+### Docbroker Service Name, currently it supports one docbroker ###
+docbroker:
+  serviceName: 
+  port: 
+  clusterSpace: 
+  docbrokersCount: 2
+
+### Global repository details  ###
+globalRepository:
+  globalRepositoryName: 
+  globalRepositoryUser: 
+
+### Ports ###
+### To-Do Change JMS port to default Port 9080 ###
+### Currently, JMS port to default Port Http 9180 and Https port to 9182 ###
+ports:
+  jmsport: 9180
+  protocol: http
+
+### Ingress ###
+ingress:
+  host: #format to be followed hostname-ijms.clusterdomainName
+  protocol: 
+  #annotations for the ingress object
+  annotations: {}  
+  
+### Persistent Volume ###
+persistentVolume:
+  ijmsdataPVCName: ijms-data-pvc
+  pvcAccessModes: ReadWriteMany
+  size: 3Gi
+  storageClass: 
+  awsEFS: false
+  awsEFSCSIDriver: efs.csi.aws.com
+  awsEFSCSIHandle: fs-82630bfa
+  existVolumePv: 
+
+serviceAccount:
+  createserviceaccount: false
+  serviceAccountName:
+
+### Volume Claim Template###
+volumeClaimTemplate:
+  vctName: ijms-vct
+  vctAccessModes: ReadWriteOnce
+  size: 1Gi
+  storageClass: 
+  logVctAccessModes: ReadWriteOnce
+  logVctSize: 2Gi
+  logVctStorageClass: 
+service:
+  type: 
+  port: 80
+  
+custom:
+  useInitContainers: false
+  
+extraInitContainers:
+
+### For Ingress to Application TLS ###
+internalTlsEnable:
+
+### For Certificate and Ingress pvc mounting ###
+dbrpersistentVolume:
+  dbrdataPVCName: certdbr-data-pvc
+
+### To enable PVC mounting for the certificates used ###
+certificate:
+  use_certificate:
+
+resources: {}
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  # limits:
+  #  cpu: 100m
+  #  memory: 128Mi
+  # requests:
+  #  cpu: 100m
+  #  memory: 128Mi
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+otds:
+  configureOTDS: 
+  clientCapability: 0
+  userPrivileges: 0
+  userXPrivileges: 0
+  userRenameEnabled: F
+  userRenameUnlockLockedObject: T
+  groupRenameEnabled: F
+extraEnv:
+  - name: HTTP_PROXY
+    value: ""
+  - name: https_proxy
+    value: ""
+  - name: http_proxy
+    value: ""
+  - name: no_proxy
+    value: ""
+  - name: NO_PROXY
+    value: ""
+  - name: HTTPS_PROXY
+    value: ""
+  - name: CERTIFICATE_1
+    value: ""
+  - name: docbase1_resource_id
+    value: ""
+  - name: docbase1_secretKey
+    value: ""        
+  - name: TOKENTIMEOUT
+    value: "30"
+  - name: INACTIVE_DELETED_USER
+    value: "T"
+  - name: INACTIVE_UNSUBSCRIBED_USER
+    value: "F"
+  - name: LSS_CC_ENABLED
+    value: "F"
+  - name: DA_PRIVILEGE_ENABLED
+    value: "F"
+  - name: ACTIVATE_POSTMEMBER_ENABLED
+    value: "T"
+  - name: MIGRATE_LDAP_USERS
+    value: "F"
+  - name: MIGRATE_LDAP_DOCBASES
+    value: "docbase1"
+  - name: LDAP_CONFIGS_TOKENIZER
+    value: ","
+  - name: docbase1_MIGRATE_LDAP_CONFIGS
+    value: ""
+  - name: CUSTOM_JOB_ENABLED
+    value: "F"
+  - name: CUSTOM_USER_RENAMEJOB
+    value: ""  
+  - name: CUSTOM_USER_RENAME_METHOD
+    value: ""   
+
+  
+

@@ -1,0 +1,106 @@
+dctm-dcis:
+  # Description: File used for setting Foundation Java API properties.
+  configurationFiles:
+    - dfc.properties
+
+  cs:
+    # Description: Indicates to use the secrets mounted by Documentum CM Server. Otherwise, Content Aviator does not use any secrets.
+    useCSSecrets: true
+
+    # Description: Name of the secret ConfigMap.
+    secretName: cs-secret-config
+
+    # Description: Port of the Java Method Server service.
+    acsServicePort: 9080
+
+  dfc:
+    # Description: Path of the Foundation Java API file location.
+    dataDir: /home/dmadmin/dcis
+
+    # Description: Connection broker service. OpenText recommends to use the FQDN of service.
+    docbroker: dbr #In production,better to use the FQDN of service
+
+    # Description: Connection broker port.
+    port: 1489
+
+    # Description: Connection broker connection mode.
+    connectionMode: native
+
+    # Description: Connection broker keystore file.
+    cryptoRepository:
+
+    # Description: Additional properties for Foundation Java API.
+    additionalProperties: # Description: ActiveMQ server components helps to process the event messages for embedding process and creates the required queues for event messages.
+  activemq:
+    # Description: ActiveMQ URL. The format is as follows: tcp://<activemq_servicename>.<namespace>.skubevc.cluster.local:<port>
+    broker_url:
+
+    # Description: ActiveMQ user name. For example, artemis.
+    user_name:
+
+    # Description: Document embedding queue name.
+    queue_name:
+
+    # Description: Folder embedding queue name.
+    folder_queue_name:
+  csai:
+    # Description: CSAI embedding service URL. For example: http://localhost/embeddings
+    embedding_svc_url: # CSAI Embedding Service URL
+
+    # Description: CSAI chat or query service URL. For example: http://localhost/chat
+    chat_svc_url:
+      # CSAI Chat Service URL
+
+  saasproxy:
+    # Description: Remote SaasProxy service URL. For example: wss://10.21.185.120:3333
+    websocketEndpoint: # wss://10.21.185.120:3333
+
+    # Description: SaasProxy service authentication credentials. The format is: <userName>:<password>
+    websocketAuth: # <userName>:<password> It is the credential used for
+
+    # Description: Number of remote web socket client connections.
+    websocketConnections: 5
+
+    # Description: OTDS token endpoint for JWT token validation called by CSAI Embedding service. For example: http://otdws/otdws/oauth2/jwks
+    callbacksAuthEndpoint: # <OTDS Authentication JWT Token validation endpoint> eg:http://otdws/otdws/oauth2/jwks
+
+    # Description: URL of the Foundation REST API permission check endpoint.
+    callbacksPermsEndpoint: #<URL of DCTM REST Permission Check Endpoint>
+
+    # Description: URL of the Foundation REST API authentication endpoint.
+    callbacksDctmAuthEndpoint:
+      # <URL of DCTM REST Authentication Endpoint>
+
+  otds:
+    # Description: Indicates if the OpenText Directory Services pod deployment is enabled.
+    enabled: true
+
+    # Description: OTDS client ID.
+    oauth_client_id: #<oauth_client_id>
+
+    # Description: OTDS token endpoint. For example: http://otds/token
+    oauth_token_url:
+      #<oauth_token_url>
+
+      # Description: Port on which OTDS HTTP is listening for TCP connections.
+  actuatorHttpPort: 8080
+
+  # Description: Port on which OTDS HTTPS is listening for TCP connections.
+  actuatorHttpsPort: 8443
+
+  livenessProbe:
+    # Description: Indicates if the liveness probe is enabled.
+    enabled: true
+
+    # Description: Scheme to use for connecting to the host (HTTP or HTTPS).
+    scheme: HTTP
+
+    # Description: Liveness probe handler path.
+    probeUrl: /actuator/health
+
+    # Description: Number of seconds after the container has started before the probe is initiated.
+    # If a startup probe is defined, liveness probe delays do not begin until the startup probe has succeeded.
+    initialDelaySeconds: 40
+
+    # Description: Frequency to perform the probe. If the value of periodSeconds is greater than initialDelaySeconds, then the initialDelaySeconds is ignored.
+    periodSeconds: 5

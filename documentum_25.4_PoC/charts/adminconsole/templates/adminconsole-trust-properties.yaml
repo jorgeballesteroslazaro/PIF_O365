@@ -1,0 +1,28 @@
+{{- if .Values.global.dctmclientinstaller.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: adminconsole-trust-properties
+  {{- template "configMap.labels" . }}
+data:
+  trust.properties: |-
+    #
+    # Copyright (c) 2017. Open Text Corporation. All Rights Reserved.
+    #
+    *.user=dmadmin
+    *.password=password
+
+    {{- if $configFileAppendsValues := .Values.trust_properties }} 
+    {{ $configFileAppendsValues | indent 4 }} 
+    {{- end }}
+
+{{- $configFileOverridesFile := printf "%s/%s" .Values.configFileOverrideFilesDir "trust.properties" }}
+{{- $configFileMsg0 := printf "\n\n##### Begin lines added from %s\n" $configFileOverridesFile }}
+{{- $configFileMsg1 := printf "##### End lines added from %s" $configFileOverridesFile }}
+{{- $configFileLinesToAppend := .Files.Get $configFileOverridesFile }}
+{{- if $configFileLinesToAppend }}
+{{ $configFileMsg0 | indent 4 }}
+{{ $configFileLinesToAppend | indent 4 }}
+{{ $configFileMsg1 | indent 4 }}
+{{- end }}
+{{- end }}

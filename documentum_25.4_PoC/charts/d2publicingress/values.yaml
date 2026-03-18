@@ -1,0 +1,121 @@
+# Default values for d2config.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+ingress:
+  hostShortName: 
+  hostDomainName: 
+  class: nginx
+  annotations:
+    # nginx.ingress.kubernetes.io/proxy-body-size: "0"
+    # nginx.ingress.kubernetes.io/affinity: cookie
+    # nginx.ingress.kubernetes.io/session-cookie-hash: sha1
+    # nginx.ingress.kubernetes.io/proxy-connect-timeout: "6000"
+    # nginx.ingress.kubernetes.io/proxy-send-timeout: "6000"
+    # nginx.ingress.kubernetes.io/proxy-read-timeout: "6000"
+  #When GCP native load balancer is used, the pathType should be updated to Prefix, otherwise it should be default value which is ImplementationSpecific
+  pathType: ImplementationSpecific
+# List of valid values are CFCR, Azure, AWS, GCP
+cloudPlatform: CFCR
+
+
+
+tls:
+  enable: false
+  secretName:
+
+d2classicservice:
+    enable: 
+    path: 
+    serviceName: d2classic
+d2smartviewservice:
+    enable: 
+    path: 
+    serviceName: d2smartview
+d2restservice:
+    enable: 
+    path: 
+    serviceName: d2rest
+dctmrestservice:
+    enable: 
+    path: dctm-rest
+    serviceName: dctm-rest
+dctmreportsd2service:
+    enable: 
+    path: DCTM-Reports
+dtrbaseService:
+  enable: 
+  serviceName: dtrbase
+  servicePortCore: 5001
+  servicePortServlet: 8080
+  path: dtr
+otdsws:
+    enable: 
+    serviceName: otdsws
+    servicePort: 80
+    path: otdsws   
+contentConnectService:
+    enable: 
+    # the path value should be the extension value given in the configmap.extension value inside the cotentconnect subchart values.yaml
+    path: cc
+smartviewm365:
+    enable: 
+    serviceName: smartviewm365
+    servicePort: 8080
+    path: SmartViewM365
+recordsService:
+    enable: 
+    serviceName: records-svc
+    servicePort: 8080
+    path: records
+dcc:  
+  prefix: dcc
+  syncnshareManual:
+    enabled: 
+    prefix: syncagent-manual
+    path: syncnshare-manual
+    service:
+      servicePort: 8080
+
+dc4spService:
+  enable: 
+  host: lss-pub-dc4sp
+  serviceName: dc4sp-svc
+
+d2xmlViewerService:
+  enable: 
+  serviceName: d2classic
+  path: XMLViewer
+
+d2lsService:
+  enable: 
+  serviceName: d2classic
+  path: d2ls
+
+lsprintService:
+  enable: 
+  serviceName: lsprint-svc
+  path: ControlledPrint
+
+dmotdsrestService:
+  enable: 
+  serviceName: dcs-pg-jms-service
+  servicePort: 9080
+  pathType:
+
+oes:
+  enable:
+  serviceName: oes
+  servicePort: 8080
+  path:
+  pathType:
+
+epfmaService:
+  enable: 
+
+#extraPaths is used to define additional ingress resources in d2webappscustominstaller section in d2/values.yaml
+#extraPaths:
+#      - backend:
+#          serviceName: {{ .Values.d2webappName }}
+#          servicePort: 8080        
+#        path: /CustomApp1

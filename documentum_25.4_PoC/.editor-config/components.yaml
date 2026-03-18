@@ -1,0 +1,350 @@
+platform:
+  - label: Google Cloud Platform
+    code: GCP
+  - label: Microsoft Azure
+    code: Azure
+  - label: Amazon Web Services
+    code: AWS
+  - label: Red Hat OpenShift
+    code: OpenShift
+component-list:
+  - label: Infrastructure Components
+    components:
+      - component: otds
+        imageDetail:
+          - otds|otds.otdsws.image.name|otds.otdsws.image.tag
+        publicComponent:
+          - OTDS Database|otds.otdsws.otdsdb.dbImage.source|otds.otdsws.otdsdb.dbImage.name|otds.otdsws.otdsdb.dbImage.tag
+        label: OTDS
+        show: true
+        enable: [M]
+      - component: cs-secrets
+        label: Documentum CM Secrets
+        show: true
+        enable: []
+      - component: db
+        publicComponent:
+          - Database as Container|db.images.repository|db.images.db.name|db.images.db.tag
+        label: Database
+        show: true
+        enable: []
+      - component: docbroker
+        imageDetail:
+          - docbroker|docbroker.images.contentserver.name|docbroker.images.contentserver.tag
+        initContainer:
+          - DSIS Init Container|dsisinit|docbroker.extraInitContainers
+        label: Connection Broker
+        show: true
+        enable: [M]
+      - component: content-server
+        imageDetail:
+          - Content Server|content-server.images.contentserver.name|content-server.images.contentserver.tag
+        initContainer:
+          - DSIS Init Container|dsisinit|content-server.extraInitContainers
+          - Client Installer|dctmclientinstallerinit|content-server.extraInitContainers
+          - Process Engine Installer|peinstaller-init|content-server.extraInitContainers
+          - Content Connect DAR Installer|cc-dar-installer|content-server.extraInitContainers
+          - Smart View M365|smartviewm365-dar-installer|content-server.extraInitContainers
+          - OES Connector DAR Installer|oesconnector-dar-installer|content-server.extraInitContainers
+          - Records DAR Installer|dctm-records-darinstallation|content-server.extraInitContainers
+          - Reports Installer|dctm-reports-installer|content-server.extraInitContainers
+          - DCC DAR Installer|dcc-dar-installer|content-server.extraInitContainers
+          - DCME Installer|dcme-installer-init|content-server.extraInitContainers
+          - LSS Init Container|lsinitcontainer|content-server.extraInitContainers
+          - LSS Reports Installer|ls-reports-installer|content-server.extraInitContainers
+          - LSS HFX Init Container|hfxinitcontainer|content-server.extraInitContainers
+          - DCME Installer|dcme-installer-init|content-server.extraInitContainers
+        label: Documentum CM Server
+        show: true
+        enable: [M]
+      - component: dctm-dms
+        subComponent:
+          - Messaging Service|dctm-dms.dmsInitContainers.image.name|dctm-dms.dmsInitContainers.image.tag
+        label: Messaging Service
+        show: true
+        enable: []
+      - component: ijms
+        imageDetail:
+          - ijms|ijms.images.ijms.name|ijms.images.ijms.tag
+        initContainer:
+          - Process Engine Init Container|peijmsinstaller-init|ijms.extraInitContainers
+          - Client Installer|dctmclientijmsinit|ijms.extraInitContainers
+        label: Independent Java Method Server
+        show: true
+        enable: []
+      - component: cs-logging-configMap
+        label: CS logging ConfigMap
+        show: false
+        enable: [M]
+      - component: cs-dfc-properties
+        label: CS DFC Properties
+        show: false
+        enable: [M]
+      - component: dctm-ingress
+        label: Documentum Ingress
+        show: false
+        enable: []
+  - label: Capabilities
+    components:
+      - component: da
+        imageDetail:
+          - da|da.images.extensionImage.name|da.images.extensionImage.tag
+        subComponent:
+          - Admin Tomcat Image|da.images.da.name|da.images.da.tag
+        label: Documentum Administrator
+        show: true
+        enable: []
+      - component: otiv
+        imageDetail:
+          - otiv||otiv.global.imageBaseTag
+        subComponent:
+          - Secretlink|otiv.global.secretlink.image.name|otiv.global.secretlink.image.tag
+          - Amqp|otiv.amqp.image.name|otiv.amqp.image.tag
+          - Initialization|otiv.initialization.image.name|otiv.initialization.image.tag
+          - Viewer|otiv.viewer.image.name|otiv.viewer.image.tag
+          - Markup|otiv.markup.image.name|otiv.markup.image.tag
+          - Config|otiv.config.image.name|otiv.config.image.tag
+          - Highlight|otiv.highlight.image.name|otiv.highlight.image.tag
+          - Publication|otiv.publication.image.name|otiv.publication.image.tag
+          - Publisher|otiv.publisher.image.name|otiv.publisher.image.tag
+          - Asset|otiv.asset.image.name|otiv.asset.image.tag
+        label: Intelligent Viewing
+        show: true
+        enable: []
+      - component: notificationservice
+        imageDetail:
+          - notificationservice|notificationservice.image.name|notificationservice.image.tag
+        label: Notification Service
+        show: true
+        enable: []
+      - component: oesconnector
+        imageDetail:
+          - oesconnector|oesconnector.extensionImage.name|oesconnector.extensionImage.tag
+        label: Online Editing Service Connector
+        show: true
+        enable: []
+      - component: contentconnect
+        imageDetail:
+          - cc|contentconnect.images.cc.name|contentconnect.images.cc.tag
+        subComponent:
+          - Content Connect Database|contentconnect.images.ccdb.name|contentconnect.images.ccdb.tag
+        label: Content Connect
+        show: true
+        enable: []
+      - component: records
+        imageDetail:
+          - records|records.images.extensionImage.name|records.images.extensionImage.tag
+        label: Records Client
+        show: true
+        enable: []
+      - component: rqm #  ----  Optional for Records, used for load balancing
+        imageDetail:
+          - rqm|rqm.images.rqm.name|rqm.images.rqm.tag
+        label: Records Queue Manager
+        show: true
+        enable: []
+      - component: dtrbase
+        imageDetail:
+          - dtrbase|dtrbase.images.dtrbase.name|dtrbase.images.dtrbase.tag
+        label: Reports
+        show: true
+        enable: []
+      - component: dctmclientinstaller
+        label: Documentum Client Installer
+        show: true
+        enable: []
+      - component: peinstaller
+        label: Process Engine Installer
+        show: true
+        enable: []
+      - component: amq
+        publicComponent:
+          - ActiveMQ|amq.image.repository|amq.image.name|amq.image.tag
+        label: ActiveMQ
+        show: true
+        enable: []
+      - component: smartviewm365
+        imageDetail:
+          - extensionImage|smartviewm365.extensionImage.name|smartviewm365.extensionImage.tag
+        subComponent:
+          - Notification Service|notificationservice.image.name|notificationservice.image.tag
+        label: DCM for Microsoft 365
+        show: true
+        enable: []
+      - component: dctm-dcc
+        subComponent:
+          - Consul|dctm-dcc.consul.image.name|dctm-dcc.consul.image.tag
+          - Metadata|dctm-dcc.metadata.image.name|dctm-dcc.metadata.image.tag
+          - Syncagent|dctm-dcc.syncagent.image.name|dctm-dcc.syncagent.image.tag
+          - syncnshareManual|dctm-dcc.syncnshareManual.image.name|dctm-dcc.syncnshareManual.image.tag
+          - Core Notification|dctm-dcc.coreNotification.image.name|dctm-dcc.coreNotification.image.tag
+          - Mail Service|dctm-dcc.mailService.image.name|dctm-dcc.mailService.image.tag
+          - Database Schema|dctm-dcc.database.dbSchemaInit.image.name|dctm-dcc.database.dbSchemaInit.image.tag
+        label: Documentum Connector for Core Share
+        show: true
+        enable: []
+  - label: Extensibilty and APIs
+    components:
+      - component: dctm-rest
+        imageDetail:
+          - dctm-rest|dctm-rest.restInitContainers.imageName|dctm-rest.restInitContainers.imageTag
+        label: Foundation REST API
+        show: true
+        enable: []
+      - component: dfs
+        imageDetail:
+          - dfs|dfs.containers.initcontainer.image.name|dfs.containers.initcontainer.image.tag
+        label: Foundation SOAP API
+        show: true
+        enable: []
+      - component: dctm-cmis
+        subComponent:
+          - Foundation CMIS API|dctm-cmis.cmisInitContainers.image.name|dctm-cmis.cmisInitContainers.image.tag
+        label: Foundation CMIS API
+        show: true
+        enable: []
+  - label: Client
+    components:
+      - component: d2classic
+        imageDetail:
+          - d2classic|d2classic.extensionImage.name|d2classic.extensionImage.tag
+        initContainer:
+          - Reports in Client|dctm-reports-client|d2classic.extraInitContainers
+          - DCME Installer|dcme-installer-init|d2classic.extraInitContainers
+          - LSS D2Classic Installer|lsd2installerinit|d2classic.extraInitContainers
+          - LSS HFX Init Container|hfxinitcontainer|d2classic.extraInitContainers
+        label: Classic View
+        show: true
+        enable: []
+      - component: d2smartview
+        imageDetail:
+          - d2smartview|d2smartview.extensionImage.name|d2smartview.extensionImage.tag
+        initContainer:
+          - DCME Installer|dcme-installer-init|d2smartview.extraInitContainers
+          - LSS D2SV Installer|lsd2svinstaller|d2smartview.extraInitContainers
+          - LSS HFX Init Container|hfxinitcontainer|d2smartview.extraInitContainers
+        label: Smart View
+        show: true
+        enable: []
+      - component: d2config
+        imageDetail:
+          - d2config|d2config.extensionImage.name|d2config.extensionImage.tag
+        initContainer:
+          - Reports in Client |dctm-reports-client|d2config.extraInitContainers
+          - DCME Installer|dcme-installer-init|d2config.extraInitContainers
+          - LSS D2Config Installer|lsd2configinstaller|d2config.extraInitContainers
+          - LSS HFX Init Container|hfxinitcontainer|d2config.extraInitContainers
+        label: Client Configuration
+        show: true
+        enable: []
+      - component: d2rest
+        imageDetail:
+          - d2rest|d2rest.extensionImage.name|d2rest.extensionImage.tag
+        initContainer:
+          - Smart View M365 Custom JAR|dctm-smartviewm365customjar|d2rest.extraInitContainers
+          - LSS D2Rest Installer|lsd2restinstaller|d2rest.extraInitContainers
+          - LSS HFX Init Container|hfxinitcontainer|d2rest.extraInitContainers
+        label: Client REST API
+        show: true
+        enable: []
+      - component: adminconsole
+        imageDetail:
+          - adminconsole|adminconsole.extensionImage.name|adminconsole.extensionImage.tag
+        label: Admin Console
+        show: true
+        enable: []
+      - component: appworks-gateway
+        imageDetail:
+          - appworks-gateway-global||appworks-gateway.global.imageTag
+        subComponent:
+          - Image|appworks-gateway.image.repository|
+          - Init Container|appworks-gateway.image.awgInitContainer.repository|
+          - Apps Init Container|appworks-gateway.image.appsInitContainer.repository|appworks-gateway.image.appsInitContainer.tag
+        label: AppWorks Gateway
+        show: true
+        enable: []
+  - label: Workflow
+    components:
+      - component: dctm-workflow-designer
+        imageDetail:
+          - dctm-workflow-designer|dctm-workflow-designer.image.name|dctm-workflow-designer.image.tag
+        initContainer:
+          - DCME Installer Init|dcme-installer-init|dctm-workflow-designer.extraInitContainers
+          - LSS WFD Installer|lswfdinstallerinit|dctm-workflow-designer.extraInitContainers
+        label: Workflow Designer
+        show: true
+        enable: []
+      - component: bps
+        imageDetail:
+          - bps|bps.image.name|bps.image.tag
+        label: Business Process Services
+        show: true
+        enable: []
+      - component: xda
+        imageDetail:
+          - xda|xda.image.name|xda.image.tag
+        label: xCP Deployment Agent
+        show: true
+        enable: []
+  - label: Search
+    components:
+      - component: xPlore-OneD
+        subComponent:
+          - Index Server|xPlore-OneD.image.indexserver.name|xPlore-OneD.image.indexserver.tag
+          - Index Agent|xPlore-OneD.image.indexagent.name|xPlore-OneD.image.indexagent.tag
+          - CPS|xPlore-OneD.image.cps.name|xPlore-OneD.image.cps.tag
+          - Fetcher|xPlore-OneD.dcis-text-extractor.fetcher.image.name|xPlore-OneD.dcis-text-extractor.fetcher.image.tag
+          - Parser|xPlore-OneD.dcis-text-extractor.parser.image.name|xPlore-OneD.dcis-text-extractor.parser.image.tag
+        label: Documentum xPlore
+        show: true
+        enable: []
+  - label: Add-On
+    components:
+      - component: ao-installer
+        label: DCM for Engineering
+        show: true
+        enable: []
+      - component: lss
+        subComponent:
+          - LSS Controlled Print|lss.ls-print.extensionImage.name|lss.ls-print.extensionImage.tag
+          - SFTP|lss.ls-sftp.image.name|lss.ls-sftp.image.tag
+        label: DCM for Life Sciences
+        show: true
+        enable: []
+      - component: dctm-dcis
+        imageDetail:
+          - dctm-dcis|dctm-dcis.image.name|dctm-dcis.image.tag
+        label: Content Aviator
+        show: true
+        enable: []
+      - component: sapconnector-init
+        imageDetail:
+        label: DAR Installation for SAP Connectors
+        show: true
+        enable: []
+      - component: dctm-assap
+        imageDetail:
+          - dctm-assap|dctm-assap.images.assap.name|dctm-assap.images.assap.tag
+        label: Documentum Archive Services for SAP Solutions
+        show: true
+        enable: []
+      - component: dctm-assap-ilm
+        imageDetail:
+          - dctm-assap-ilm|dctm-assap-ilm.images.assapilm.name|dctm-assap-ilm.images.assapilm.tag
+        label: Documentum Archive Services for SAP ILM Solutions
+        show: true
+        enable: []
+      - component: dctm-cssap
+        imageDetail:
+          - dctm-cssap|dctm-cssap.images.cssap.name|dctm-cssap.images.cssap.tag
+        label: Documentum Content Services for SAP Solutions
+        show: true
+        enable: []
+
+global:
+  - dockerimages-values|global.repository: input|Repository Path|M|col-4
+  - dockerimages-values|global.appserverImageName: input|Application Server Image Name|M|col-4
+  - dockerimages-values|global.appserverImageTag: input|Application Server Image Tag|M|col-4
+  - dockerimages-values|global.pullPolicyType: select(IfNotPresent,Always)|Pull Policy Type|M|col-4
+  - dockerimages-values|global.fluentdImage: input|Fluentd Image Tag|O|col-4
+  - dockerimages-values|global.zkStatusImage: input|ZooKeeper Image|M|col-4

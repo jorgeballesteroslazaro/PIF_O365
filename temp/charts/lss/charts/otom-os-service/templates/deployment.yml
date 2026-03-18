@@ -1,0 +1,861 @@
+{{- if eq .Values.services.osprimary "true" }} 
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-{{ .Values.global.namespace }}-{{ .Values.components.oshaproxy }}
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    app: {{ .Release.Name }}-{{ .Values.global.namespace }}-{{ .Values.components.oshaproxy }}
+spec:
+  replicas: {{ .Values.replicaCount.oshaproxy }}
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-{{ .Values.global.namespace }}-{{ .Values.components.oshaproxy }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-{{ .Values.global.namespace }}-{{ .Values.components.oshaproxy }}
+    spec:      
+      hostname: {{ .Values.components.oshaproxy }}
+      imagePullSecrets:
+      - name: {{ .Values.global.imagePullSecrets }}   
+      volumes:
+        - name: haproxy-config
+          configMap:
+             name: {{ .Release.Name }}-{{ .Values.global.namespace }}-{{ .Values.components.oshaproxy }}-configmap
+      containers:
+      - name: {{ .Values.components.oshaproxy }}
+        image: {{ .Values.global.artifactorypath }}otoscehaproxy:{{ .Values.tags.oshaproxy }}
+        envFrom:
+          - configMapRef:
+             name: {{ .Release.Name }}-{{ .Values.global.namespace }}-{{ .Values.components.oshaproxy }}-env
+        imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+        resources:
+          requests:
+            memory: {{ .Values.memory.oshaproxy }}
+            cpu: {{ .Values.cpu.oshaproxy }}        
+        volumeMounts:
+           - name: haproxy-config
+             mountPath: /usr/local/etc/haproxy
+             readOnly: true
+        ports:
+        - containerPort: {{ .Values.ingress.ostcpport }}
+        readinessProbe:
+          tcpSocket:
+             port: {{ .Values.ingress.oshttpport }}
+          initialDelaySeconds: {{ .Values.readinessProbe.oshaproxy.initialDelaySeconds }}
+          periodSeconds: {{ .Values.readinessProbe.oshaproxy.periodSeconds }}
+        livenessProbe:
+          tcpSocket:
+            port: {{ .Values.ingress.oshttpport }}
+          initialDelaySeconds: {{ .Values.livenessProbe.oshaproxy.initialDelaySeconds }}
+          periodSeconds: {{ .Values.livenessProbe.oshaproxy.periodSeconds }}
+ 
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ .Release.Name }}-{{ .Values.global.namespace }}-{{ .Values.components.osprimary }}
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    app: {{ .Release.Name }}-{{ .Values.global.namespace }}-{{ .Values.components.osprimary }}
+spec:
+  replicas: {{ .Values.replicaCount.osprimary }}
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-{{ .Values.global.namespace }}-{{ .Values.components.osprimary }}
+  volumeClaimTemplates:
+  - metadata:
+      name: {{ .Release.Name }}-{{ .Values.global.namespace }}-{{ .Values.components.osprimary }}-nfs-pvc
+    spec:
+      accessModes: [ "ReadWriteMany" ]
+      {{- if eq .Values.services.pv "true" }}  
+      storageClassName: {{ .Values.global.storageclass }}-osprimary
+      {{- end }}
+      {{- if eq .Values.services.pv "false" }}  
+      storageClassName: {{ .Values.global.storageclass }}
+      {{- end }}        
+      resources:
+        requests:
+          storage: {{ .Values.storage.osprimary }}
+  serviceName: {{ .Release.Name }}-{{ .Values.global.namespace }}-{{ .Values.components.osprimary }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-{{ .Values.global.namespace }}-{{ .Values.components.osprimary }}
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1005
+        runAsGroup: 1005
+        fsGroup: 1005      
+      hostname: {{ .Values.components.osprimary }} 
+      imagePullSecrets:
+      - name: {{ .Values.global.imagePullSecrets }}   
+      hostAliases:
+      {{- if eq .Values.envvariables.osprimary.CONFIGURE_SAP_OMSCB "1" }}
+      - ip: {{ .Values.envvariables.osprimary.SAP_GWHOST_IP_ADDRESS }}
+        hostnames:
+        - {{ .Values.envvariables.osprimary.SAP_GWHOST_NAME }}
+      - ip: {{ .Values.envvariables.osprimary.SAP_ASHOST_IP_ADDRESS }}
+        hostnames:
+        - {{ .Values.envvariables.osprimary.SAP_ASHOST_NAME }} 
+      {{- end }}    
+      - ip: "127.0.0.1"
+        hostnames:
+        - "local"
+        - "localhost.localdomain"
+        - "{{ .Values.components.osprimary }}"
+      volumes:
+       {{- if eq .Values.services.pvc "true" }}
+       #- name: otos
+         #persistentVolumeClaim:
+          #claimName: {{ .Release.Name }}-{{ .Values.global.namespace }}-{{ .Values.components.osprimary }}-nfs-pvc
+       {{- if eq .Values.services.graylog "true" }}   
+       - name: {{ .Release.Name }}-{{ .Values.global.namespace }}-{{ .Values.components.osprimary }}-cache-volume
+         emptyDir: {}
+       {{- end}} 
+       {{- end}}    
+        {{- if eq .Values.envvariables.osprimary.ENABLE_INTERNATIONAL_PRINTING "1" }}        
+       - name: ipconfig
+         configMap:
+          name: {{ .Release.Name }}-{{ .Values.global.namespace }}-{{ .Values.components.osprimary }}-ip-configmap
+        {{- end}}  
+       {{- if eq .Values.envvariables.osprimary.CONFIGURE_SAP_OMSCB "1" }}   
+       - name: sapconfig
+         configMap:
+          name: {{ .Release.Name }}-{{ .Values.global.namespace }}-{{ .Values.components.osprimary }}-sap-configmap   
+       {{- end}}  
+       {{- if or (eq .Values.otdsparameters.automate_otds "1") (eq .Values.otdsparameters.automate_otds "2") }}    
+       - name: licenseconfig
+         configMap:
+          name: {{ .Release.Name }}-{{ .Values.global.namespace }}-{{ .Values.components.osprimary }}-licensefile-configmap  
+       {{- end}}        
+       {{- if eq .Values.osdatabaseparameters.DB_CONNECT_IDENTIFIER "TNS" }}
+       - name: tnsnamesconfig
+         configMap:
+          name: {{ .Release.Name }}-{{ .Values.global.namespace }}-{{ .Values.components.osprimary }}-tnsnames-configmap
+       {{- end}}
+      terminationGracePeriodSeconds: {{ .Values.global.graceperiodinseconds }}
+      containers:
+      - securityContext:
+          runAsNonRoot: true
+          runAsUser: 1005
+          runAsGroup: 1005
+        imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+        resources:
+          requests:
+            memory: {{ .Values.memory.osprimary }}
+            cpu: {{ .Values.cpu.osprimary }}        
+        volumeMounts:
+         {{- if eq .Values.services.pvc "true" }}
+          - name: {{ .Release.Name }}-{{ .Values.global.namespace }}-{{ .Values.components.osprimary }}-nfs-pvc
+            mountPath: /opt/om/otos/instance
+         {{- end}}  
+          {{- if eq .Values.envvariables.osprimary.ENABLE_INTERNATIONAL_PRINTING "1" }}
+          - name: ipconfig
+            mountPath: /opt/om/external/ip
+            readOnly: true
+          {{- end}}  
+          {{- if eq .Values.envvariables.osprimary.CONFIGURE_SAP_OMSCB "1" }}  
+          - name: sapconfig
+            mountPath: /opt/om/external/sap
+            readOnly: true
+          {{- end}}  
+          {{- if or (eq .Values.otdsparameters.automate_otds "1") (eq .Values.otdsparameters.automate_otds "2") }}  
+          - name: licenseconfig
+            mountPath: /opt/om/external/license
+            readOnly: true
+          {{- end}}           
+	  {{- if and (eq .Values.osdatabaseparameters.DATABASETYPE "3") (eq .Values.osdatabaseparameters.DB_CONNECT_IDENTIFIER "TNS") }}
+          - name: tnsnamesconfig
+            mountPath: /opt/om/external/osdb
+            readOnly: true
+          {{- end}}
+         # Primary container Host Name 
+         # Example : OSPrimary    
+        name: {{ .Values.components.osprimary }}
+        image: {{ .Values.global.artifactorypath }}otosce:{{ .Values.tags.osprimary }}
+        envFrom:
+          - secretRef:
+             name: {{ .Release.Name }}-{{ .Values.global.namespace }}-{{ .Values.components.otds }}-secret
+          - secretRef:
+             name: {{ .Release.Name }}-{{ .Values.global.namespace }}-osdatabase-secret          
+          - secretRef:
+             name: {{ .Release.Name }}-{{ .Values.global.namespace }}-ossecretmanager-secret
+          - configMapRef:
+             name: {{ .Release.Name }}-{{ .Values.global.namespace }}-{{ .Values.components.otds }}-env
+          - configMapRef:
+             name: {{ .Release.Name }}-{{ .Values.global.namespace }}-ossecretmanager-env
+          - configMapRef:
+             name: {{ .Release.Name }}-{{ .Values.global.namespace }}-osdbparameters-env
+          - configMapRef:
+             name: {{ .Release.Name }}-{{ .Values.global.namespace }}-osprimarycommonparameter-env
+        env:
+            # you can update OTDS User Password
+            # Example : password           
+          #- name: OTDS_PASSWORD
+            #valueFrom:
+              #secretKeyRef:
+                #name: {{ .Release.Name }}-{{ .Values.global.namespace }}-{{ .Values.components.otds }}-secret
+                #key: OTDS_PASSWORD                
+            # you can update OTDS OAUTH CLIENT SECRET
+            # Example :   
+                      
+	  {{- if eq .Values.secretmanager.secret_manager_enabled "0" }}
+          - name: OTDS_OAUTH_CLIENT_SECRET
+            {{- if and (eq .Values.secretmanager.secret_manager_enabled "0") (or (eq .Values.otdsparameters.automate_otds "0") (eq .Values.otdsparameters.automate_otds "1")) }}
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Release.Name }}-{{ .Values.global.namespace }}-{{ .Values.components.osprimary }}-otds-oauth-client-secret
+                key: OTDS_OAUTH_CLIENT_SECRET
+            {{- end }} 
+            {{- if or (eq .Values.otdsparameters.automate_otds "2") (eq .Values.secretmanager.secret_manager_enabled "1") }}
+            value: "default"
+            {{- end }}            
+          {{- end}}
+            # Database Port
+          - name: DATABASE_SERVER_PORT
+            value: "{{ .Values.osdatabaseparameters.LOGIN_DB_PORT }}"
+            # Enter the password for the database.
+            # Example : otom10
+          #- name: DATABASE_SERVER_PASSWORD
+            #valueFrom:
+              #secretKeyRef:
+                #name: {{ .Release.Name }}-{{ .Values.global.namespace }}-osdatabase-secret
+                #key: DATABASE_SERVER_PASSWORD
+            ############################ GENERIC CONFIGURATION##########################################
+            # Below Mentioned Environment Variables belongs to OS Primary Containers
+            # To Enable Primary Container 
+            # Example : 1 or 0
+          - name: OPERATION
+            valueFrom:
+               configMapKeyRef:
+                  name: {{ .Release.Name }}-{{ .Values.global.namespace }}-helm-hook
+                  key: OPERATION
+          - name: SANITY_TEST
+            value: "{{ .Values.global.sanitytest }}"                  
+          - name: SANITY_TEST
+            value: "{{ .Values.global.sanitytest }}"
+          - name: ENABLE_PRIMARY_CONTAINER
+            value: "1"
+            # Service Name of Pod
+            # Example : otom-services-om-osprimary  
+          - name: OTOM_SERVICE_NAME
+            value: {{ .Release.Name }}-{{ .Values.global.namespace }}-{{ .Values.components.osprimary }}            
+            # Host Name of Container
+            # Example : OSPrimary  
+          - name: HOST_NAME
+            value: {{ .Release.Name }}-{{ .Values.global.namespace }}-{{ .Values.components.osprimary }}-0            
+            # It enables server to start in particular range
+            # Example : 20000-20500
+          - name: STRICT_RESOURCE_CHECK
+            value: {{ .Values.envvariables.osprimary.STRICT_RESOURCE_CHECK | quote }}
+          - name: WEB_SERVER_COUNT
+            value: {{ .Values.envvariables.osprimary.WEB_SERVER_COUNT | quote  }}
+          - name: WSGW_COUNT
+            value: {{ .Values.envvariables.osprimary.WSGW_COUNT | quote  }}
+          - name: ODMAN_COUNT
+            value: {{ .Values.envvariables.osprimary.ODMAN_COUNT | quote  }}
+          - name: RESTGW_COUNT
+            value: {{ .Values.envvariables.osprimary.RESTGW_COUNT | quote  }}
+          - name: SASVC_COUNT
+            value: {{ .Values.envvariables.osprimary.SASVC_COUNT | quote  }}
+          - name: SAWEB_COUNT
+            value: {{ .Values.envvariables.osprimary.SAWEB_COUNT | quote  }}
+          - name: SAOXPD_COUNT
+            value: {{ .Values.envvariables.osprimary.SAOXPD_COUNT | quote  }}
+          - name: SARICOH_COUNT
+            value: {{ .Values.envvariables.osprimary.SARICOH_COUNT | quote }}
+          - name: IPP_COUNT
+            value: {{ .Values.envvariables.osprimary.IPP_COUNT | quote  }}
+          - name: SAKYOCERA_COUNT
+            value: {{ .Values.envvariables.osprimary.SAKYOCERA_COUNT | quote  }}
+          - name: SAPSCPSGW_COUNT
+            value: {{ .Values.envvariables.osprimary.SAPSCPSGW_COUNT | quote  }}
+          - name: DAZEL_PORTS
+            value: {{ .Values.envvariables.osprimary.DAZEL_PORTS | quote }}
+            # It enables clients to start in particular range
+            # DAZEL_CLIENT_PORTS is needed for em server
+            # Select the number of ports based on number of em subscriptions
+            # Example : 30000-30500
+          - name: DAZEL_CLIENT_PORTS
+            value: {{ .Values.envvariables.osprimary.DAZEL_CLIENT_PORTS | quote }}
+          - name: SERVICES_PORT_RANGE
+            value: {{ .Values.envvariables.osprimary.SERVICES_PORT_RANGE | quote }}
+          - name: JVM_MAX_HEAP
+            value: {{ .Values.envvariables.osprimary.JVM_MAX_HEAP | quote }}
+          - name: JVM_MIN_HEAP
+            value: {{ .Values.envvariables.osprimary.JVM_MIN_HEAP | quote }}
+
+            ############################ WEB SERVICE APPLICATION SERVER ######################################
+            # If you want to configure web server
+            # Example : 1 or 0
+          - name: CONFIGURE_WEB_SERVICES
+            value: "1"
+            # Enter web service port number
+            # HTTPS_PORT=HTTP_PORT+1
+            # Example : 9001
+          - name: APPLICATION_SERVER_PORT
+            value: "9001"
+            # Enter web service port number
+            # Example : 9001
+          - name: APPLICATION_SERVICE_PORT
+            value: "9001"
+            #Enter Ext Application Server URL
+            #Example: "ws-osdomain-service-dev-om.shared.cfcr-lab.bp-paas.otxlab.net"
+          - name: EXT_APPLICATION_SERVER_URL
+            value: {{ .Release.Name }}.{{ .Values.ingress.ingressdomain}}
+            #Enter Ext Application Server URL
+            #Example: "https://osdomain.om.shared.cfcr-lab.bp-paas.otxlab.net"
+          - name: OTOS_AMQ_EXT_URL
+            value: https://{{ .Release.Name }}.{{ .Values.ingress.ingressdomain }}
+            
+            {{- if eq .Values.envvariables.osprimary.ENABLE_OTOS_DISTRIBUTOR "1" }}            
+            ############################ OUTPUT DISTRIBUTER ############################################
+            # If you want configure to Output Server Distributor
+            # Example : 1 or 0 
+          - name: ENABLE_OTOS_DISTRIBUTOR
+            value: {{ .Values.envvariables.osprimary.ENABLE_OTOS_DISTRIBUTOR | quote }}
+            {{end}}
+              
+            {{- if eq .Values.envvariables.osprimary.WEBSERVER_MEM_BUFFER_SIZE "200" }}
+            ############################ WEBSERVER BUFFER SIZE ########################################
+          - name: WEBSERVER_MEM_BUFFER_SIZE
+            value: {{ .Values.envvariables.osprimary.WEBSERVER_MEM_BUFFER_SIZE | quote }}
+            {{end}}
+    
+            {{- if eq .Values.envvariables.osprimary.ENABLE_INTERNATIONAL_PRINTING "1" }}
+            ############################ INTERNATIONAL PRINTING ########################################
+            # If you want to ENABLE International Printing
+            # Example : 1 or 0
+          - name: ENABLE_INTERNATIONAL_PRINTING
+            value: {{ .Values.envvariables.osprimary.ENABLE_INTERNATIONAL_PRINTING | quote }}
+            # If you want to ENABLE International Printing EOTE
+            # Example : 1 or 0 
+          - name: ENABLE_IP_EOTE
+            value: {{ .Values.envvariables.osprimary.ENABLE_IP_EOTE | quote }}
+            {{end}}
+            
+            {{- if eq .Values.envvariables.osprimary.CONFIGURE_SECURE_ACCESS "1" }}
+            ############################ SECURE ACCESS #################################################
+            # If you want to configure Secure Access
+            # Example : 1 or 0
+          - name: CONFIGURE_SECURE_ACCESS
+            value: {{ .Values.envvariables.osprimary.CONFIGURE_SECURE_ACCESS | quote  }}
+            
+            # If you want to configure CLoud fax service
+            # Example : 1 or 0
+          - name: CONFIGURE_CLOUDFAX_SERVICE
+            value: {{ .Values.envvariables.osprimary.CONFIGURE_CLOUDFAX_SERVICE | quote  }}
+            # Enter Secure Access Solr port number
+            # Example : 4003
+          - name: OTOSSA_SOLR_PORT
+            value: "4003"
+            # Enter Secure Access Solr User Name
+            # Example : solradmin
+          - name: SOLR_USERNAME
+            value: "solradmin"
+            # Enter the password for the database.
+            # Example : otom10
+          - name: SOLR_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Release.Name }}-{{ .Values.global.namespace }}-{{ .Values.components.osprimary }}-solr-secret
+                key: SOLR_PASSWORD            
+            {{end}}
+           
+            {{- if eq .Values.envvariables.osprimary.CONFIGURE_OTOS_ANALYTICS "1" }}
+            ############################ OTOS ANALYTICS #################################################
+            # If you want to configure OTOS Analytics
+            # Example : 1 or 0
+          - name: CONFIGURE_OTOS_ANALYTICS
+            value: {{ .Values.envvariables.osprimary.CONFIGURE_OTOS_ANALYTICS | quote  }}
+            # Enter Secure Access Solr port number
+            # Example : 4003
+          - name: OTOSSA_SOLR_PORT
+            value: "4003"
+            # Enter Secure Access Solr User Name
+            # Example : solradmin
+          - name: SOLR_USERNAME
+            value: "solradmin"
+            # Enter the password for the database.
+            # Example : otom10
+          - name: SOLR_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Release.Name }}-{{ .Values.global.namespace }}-{{ .Values.components.osprimary }}-solr-secret-osa
+                key: SOLR_PASSWORD
+            {{end}}
+
+            
+            {{- if eq .Values.envvariables.osprimary.CONFIGURE_IPP_SERVICE "1" }}
+            ############################ SECURE ACCESS #################################################
+            # If you want to configure IPP Service
+            # Example : 1 or 0
+          - name: CONFIGURE_IPP_SERVICE
+            value: {{ .Values.envvariables.osprimary.CONFIGURE_IPP_SERVICE | quote  }}
+            {{end}}
+
+            
+            {{- if eq .Values.envvariables.osprimary.CONFIGURE_SAP_OMSCB "1" }}
+            ############################ SAP OMS CALLBACK SERVER #######################################
+            # If you want to configure SAP omscb server
+            # Example : 1 or 0
+          - name: CONFIGURE_SAP_OMSCB
+            value: {{ .Values.envvariables.osprimary.CONFIGURE_SAP_OMSCB | quote }}
+            # If you want to configure omscb Message server
+            # Example : 1 or 0 
+          - name: SAP_MESSAGE_SERVER
+            value: {{ .Values.envvariables.osprimary.SAP_MESSAGE_SERVER | quote }}
+            # SAP Host server SID Instance number
+            # Example : mucr3t7c_T7C_00 
+          - name: SAP_INSTANCE
+            value: {{ .Values.envvariables.osprimary.SAP_INSTANCE }}
+            # The ROMS identifies the characteristics of the
+            # external OMS (OpenText Output Server).
+            # Example : RREK 
+          - name: SAP_REAL_OMS
+            value: {{ .Values.envvariables.osprimary.SAP_REAL_OMS }}
+            # User, who has permissions to update the database
+            # with callback messages
+            # Example : OMTEST 
+          - name: SAP_USERNAME
+            value: {{ .Values.envvariables.osprimary.SAP_USERNAME }}            
+            # Specifies the user password.
+            # Example : OT123456 
+          - name: SAP_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Release.Name }}-{{ .Values.global.namespace }}-{{ .Values.components.osprimary }}-omscb-secret
+                key: SAP_PASSWORD
+            # Specifies the client in which the user was created.
+            # Example : 100
+          - name: SAP_CLIENT_NUMBER
+            value: {{ .Values.envvariables.osprimary.SAP_CLIENT_NUMBER | quote }}
+            {{end}}
+           
+            {{- if eq .Values.envvariables.osprimary.CONFIGURE_SCPS "1" }}
+            ############################ SAP SCPS SERVER #######################################
+            # If you want to configure SAP scps server
+            # Example : 1 or 0
+          - name: CONFIGURE_SCPS
+            value: {{ .Values.envvariables.osprimary.CONFIGURE_SCPS | quote }}
+          - name: SCPS_SAP_URL
+            value: {{ .Values.envvariables.osprimary.SCPS_SAP_URL }}
+          - name: SCPS_USER_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Release.Name }}-{{ .Values.global.namespace }}-{{ .Values.components.osprimary }}-scps-secret
+                key: SCPS_USER_PASSWORD
+          - name: SCPS_SAP_USER
+            value: {{ .Values.envvariables.osprimary.SCPS_SAP_USER }}
+            {{end}}  
+         
+            {{- if eq .Values.envvariables.osprimary.CONFIGURE_SAP_SAPCON "1" }}
+            ############################ SAPCON SERVER #################################################
+            # If you want to configure SAP sapcon server
+            # Example : 1 or 0
+          - name: CONFIGURE_SAP_SAPCON
+            value: {{ .Values.envvariables.osprimary.CONFIGURE_SAP_SAPCON | quote }}            
+            # This attribute specifies the RFC destination
+            # Example : RFC_REK
+          - name: SAPCON_SERVER_SID
+            value: {{ .Values.envvariables.osprimary.SAPCON_SERVER_SID }}
+            # If you want to configure e-mail, set this attribute.
+            # Example : lMailFile1
+          - name: SAPCON_LOGICAL_EMAIL_DEST
+            value: {{ .Values.envvariables.osprimary.SAPCON_LOGICAL_EMAIL_DEST }}            
+            # If you want to configure fax, set this attribute.
+            # Example : lFaxFile1
+          - name: SAPCON_LOGICAL_FAX_DEST
+            value: {{ .Values.envvariables.osprimary.SAPCON_LOGICAL_FAX_DEST }}
+            {{end}}
+            
+            {{- if eq .Values.envvariables.osprimary.CONFIGURE_SAP_HPOSMAIL "1" }}
+            ############################ HPOSMAIL SERVER ##############################################
+            # If you want to configure SAP hposmail server
+            # Example : 1 or 0 
+          - name: CONFIGURE_SAP_HPOSMAIL
+            value: {{ .Values.envvariables.osprimary.CONFIGURE_SAP_HPOSMAIL | quote }}
+            # Specify the port on which the HPOSMAIL server listens
+            # for connections
+            # Example : 4004
+          - name: HPOSMAIL_DAEMON_PORT
+            value: "4004"
+            # Specifies the port through which SAP-SMTP receives
+            # the SMTP data (mail) from the HPOSMAIL server.
+            # Example :  
+          - name: HOSMAIL_FILTER_PORT
+            value: "4005"            
+            
+            ############################ SAPSMTP SERVER ################################################
+            # If you want to configure e-mail, set this attribute.
+            # Example : lMailFile2    
+          - name: SAPSMTP_LOGICAL_EMAIL_DEST
+            value: {{ .Values.envvariables.osprimary.SAPSMTP_LOGICAL_EMAIL_DEST }}
+            # If you want to configure fax, set this attribute.
+            # Example : lFaxFile2 
+          - name: SAPSMTP_LOGICAL_FAX_DEST
+            value: {{ .Values.envvariables.osprimary.SAPSMTP_LOGICAL_FAX_DEST }}            
+            {{end}}
+            
+            {{- if eq .Values.envvariables.osprimary.ENABLE_WEB_DELIVERY_AGENT "1" }}
+            ############################ WEB DELIVERY AGENT ############################################
+            # If you want to configure Web Delivery
+            # Example : 1 or 0 
+          - name: ENABLE_WEB_DELIVERY_AGENT
+            value: {{ .Values.envvariables.osprimary.ENABLE_WEB_DELIVERY_AGENT | quote }}
+            # If you want to configure WebDelivery Remote server URL
+            # Example : http://webdelivery:80/otoswd
+          - name: MWREMOTE_SERVER_URL
+            value: {{ .Values.envvariables.osprimary.MWREMOTE_SERVER_URL }}
+            {{end}}
+        lifecycle:
+          preStop:
+            exec:
+              command: ["/bin/sh", "-c", "cd / && ./automation/preStop.sh"]
+        readinessProbe:
+          tcpSocket:
+             port: 3001
+          initialDelaySeconds: {{ .Values.readinessProbe.osprimary.initialDelaySeconds }}
+          periodSeconds: {{ .Values.readinessProbe.osprimary.periodSeconds }}
+        livenessProbe:
+          tcpSocket:
+            port: 3001
+          initialDelaySeconds: {{ .Values.livenessProbe.osprimary.initialDelaySeconds }}
+          periodSeconds: {{ .Values.livenessProbe.osprimary.periodSeconds }}
+      {{- if eq .Values.services.pvc "true" }}   
+      {{- if eq .Values.services.graylog "true" }}    
+      - name: graylog-sidecar
+        image: {{ .Values.global.artifactorypath }}otoscegraylogsidecar:{{ .Values.tags.graylog }}
+        imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+        env:
+        - name: GRAYLOG_HTTP_HTTPS
+          value: {{ .Values.graylogparameters.GRAYLOG_HTTP_HTTPS | quote }}
+        - name: GRAYLOG_SERVER
+          value: {{ .Values.graylogparameters.GRAYLOG_SERVER | quote }}
+        - name: GRAYLOG_PORT
+          value: {{ .Values.graylogparameters.GRAYLOG_PORT | quote }}
+        - name: TAGS
+          value: {{ .Values.graylogparameters.TAGS | quote }}
+        - name: NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        - name: NAMESPACE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        volumeMounts:
+        - name: {{ .Release.Name }}-{{ .Values.global.namespace }}-{{ .Values.components.osprimary }}-nfs-pvc
+          mountPath: /opt/om/otos/instance
+        - name: {{ .Release.Name }}-{{ .Values.global.namespace }}-{{ .Values.components.osprimary }}-cache-volume
+          mountPath: /var/cache/graylog
+      {{- end}}
+      {{- end}}
+{{- end }}
+
+{{- if eq .Values.services.osscale "true" }}
+---
+
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ .Release.Name }}-{{ .Values.global.namespace }}-{{ .Values.components.osscale }}
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    app: {{ .Release.Name }}-{{ .Values.global.namespace }}-{{ .Values.components.osscale }}
+spec:
+    replicas: {{ .Values.replicaCount.osscale }}
+    selector:
+      matchLabels:
+        app: {{ .Release.Name }}-{{ .Values.global.namespace }}-{{ .Values.components.osscale }}
+    volumeClaimTemplates:
+    - metadata:
+        name: {{ .Release.Name }}-{{ .Values.global.namespace }}-{{ .Values.components.osscale }}-nfs-pvc      
+      spec:
+        accessModes: [ "ReadWriteMany" ]
+        {{- if eq .Values.services.pv "true" }}  
+        storageClassName: {{ .Values.global.storageclass }}-osscale
+        {{- end }}
+        {{- if eq .Values.services.pv "false" }}  
+        storageClassName: {{ .Values.global.storageclass }}
+        {{- end }}        
+        resources:
+          requests:
+            storage: {{ .Values.storage.osscale }}  
+    serviceName: {{ .Release.Name }}-{{ .Values.global.namespace }}-{{ .Values.components.osscale }}
+    template:
+      metadata:
+        labels:
+          app: {{ .Release.Name }}-{{ .Values.global.namespace }}-{{ .Values.components.osscale }}
+      spec:
+        hostname: {{ .Values.components.osscale }}
+        imagePullSecrets:
+        - name: {{ .Values.global.imagePullSecrets }} 
+        hostAliases: 
+          - ip: "127.0.0.1"
+            hostnames:
+             - "local"
+             - "localhost.localdomain"
+             - "{{ .Values.components.osscale }}"
+        {{- if eq .Values.services.pvc "true" }}
+        volumes:        
+         #- name: otos
+         #  persistentVolumeClaim:
+         #   claimName: {{ .Release.Name }}-{{ .Values.global.namespace }}-{{ .Values.components.osscale }}-nfs-pvc
+        {{- if eq .Values.services.graylog "true" }}      
+         - name: {{ .Release.Name }}-{{ .Values.global.namespace }}-{{ .Values.components.osscale }}-cache-volume
+           emptyDir: {} 
+        {{- end}}             
+        {{- end}} 
+        terminationGracePeriodSeconds: {{ .Values.global.graceperiodinseconds }}
+        containers:
+        - name: {{ .Values.components.osscale }}
+          {{- if eq .Values.services.pvc "true" }}
+          volumeMounts:
+           - name: {{ .Release.Name }}-{{ .Values.global.namespace }}-{{ .Values.components.osscale }}-nfs-pvc
+             mountPath: /opt/om/otos/instance
+          {{- end}}          
+          image: {{ .Values.global.artifactorypath }}otosce:{{ .Values.tags.osscale }}
+          imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          resources:
+            requests:
+              memory: {{ .Values.memory.osscale }}
+              cpu: {{ .Values.cpu.osscale }}          
+          envFrom:
+            - secretRef:
+                name: {{ .Release.Name }}-{{ .Values.global.namespace }}-osdatabase-secret           
+            - secretRef:
+                name: {{ .Release.Name }}-{{ .Values.global.namespace }}-ossecretmanager-secret
+            - configMapRef:
+               name: {{ .Release.Name }}-{{ .Values.global.namespace }}-osdbparameters-env
+            - configMapRef:
+               name: {{ .Release.Name }}-{{ .Values.global.namespace }}-ossecretmanager-env
+            - configMapRef:
+               name: {{ .Release.Name }}-{{ .Values.global.namespace }}-oscommonparameter-env
+            - configMapRef:
+               name: {{ .Release.Name }}-{{ .Values.global.namespace }}-{{ .Values.components.otds }}-env               
+          env:
+            # you can update OTDS User Password
+            # Example : password   
+            - name: OPERATION
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ .Release.Name }}-{{ .Values.global.namespace }}-helm-hook
+                  key: OPERATION
+            #- name: OTDS_PASSWORD
+            #  valueFrom:
+            #    secretKeyRef:
+            #      name: {{ .Release.Name }}-{{ .Values.global.namespace }}-{{ .Values.components.otds }}-secret
+            #      key: OTDS_PASSWORD      
+            {{- if eq .Values.secretmanager.secret_manager_enabled "0" }}   
+            - name: OTDS_OAUTH_CLIENT_SECRET
+              {{- if or (eq .Values.otdsparameters.automate_otds "0") (eq .Values.otdsparameters.automate_otds "1") }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-{{ .Values.global.namespace }}-{{ .Values.components.osprimary }}-otds-oauth-client-secret
+                  key: OTDS_OAUTH_CLIENT_SECRET
+              {{- end }} 
+              {{- if eq .Values.otdsparameters.automate_otds "2" }}
+              value: "default"
+              {{- end }}
+            {{- end }}
+            - name: DATABASE_SERVER_PORT
+              value: "{{ .Values.osdatabaseparameters.LOGIN_DB_PORT }}"                
+            #- name: DATABASE_SERVER_PASSWORD
+              #valueFrom:
+               #secretKeyRef:
+                #name: {{ .Release.Name }}-{{ .Values.global.namespace }}-osdatabase-secret
+                #key: DATABASE_SERVER_PASSWORD
+            - name: ENABLE_SCALE_CONTAINER
+              value: "1"
+            - name: HOST_NAME
+              value: {{ .Release.Name }}-{{ .Values.global.namespace }}-{{ .Values.components.osscale }}-0
+            # Service Name of Pod
+            # Example : otom-services-om-osprimary  
+            - name: OTOM_SERVICE_NAME
+              value: {{ .Release.Name }}-{{ .Values.global.namespace }}-{{ .Values.components.osscale }}              
+              # Enter web service port number           
+              # Example : 9001
+            - name: APPLICATION_SERVICE_PORT
+              value: "9001"  
+            # Enter Secure Access Solr port number
+            # Example : 4003
+            - name: OTOSSA_SOLR_PORT
+              value: "4003"              
+            - name: DLM_SERVER_COUNT
+              value: {{ .Values.envvariables.osscale.DLM_SERVER_COUNT  | quote }}
+            - name: DLM_SERVER_NAMES
+              value: {{ .Values.envvariables.osscale.DLM_SERVER_NAMES }}
+            - name: DSM_SERVER_COUNT
+              value: {{ .Values.envvariables.osscale.DSM_SERVER_COUNT | quote  }}
+            - name: DSM_SERVER_NAMES
+              value: {{ .Values.envvariables.osscale.DSM_SERVER_NAMES }}
+            - name: DAZEL_PORTS
+              value: {{ .Values.envvariables.osscale.DAZEL_PORTS | quote  }}
+            - name: DAZEL_CLIENT_PORTS
+              value: {{ .Values.envvariables.osscale.DAZEL_CLIENT_PORTS | quote  }}
+          lifecycle:
+            preStop:
+              exec:
+                command: ["/bin/sh", "-c", "cd / && ./automation/preStop.sh"]              
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1005
+            runAsGroup: 1005
+          readinessProbe:
+            tcpSocket:
+              port: 3001
+            initialDelaySeconds: {{ .Values.readinessProbe.osscale.initialDelaySeconds }}
+            periodSeconds: {{ .Values.readinessProbe.osscale.periodSeconds }}
+          livenessProbe:
+            tcpSocket:
+              port: 3001
+            initialDelaySeconds: {{ .Values.livenessProbe.osscale.initialDelaySeconds }}
+            periodSeconds: {{ .Values.livenessProbe.osscale.periodSeconds }}            
+        {{- if eq .Values.services.pvc "true" }}   
+        {{- if eq .Values.services.graylog "true" }}      
+        - name: graylog-sidecar
+          image: {{ .Values.global.artifactorypath }}otoscegraylogsidecar:{{ .Values.tags.graylog }}
+          imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          env:
+          - name: GRAYLOG_HTTP_HTTPS
+            value: {{ .Values.graylogparameters.GRAYLOG_HTTP_HTTPS | quote }}
+          - name: GRAYLOG_SERVER
+            value: {{ .Values.graylogparameters.GRAYLOG_SERVER | quote }}
+          - name: GRAYLOG_PORT
+            value: {{ .Values.graylogparameters.GRAYLOG_PORT | quote }}
+          - name: TAGS
+            value: {{ .Values.graylogparameters.TAGS | quote }}
+          - name: NODE_NAME
+            valueFrom:
+              fieldRef:
+               fieldPath: spec.nodeName
+          - name: NAMESPACE_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.namespace
+          - name: POD_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.name
+          volumeMounts:
+            - name: {{ .Release.Name }}-{{ .Values.global.namespace }}-{{ .Values.components.osscale }}-nfs-pvc
+              mountPath: /opt/om/otos/instance
+            - name: {{ .Release.Name }}-{{ .Values.global.namespace }}-{{ .Values.components.osscale }}-cache-volume
+              mountPath: /var/cache/graylog 
+        {{- end}}
+        {{- end}}        
+{{- end }}
+
+{{- if eq .Values.services.osclient "true" }}
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-{{ .Values.global.namespace }}-{{ .Values.components.osclient }}
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    app: {{ .Release.Name }}-{{ .Values.global.namespace }}-{{ .Values.components.osclient }}
+spec:
+  replicas: {{ .Values.replicaCount.osclient }}
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-{{ .Values.global.namespace }}-{{ .Values.components.osclient }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-{{ .Values.global.namespace }}-{{ .Values.components.osclient }}
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1005
+        runAsGroup: 1005
+        fsGroup: 1005
+      hostname: {{ .Values.components.osclient }}
+      imagePullSecrets:
+      - name: {{ .Values.global.imagePullSecrets }} 
+      hostAliases: 
+      - ip: "127.0.0.1"
+        hostnames:
+        - "local"
+        - "localhost.localdomain"
+        - "{{ .Values.components.osclient }}"
+      containers:
+      - securityContext:
+          runAsNonRoot: true
+          runAsUser: 1005
+          runAsGroup: 1005        
+         # Primary container Host Name 
+         # Example : osclient    
+        name: {{ .Values.components.osclient }}
+        image: {{ .Values.global.artifactorypath }}otoscecli:{{ .Values.tags.osclient }}
+        imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+        resources:
+          requests:
+            memory: {{ .Values.memory.osclient }}
+            cpu: {{ .Values.cpu.osclient }}        
+        envFrom:
+          - secretRef:
+             name: {{ .Release.Name }}-{{ .Values.global.namespace }}-osdatabase-secret        
+          - configMapRef:
+             name: {{ .Release.Name }}-{{ .Values.global.namespace }}-osdbparameters-env
+          - configMapRef:
+             name: {{ .Release.Name }}-{{ .Values.global.namespace }}-oscommonparameter-env
+        env:
+          - name: OPERATION
+            valueFrom:
+                configMapKeyRef:
+                   name: {{ .Release.Name }}-{{ .Values.global.namespace }}-helm-hook
+                   key: OPERATION
+          - name: DATABASE_SERVER_PORT 
+            value: "{{ .Values.osdatabaseparameters.LOGIN_DB_PORT }}"
+            # Enter the password for the database.
+            # Example : otom10
+          #- name: DATABASE_SERVER_PASSWORD
+            #valueFrom:
+              #secretKeyRef:
+                #name: {{ .Release.Name }}-{{ .Values.global.namespace }}-osdatabase-secret
+                #key: DATABASE_SERVER_PASSWORD
+            
+            ############################ GENERIC CONFIGURATION##########################################
+            # Below Mentioned Environment Variables belongs to OS Primary Containers
+            # To Enable Primary Container 
+            # Example : 1 or 0
+          - name: ENABLE_CLIENT_CONTAINER
+            value: "1"
+            # Host Name of Container
+            # Example : OSClient  
+          - name: HOST_NAME
+            value: "{{ .Values.components.osclient }}"
+            # DAZEL_PORTS is needed for Dazel EPOD Client
+            # Select the number os port based on number of EPOD Clients
+            # Example : 20000-20010
+          - name: DAZEL_PORTS
+            value: {{ .Values.envvariables.osclient.DAZEL_PORTS  | quote }}
+            # It enables clients to start in particular range
+            # DAZEL_CLIENT_PORTS is needed for em server
+            # Select the number of ports based on number of em subscriptions
+            # Example : 30000-32000
+          - name: DAZEL_CLIENT_PORTS
+            value: {{ .Values.envvariables.osclient.DAZEL_CLIENT_PORTS  | quote }}
+        readinessProbe:
+          tcpSocket:
+            port: 3001
+          initialDelaySeconds: {{ .Values.readinessProbe.osclient.initialDelaySeconds }}
+          periodSeconds: {{ .Values.readinessProbe.osclient.periodSeconds }}
+        livenessProbe:
+          tcpSocket:
+            port: 3001
+          initialDelaySeconds: {{ .Values.livenessProbe.osclient.initialDelaySeconds }}
+          periodSeconds: {{ .Values.livenessProbe.osclient.periodSeconds }}
+{{- end }}

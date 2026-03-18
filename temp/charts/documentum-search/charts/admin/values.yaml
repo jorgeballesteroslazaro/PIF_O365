@@ -1,0 +1,98 @@
+# Default values for lunr.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+service:
+  name: ds-admin
+  port: 8800
+  targetPort: 8800
+
+serviceAnnotations: {}
+replicaCount: 1
+
+ingress:
+  enable: true
+  name: dsadmin
+  class: nginx
+  host:
+  clusterDomainName: xplore.cfcr-lab.bp-paas.otxlab.net
+
+image:
+  repository:
+  name: ot-dctm-search-admin
+  tag: latest
+  pullPolicy:
+
+env:
+  SERVER_CONTEXT_PATH: /admin
+  ADMIN_PORT: 8800
+  JAVA_OPTS: -Xms500m -Xmx2250m
+
+ssl:
+  enabled: false
+  secret: admin-secret
+  crt: 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
+  key: cGFzc3dvcmQ
+  protocol: TLS
+  enabledProtocols: TLSv1.3
+  certificateMountPath: /opt/dctm/certificate
+  keyStore:
+  keyStorePassword:
+  keyStoreType:
+  keyAlias: commontls
+  keyPassword:
+zookeeper:
+  clientSecure: true
+  sslProtocol: 'TLSv1.3'
+  sslTrustStoreLocation:
+  sslTrustStorePassword:
+javax:
+  sslTrustStoreLocation: #Solr truststore
+  sslTrustStorePassword: #Solr truststore
+jdk:
+  tlsClientProtocols: 'TLSv1.3'
+livenessProbe:
+  initialDelaySeconds: 60
+  periodSeconds: 30
+
+readinessProbe:
+  initialDelaySeconds: 60
+  periodSeconds: 30
+
+serviceAccount:
+  createserviceaccount: true
+  serviceAccountName: 
+newrelic:
+  enable:
+  app_name: DCTM_ADMIN_APP
+secrets:
+  cs:
+    name:
+otds:
+  otds_enabled:
+  OTDS_AUTH_SVC:
+  OAUTH_CLIENT_ID:
+  OAUTH_CLIENT_SECRET:
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+
+global:
+  zkstatus_image:
+  searchContainerUsername: searchsvc
+  newrelic_proxy_host:
+  newrelic_proxy_port:
+  newrelic_proxy_protocol:
+  newrelic_license_key:
+  pullSecrets:
+  useCertificate: false
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}

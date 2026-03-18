@@ -1,0 +1,17 @@
+{{- if (empty (.Values.persistentVolume.users.createPVC | quote) | ternary .Values.global.createLSSPVC  .Values.persistentVolume.users.createPVC) }} 
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ .Values.persistentVolume.users.pvcName }}
+  namespace: {{ .Values.namespace | default .Release.Namespace }}
+spec:
+  accessModes:
+    - {{ .Values.persistentVolume.users.accessModes }}
+  storageClassName: {{ .Values.persistentVolume.users.storageClass | default .Values.global.rwmStorage }}
+{{ if .Values.persistentVolume.users.pvName }}
+  volumeName: {{ .Values.persistentVolume.users.pvName }}
+{{ end }}
+  resources:
+    requests:
+      storage: {{ .Values.persistentVolume.users.size }}
+{{- end }}

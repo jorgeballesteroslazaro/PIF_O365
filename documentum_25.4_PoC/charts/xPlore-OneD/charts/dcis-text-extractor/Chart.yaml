@@ -1,0 +1,5 @@
+apiVersion: v2
+appVersion: "25.4"
+description: A Dcis Text Extractor Helm chart for Kubernetes
+name: dcis-text-extractor
+version: "25.4"

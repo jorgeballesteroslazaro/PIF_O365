@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: zoo-search-configmap
+  
+data:
+{{- if or .Values.ssl.enabled .Values.global.useCertificate }}
+  zk.host: {{ .Values.service.name }}-headless:{{ .Values.ssl.secureClientPort }}
+  zk.port: {{ .Values.ssl.secureClientPort | quote }}
+{{- else }}
+  zk.host: {{ .Values.service.name }}-headless:{{ .Values.service.ports.client.port }}
+  zk.port: {{ .Values.service.ports.client.port | quote }}
+{{- end }}

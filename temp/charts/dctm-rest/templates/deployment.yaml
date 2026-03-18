@@ -1,0 +1,271 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.serviceName }}
+spec:
+  strategy:
+   type: {{ .Values.strategyType}}
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "dctm-rest.custom-labels" . | indent 6 }}
+  template:
+    metadata:
+        labels:
+          {{- include "dctm-rest.custom-labels" . | indent 10 }}
+    spec:
+      serviceAccountName: {{ default .Values.global.documentumserviceaccount .Values.serviceAccount.serviceAccountName }}
+      initContainers:
+          - name: {{ .Values.restInitContainers.name }}
+            image: {{ default .Values.global.repository .Values.restInitContainers.repository }}/{{ .Values.restInitContainers.imageName }}:{{ .Values.restInitContainers.imageTag }}
+            imagePullPolicy: {{ default .Values.global.pullPolicyType .Values.restInitContainers.imagePullPolicy }}
+            volumeMounts: 
+              {{- if (empty (.Values.rest.useCommonPVC | quote) | ternary .Values.global.tomcatbase_usecommonpvc .Values.rest.useCommonPVC) }}
+              - name: common-volume
+              {{- else  }}
+              - name: custom-script-pvc
+              {{- end }}
+                mountPath: /home/dmadmin/dctmrestextension
+                subPath: dctmrestextension
+
+    {{- if  and (.Values.extraInitContainers) (.Values.custom.useInitContainers) }}
+          - name: {{ .Values.extraInitContainers.name }}
+            image: {{ .Values.extraInitContainers.repository }}/{{ .Values.extraInitContainers.imageName }}:{{ .Values.extraInitContainers.imageTag }}
+            imagePullPolicy: {{ .Values.extraInitContainers.imagePullPolicy }}
+            volumeMounts:
+              - name: custom-script-pvc
+                mountPath: /opt/customscriptpvc
+                subPath: customscriptpvc
+    {{- end }}            
+
+
+{{- if (empty (.Values.image.pullSecrets | quote) | ternary .Values.global.pullSecretName .Values.image.pullSecrets) }}
+      imagePullSecrets:
+        - name: {{ default .Values.global.pullSecretName .Values.image.pullSecrets }}
+{{ end }}    
+      containers:
+          - name: {{ .Values.containerName }}
+            image: {{ default .Values.global.repository .Values.image.repository }}/{{ default .Values.global.appserverImageName .Values.image.name }}:{{ default .Values.global.appserverImageTag .Values.image.tag }}
+            imagePullPolicy: {{ default .Values.global.pullPolicyType .Values.imagePullPolicy }}
+            command: ['bin/sh', '-c', 'mkdir -p /home/dmadmin/restextnscriptfolder/;chmod 755 /home/dmadmin/restextnscriptfolder/;cp /home/dmadmin/dctmrestextension/extensionstartup.sh /home/dmadmin/restextnscriptfolder/;chmod +x /home/dmadmin/restextnscriptfolder/extensionstartup.sh;/home/dmadmin/restextnscriptfolder/extensionstartup.sh {{ quote .Values.java.javaOptions }} {{ .Values.vault.statusCheckRetryCount }} {{ .Values.vault.statusCheckTimeInterval }}']
+            env:
+              {{- if eq (default .Values.global.newrelic .Values.newrelic.enabled | toString) "true" }}
+              - name: NEW_RELIC_AGENT_ENABLED
+                value: {{ quote (default .Values.global.newrelic .Values.newrelic.enabled) }}
+              {{- if or .Values.newrelic.proxy_host .Values.global.newrelicProxyHost }}
+              - name: NEW_RELIC_PROXY_HOST
+                value: {{ quote (default .Values.global.newrelicProxyHost .Values.newrelic.proxy_host) }}
+              {{ end }}
+              {{- if or .Values.newrelic.proxy_port .Values.global.newrelicProxyPort }}
+              - name: NEW_RELIC_PROXY_PORT
+                value: {{ quote (default .Values.global.newrelicProxyPort .Values.newrelic.proxy_port) }}
+              {{ end }}
+              {{- if or .Values.newrelic.proxy_protocol .Values.global.newrelicProxyProtocol }}
+              - name: NEW_RELIC_PROXY_SCHEME
+                value: {{ quote (default .Values.global.newrelicProxyProtocol .Values.newrelic.proxy_protocol) }}
+              {{ end }}
+              {{- if (.Values.content_server.secretName) }}
+              - name: NEW_RELIC_LICENSE_KEY
+                valueFrom:
+                  secretKeyRef:
+                    name: {{ .Values.content_server.secretName }}
+                    key: newrelicLicensekey
+              {{- end }}
+              - name: NEW_RELIC_APP_NAME
+                value: {{ quote .Values.newrelic.app_name }}
+              - name: NEW_RELIC_FILE
+                value: {{ .Values.extraConfigMountPath }}/{{ .Values.newrelic.configurationFile }}
+              {{- if (.Values.newrelic.addNodeNamePrefix) }}
+              - name: NODE_NAME
+                valueFrom:
+                  fieldRef:
+                    fieldPath: spec.nodeName
+              {{- end }}
+              {{- end }}
+              {{- if (empty (.Values.vault.enable | quote) | ternary .Values.global.isVaultEnabled .Values.vault.enable) }}
+              - name: DFC_DSIS_ENABLED
+                value: {{ default .Values.global.isVaultEnabled .Values.vault.enable | quote }}
+              {{- end }}
+              {{- if (.Values.content_server.secretName) }}
+              - name: BOF_REGISTRY_USER_PASSWORD
+                valueFrom:
+                  secretKeyRef:
+                    name: {{ .Values.content_server.secretName }}
+                    key: globalRegistryPassword
+              {{- end }}
+              - name: KUBERNETES
+                value: "true"
+              - name: SERVICE_PORT
+                value: "{{ include "dctm-rest.servicePort" . }}"
+              - name: SINGLE_HELM_ENABLED
+                value: {{ .Values.single_helm.enable | quote }}
+              - name: ACS_HOST
+                value: {{ default .Values.global.jmsServiceName .Values.acsService.serviceName | quote }}
+              - name: ACS_PORT
+                value: {{ default .Values.global.jmsPort .Values.acsService.servicePort | quote }}
+              {{ if eq (empty (.Values.docbroker.useCertificate | quote) | ternary .Values.global.useCertificate .Values.docbroker.useCertificate) true }}
+              - name: DOCBASE_CERTIFICATES
+                value: {{ .Values.docbroker.useCertificate | default .Values.global.useCertificate | default false | quote }}
+              {{ end }}
+              - name: INTERNAL_TLS_ENABLED
+                value: {{ .Values.internalTlsEnable | default .Values.global.internalTlsEnable | default false | quote }}
+              - name: INGRESS_KEYSTORE_PASSWORD
+                valueFrom:
+                  secretKeyRef:
+                    name: {{ .Values.content_server.secretName | default .Values.global.csSecrets }}
+                    key: ingress.keystorepassword
+              - name: DFC_SSL_TRUSTSTORE_PASSWORD
+                valueFrom:
+                  secretKeyRef:
+                    name: {{ .Values.content_server.secretName | default .Values.global.csSecrets }}
+                    key: csCertTrustPassword
+              {{ if eq .Values.log4j.formatMsgNoLookups true }}
+              - name: LOG4J_FORMAT_MSG_NO_LOOKUPS
+                value: "true"
+              {{ end }}
+              - name: USE_CUSTOM_INITCONTAINERS
+                value: {{ .Values.custom.useInitContainers | quote }}
+              {{- if eq .Values.timeZone.enable true }}
+              - name: TZ
+                value: {{ .Values.timeZone.value }}
+              {{- end }}
+            volumeMounts:
+              - name: rest-config-volume
+                mountPath: /home/dmadmin/config
+              {{- if or .Values.newrelic.enabled .Values.global.newrelic }}
+              - name: ext-conf-volume
+                mountPath: {{ .Values.extraConfigMountPath }}
+              {{- end}}
+              {{- if eq (empty (.Values.graylog.enabled | quote) | ternary .Values.global.grayLogEnable .Values.graylog.enabled) true }}
+              - name: shared-logs
+                mountPath: {{ .Values.graylog.logsDir }}
+              {{- end }}
+              {{- if eq (empty (.Values.docbroker.useCertificate | quote) | ternary .Values.global.useCertificate .Values.docbroker.useCertificate) true }}
+              - name: dbr-cert-volume
+                mountPath: /home/dmadmin/dbr-cert
+                subPath: {{ .Values.docbroker.pvcCertSubPath }}
+              {{- end }}         
+              - name: dctm-rest-appserver-xml-volume
+                mountPath: /home/dmadmin/ServerXML
+              - name: dctm-rest-dfc-properties-volume
+                mountPath: /opt/tomcat/webapps/dctm-rest/WEB-INF/classes/dfc.properties
+                subPath: dfc.properties
+              {{- if (empty (.Values.vault.enable | quote) | ternary .Values.global.isVaultEnabled .Values.vault.enable) }}
+              - name: vault-volume
+                mountPath: {{ .Values.vault.vault_config_mount_path }}
+              - name: dsis-binary-volume
+                mountPath: {{ .Values.vault.binary_volume_mount_path }}
+              {{- end }}
+              {{- if (eq .Values.custom.useInitContainers true) }}
+              - name: custom-script-pvc
+                mountPath: /opt/customscriptpvc
+                subPath: customscriptpvc
+              {{- end }}
+              {{- if (empty (.Values.rest.useCommonPVC | quote) | ternary .Values.global.tomcatbase_usecommonpvc .Values.rest.useCommonPVC) }}
+              - name: common-volume
+                mountPath: /home/dmadmin/dctmrestextension
+                subPath: dctmrestextension
+              {{- end }}
+              {{- if or ( eq (empty (.Values.rest.useCommonPVC | quote) | ternary .Values.global.tomcatbase_usecommonpvc .Values.rest.useCommonPVC) false ) 
+                        (and (eq .Values.custom.useInitContainers false) ( eq (empty (.Values.rest.useCommonPVC | quote) | ternary .Values.global.tomcatbase_usecommonpvc .Values.rest.useCommonPVC) false )) }}
+              - name: custom-script-pvc
+                mountPath: /home/dmadmin/dctmrestextension
+                subPath: dctmrestextension
+              {{- end }}
+              {{- if eq .Values.timeZone.enable true }}
+              - name: zoneinfo
+                mountPath: /etc/localtime
+                subPath: {{ .Values.timeZone.value }}
+                readOnly: true
+              {{- end }}
+            resources:
+              requests:
+                memory: {{ .Values.resources.requests.memory | quote }}
+                cpu: {{ .Values.resources.requests.cpu | quote }}
+              limits:
+                memory: {{ .Values.resources.limits.memory | quote }}
+                cpu: {{ .Values.resources.limits.cpu | quote }}
+            readinessProbe:
+              exec:
+                command:
+                    - /bin/bash
+                    - -c
+                    - /home/dmadmin/dctmrestextension/readiness.sh
+              initialDelaySeconds: 200
+              periodSeconds: 15
+              timeoutSeconds: 10
+            {{- if (.Values.livenessProbe.enabled) }}
+            livenessProbe:
+              exec:
+                command:
+                    - /bin/bash
+                    - -c
+                    - home/dmadmin/dctmrestextension/liveness.sh
+              initialDelaySeconds: {{ .Values.livenessProbe.initialDelaySeconds }}
+              periodSeconds: {{ .Values.livenessProbe.periodSeconds }}
+              timeoutSeconds: 10
+            {{- end }}
+      volumes:
+        - name: rest-config-volume
+          projected:
+            sources:
+            - configMap:
+                name: {{ .Values.serviceName }}-configmap
+            - configMap:
+                name: {{ .Values.serviceName }}-logging-configmap
+            - configMap:
+                name: {{ .Values.serviceName }}-rest-api-runtime-properties
+            {{- if ( empty (.Values.existingConfigMap | quote) | ternary .Values.global.dbrConfigmapName .Values.existingConfigMap) }}
+            - configMap:
+                name: {{ default .Values.global.dbrConfigmapName .Values.existingConfigMap }}
+            {{- end }}
+        {{- if eq (empty (.Values.graylog.enabled | quote) | ternary .Values.global.grayLogEnable .Values.graylog.enabled) true }}
+        - name: shared-logs
+          emptyDir: {}
+        {{- end }}
+        {{- if (empty (.Values.vault.enable | quote) | ternary .Values.global.isVaultEnabled .Values.vault.enable) }}
+        - name: dsis-binary-volume
+          persistentVolumeClaim:
+            claimName: {{ .Values.vault.PVCName }}
+        - name: vault-volume
+          configMap:
+            name: {{ .Values.vault.vaultConfigmap }}
+            items:
+              - key: vault
+                path: application.properties
+        {{- end }}
+        {{- if (empty (.Values.rest.useCommonPVC | quote) | ternary .Values.global.tomcatbase_usecommonpvc .Values.rest.useCommonPVC) }}
+        - name: common-volume
+          persistentVolumeClaim:
+            claimName: {{ default .Values.global.tomcatbase_commonpvcname .Values.rest.commonPVCname }}
+        {{- end }}
+        {{- if or ( eq .Values.custom.useInitContainers true ) ( eq (empty (.Values.rest.useCommonPVC | quote) | ternary .Values.global.tomcatbase_usecommonpvc .Values.rest.useCommonPVC) false )  }}
+        - name: custom-script-pvc
+          persistentVolumeClaim:
+            claimName: {{ .Values.custom.scriptPVCname }}
+        {{- end }}
+        {{- if eq (empty (.Values.docbroker.useCertificate | quote) | ternary .Values.global.useCertificate .Values.docbroker.useCertificate) true }}
+        - name: dbr-cert-volume
+          persistentVolumeClaim:
+            claimName: {{ default .Values.global.dbrServiceName .Values.docbroker.dbrServiceName }}-pvc
+        {{- end }}
+        - name: dctm-rest-appserver-xml-volume
+          projected:
+            sources:
+            - configMap:
+                name: {{ .Values.serviceName }}-configmap-server-xml
+        - name: dctm-rest-dfc-properties-volume
+          projected:
+            sources:
+            - configMap:
+                name: {{ .Values.serviceName }}-dfc-properties
+        {{- if or .Values.newrelic.enabled .Values.global.newrelic }}
+        - name: ext-conf-volume
+          configMap:
+            name: {{ .Values.serviceName }}-configmap-ext
+        {{- end }}
+        {{- if eq .Values.timeZone.enable true }}
+        - name: zoneinfo
+          hostPath:
+            path: /usr/share/zoneinfo
+        {{- end }}

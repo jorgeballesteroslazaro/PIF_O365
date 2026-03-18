@@ -1,0 +1,228 @@
+################################################################################################
+#                                                                                              #
+#                                   This is a YAML-formatted file.                             #
+#                          Provide the values for variables to be passed to the templates.     #
+################################################################################################
+
+# -------------------------------------------   Capabilities:     -----------------------------------------
+# Document Management: Boost productivity with easy-to-find, reliably managed and simple to share content
+# Governance & Protection: Deliver comprehensive lifecycle management for critical enterprise information
+# ---------------------------------------------------------------------------------------------------------
+
+# Documentum CM Server, Content Storage Services, High-Volume Server, Trusted Content Services, Retention Policy Services
+global:
+  otds:
+    # Description: Indicates if the OpenText Directory Services(OTDS) pod deployment is enabled.
+    enabled: true
+
+  docbroker:
+    # Description: Indicates if the connection broker pod deployment is enabled.
+    enabled: true
+
+  content-server:
+    # Description: Indicates if the Documentum CM Server pod deployment is enabled.
+    enabled: true
+
+  # -------------------------- Start - Infrastructure Components ---------------------------
+  cs-secrets:
+    # Description: Indicates if the secret configuration file is enabled.
+    enabled: true
+
+  db:
+    # Description: Indicates if the database pod deployment is enabled.
+    enabled: true
+
+  # Messaging Service
+  dctm-dms:
+    # Description: Indicates if the Messaging Service pod deployment is enabled.
+    enabled: false
+  # -------------------------- End - Infrastructure Components ---------------------------
+
+  # -------------------------------------------   Capabilities:     -----------------------------------------
+  # Integration with Microsoft: Fuse content, collaboration and processes to amplify productivity and drive results
+  # ---------------------------------------------------------------------------------------------------------
+
+  # Content Connect
+  contentconnect:
+    # Description: Indicates if the Content Connect pod deployment is enabled.
+    enabled: false
+
+  # -------------------------------------------   Capabilities:     -----------------------------------------
+  # Extensibilty and APIs: Expand and customize Documentum with simple-to-use developer tools
+  # ---------------------------------------------------------------------------------------------------------
+  # Foundation REST API
+  dctm-rest:
+    # Description: Indicates if the Foundation REST API pod deployment is enabled.
+    enabled: false
+
+  # Foundation SOAP API
+  dfs:
+    # Description: Indicates if the Foundation SOAP API pod deployment is enabled.
+    enabled: false
+
+  # Foundation CMIS API
+  dctm-cmis:
+    # Description: Indicates if the Foundation CMIS API pod deployment is enabled.
+    enabled: false
+
+  # -------------------------------------------   Capabilities:     -----------------------------------------
+  # Workflow & Automation: Create a foundation for an intelligent and connected enterprise
+  # ---------------------------------------------------------------------------------------------------------
+  # Workflow Designer
+  dctm-workflow-designer:
+    # Description: Indicates if the Workflow Designer pod deployment is enabled.
+    enabled: true
+
+  # Business Process Services
+  bps:
+    # Description: Indicates if the Business Process Services pod deployment is enabled.
+    enabled: true
+
+  # xCP Deployment Agent
+  xda:
+    # Description: Indicates if the xCP deployment agent pod deployment is enabled.
+    enabled: false
+
+  # Documentum Administrator
+  da:
+    # Description: Indicates if the Documentum Administrator pod deployment is enabled.
+    enabled: true
+
+  # Records Client
+  records:
+    # Description: Indicates if the Records Client pod deployment is enabled.
+    enabled: true
+  rqm:
+    # Description: Indicates if the Records Queue Manager pod deployment is enabled.
+    enabled: false
+
+  # Reports
+  dtrbase:
+    # Description: Indicates if the Reports pod deployment is enabled.
+    enabled: false
+
+  # xPlore
+  # Description: When Documentum CM Search is enabled during upgrade, then set xplore.enabled to true until the migration is complete.
+  xPlore-OneD:
+    # Description: Indicates if the xPlore pod deployment is enabled.
+    enabled: false
+
+  dctmclientinstaller:
+    # Description: Indicates if the Client installer is enabled.
+    enabled: true
+
+  peinstaller:
+    # Description: Indicates if the Process Engine installer is enabled.
+    enabled: true
+
+  # Documentum Client+Pack
+  d2classic:
+    # Description: Indicates if the Classic View pod deployment is enabled.
+    enabled: true
+  d2config:
+    # Description: Indicates if the client configuration pod deployment is enabled.
+    enabled: true
+  d2rest:
+    # Description: Indicates if the Client REST API pod deployment is enabled.
+    enabled: true
+  d2smartview:
+    # Description: Indicates if the Smart View pod deployment is enabled.
+    enabled: true
+  adminconsole:
+    # Description: Indicates if the adminconsole pod deployment is enabled.
+    enabled: true
+
+  # Mobile/Appworks Gateway
+  appworks-gateway:
+    # Description: Indicates if the Appworks Gateway pod deployment is enabled.
+    enabled: false
+
+  # -------------------------------------------   Capabilities:     -----------------------------------------
+  # External Sharing & Collaboration: Foster teamwork, share knowledge and drive efficiency
+  # ---------------------------------------------------------------------------------------------------------
+  # Teams Integration
+  smartviewm365:
+    # Description: Indicates if the OpenText Documentum Content Management for Microsoft 365 pod deployment is enabled.
+    enabled: false
+  # OES Connector
+  oesconnector:
+    # Description: Indicates if the OpenText Documentum Content Management Online Editing Service pod deployment is enabled.
+    enabled: true
+
+  notificationservice:
+    # Description: Indicates if Notification Service is enabled. If either smartviewm365 or oesconnector (or both) is enabled, ensure that notificationservice is also enabled.
+    enabled: true
+
+  # Documentum Connector for Core
+  dctm-dcc:
+    # Description: Indicates if the Documentum Connector for Core Share pod deployment is enabled.
+    enabled: false
+
+  # -------------------------------------------   Capabilities:     -----------------------------------------
+  # Viewing & Transformation: Robust, reliable, in-place document viewing, mark-up and transformation for any file type
+  # ---------------------------------------------------------------------------------------------------------
+
+  # Intelligent Viewing
+  otiv:
+    # Description: Indicates if the Intelligent Viewing pod deployment is enabled.
+    enabled: false
+
+  # -------------------------------------------   Capabilities:     -----------------------------------------
+  # Search and content intelligence services
+  # ---------------------------------------------------------------------------------------------------------
+
+  # Documentum CM Search
+  documentum-search:
+    # Description: Indicates if the Documentum CM Search pod deployment is enabled.
+    enabled: false
+
+  # ActiveMQ
+  amq:
+    # Description: Indicates if the ActiveMQ pod deployment is enabled.
+    enabled: false
+
+  # Independent Java Method Server
+  ijms:
+    # Description: Indicates if the Independent Java Method Server pod deployment is enabled.
+    enabled: false
+
+  dctm-dcis:
+    # Description: Indicates if the OpenText Content Aviator pod deployment is enabled.
+    enabled: false
+
+  # -------------------------------------------   Addons:     -----------------------------------------
+  # Life Sciences Solution
+  #---------------------------------------------------------------------------------------------------
+  lss:
+    # Description: Indicates if the OpenText Documentum Content Management for Life Sciences pod deployment is enabled.
+    enabled: false
+
+  # -------------------------------------------    Addons:    -----------------------------------------
+  # Documentum Content Management for Engineering
+  # ---------------------------------------------------------------------------------------------------
+  ao-installer:
+    # Description: Indicates if the OpenText Documentum Content Management for Engineering pod deployment is enabled.
+    enabled: false
+
+  # -------------------------------------------    Addons:    -----------------------------------------
+  # Documentum Archive Services for SAP & Documentum Content Services for SAP & ILM
+  # ---------------------------------------------------------------------------------------------------
+  sapconnector-init:
+    # Description: Indicates if DAR Installation for the following components are enabled:
+
+    # 1. OpenText Documentum Archive Services for SAP Solutions
+    # 2. OpenText Documentum Archive Services for SAP Solutions ILM
+    # 3. OpenText Documentum Content Services for SAP Solutions
+    enabled: false
+
+  dctm-assap:
+    # Description: Indicates if the deployment of OpenText Documentum Archive Services for SAP Solutions is enabled.
+    enabled: false
+
+  dctm-assap-ilm:
+    # Description: Indicates if the deployment of OpenText Documentum Archive Services for SAP Solutions ILM is enabled.
+    enabled: false
+
+  dctm-cssap:
+    # Description: Indicates if the deployment of OpenText Documentum Content Services for SAP Solutions is enabled.
+    enabled: false

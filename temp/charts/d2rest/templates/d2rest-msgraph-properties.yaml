@@ -1,0 +1,33 @@
+{{- if .Values.global.dctmclientinstaller.enabled }}
+{{- if .Values.msgraphConfig.enable }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: d2rest-msgraph-properties
+  {{- template "configMap.labels" . }}
+data:
+  msgraph.properties: |-
+    app.client.id= {{ .Values.msgraphConfig.clientid | default .Values.global.msClientId }}
+    app.client.secret= {{ .Values.msgraphConfig.clientsecret }}
+    app.tenant.id= {{ .Values.msgraphConfig.tenantid | default .Values.global.mstenantid}}
+    app.scope = {{ .Values.msgraphConfig.scope }}
+    {{- if (empty (.Values.msgraphConfig.proxy_host | quote) | ternary .Values.global.proxy.host .Values.msgraphConfig.proxy_host) }}
+    app.config.proxy.config.host= {{ .Values.msgraphConfig.proxy_host | default .Values.global.proxy.host }}
+    {{- end }}
+    {{- if (empty (.Values.msgraphConfig.proxy_port | quote) | ternary .Values.global.proxy.port .Values.msgraphConfig.proxy_port) }}
+    app.config.proxy.config.port= {{ .Values.msgraphConfig.proxy_port | default .Values.global.proxy.port }}
+    {{- end }}
+{{- $configFileOverridesFile := printf "%s/%s" .Values.configFileOverrideFilesDir "msgraph.config.properties" }}
+{{- $configFileMsg0 := printf "\n\n##### Begin lines added from %s\n" $configFileOverridesFile }}
+{{- $configFileMsg1 := printf "##### End lines added from %s" $configFileOverridesFile }}
+{{- $configFileLinesToAppend := .Files.Get $configFileOverridesFile }}
+{{- if $configFileLinesToAppend }}
+{{ $configFileMsg0 | indent 4 }}
+{{ $configFileLinesToAppend | indent 4 }}
+{{ $configFileMsg1 | indent 4 }}
+{{- end }}
+{{- end }}
+{{- if $configFileAppendsValues := .Values.msgraphConfig.msgraph_properties }}
+{{ $configFileAppendsValues | indent 4 }}
+{{- end }}
+{{- end }}

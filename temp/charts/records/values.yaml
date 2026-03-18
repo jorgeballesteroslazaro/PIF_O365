@@ -1,0 +1,245 @@
+#######################################################
+# Records default values.                             #
+# This is This is a YAML-formatted file.              #
+# Declare variables to be passed into your templates. #
+#######################################################
+
+# Specify the namespace name.
+namespace:
+userName: 
+
+custom:      
+  scriptinPVC: false
+  scriptPVCname: shared-pvc
+  PVCSubPath: customscripts  
+  useInitContainers: false
+# Specify Persistent Volume Claim details.
+persistentVolumeClaim:
+  pvcName: 
+  # Applicable modes ReadWriteMany and ReadWriteOnce.
+  PVCAccessMode: ReadWriteMany
+  PVCsize: 1Gi
+  PVCStorageClass: 
+  useCommonPVC: 
+  awsEFSCSIDriver: efs.csi.aws.com
+  awsEFSCSIHandle:
+
+# Specify PVC Details for ext-conf
+persistentVolumeClaimEC:
+  pvcName: records
+  # Applicable modes ReadWriteMany and ReadWriteOnce.
+  PVCAccessMode: ReadWriteOnce
+  PVCsize: 1Gi
+  PVCStorageClass: 
+  awsEFSCSIDriver: efs.csi.aws.com
+  awsEFSCSIHandle:
+
+# Specify Service details.
+service:
+  name: records-svc
+  type: 
+  port: 8080
+  serviceAnnotations: {}
+  
+# Ingress details
+ingress:
+    name: records-ingress     
+    enable: false   
+    # Ingress host name will be prepended to cluster domain name.
+    ingressHostName: records-ingress-host
+    clusterDomainName: 
+    annotations: {}
+  # nginx.ingress.kubernetes.io/proxy-body-size: 5g
+    # nginx.ingress.kubernetes.io/proxy-connect-timeout: 30m
+    # Uncomment for deploying on azure.
+    # kubernetes.io/ingress.class: nginx    
+    # nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    # kubernetes.io/tls-acme: "true"  
+  
+### Docbroker ###
+
+docbroker:
+  replicaCount: 2
+  serviceName: 
+  port: 
+  
+### Environment ###
+env:
+  domain: 
+  # Only used in cloud tenant environment to add subscriptionName query string 
+  # parameter to the OTDS authentication URL when redirecting the user.
+  #subscriptionName: subscription1
+
+# Content Server Helm deployment details.
+cs:   
+  useCSDfcConfigMap: true             
+  configMapName: 
+  csSecretConfigName: 
+  allowTrustedLogin: false
+  
+  
+certificate:
+  useCertificate: 
+  dbrServiceName: 
+  dbrDataPVCName: certdbr-data-pvc
+  
+ ####################################################################################
+# Suppose Content Server config map not used                                       #
+# then update the below listed parameters with appropriate values of dfc.properties#
+# and ensure to toggle the flag useDfcConfigMap to false.                          #
+####################################################################################
+dfc:  
+  properties:
+  - dfc.data.dir=/opt/dctm
+  - dfc.tokenstorage.dir=/opt/dctm/apptoken
+  - dfc.tokenstorage.enable=false
+  - dfc.docbroker.host[0]=<DOCBROKER_SERVICE_NAME>
+  - dfc.docbroker.port[0]=<PORT_NO>
+  - dfc.crypto.repository=<CRYPTO_REPO_NAME>
+  - dfc.globalregistry.repository=<GLOBAL_REPO>
+  - dfc.session.secure_connect_default=try_secure_first
+  - dfc.globalregistry.username=dm_bof_registry
+  - dfc.globalregistry.password=<GLOBAL_REPO_PASSWORD>
+  - dfc.security.ssl.use_anonymous_cipher=true
+  - dfc.session.allow_trusted_login=false
+  - dfc.security.ssl.truststore=/opt/dctm/certificate/dfc.keystore
+
+# RECORDS Deployment details 
+deployment:  
+  name: records  
+  strategyType: RollingUpdate   
+
+# Specify Docker images details
+
+images:
+  records:
+    repository: 
+    name: 
+    tag: 
+    pullPolicy: 
+    pullSecrets:
+  # extension image
+  extensionImage:
+    repository:
+    name: ot-dctm-records
+    tag: 25.4
+    pullPolicy: 
+
+# Containers details    
+containers:
+  records:    
+    name: records      
+    containerPort: 8080
+    
+    docbaseName:  
+    recordsSingleHelm: true
+    probing:
+      healthPort: 8080
+      healthPortHttps: 8443
+      failureThreshold: 10
+      successThreshold: 1
+      timeoutSeconds: 5
+      readinessProbe:      
+        initialDelaySeconds: 120
+        periodSeconds: 90  
+      livenessProbe:
+        initialDelaySeconds: 120
+        periodSeconds: 90
+      startupProbe:
+        initialDelaySeconds: 180
+        periodSeconds: 90
+# OTDS SSO details.
+# Following mentioned values will be updated in otdsoauth.properties file of records if enabled.
+records:
+  replicaCount: 2
+otds:
+  enable: 
+  url:
+  clientID: 
+  scheme: 
+  authentication:
+    useDefaultDocbase: true
+    repoSelectionPageRequired: true
+    loginTicketTimeout: 250
+    renewtokenafterlogout: true
+
+vault:
+  enable: 
+  vault_configmap: dctm-vault-configmap
+  createPVC: false
+  PVCName: dsis-binary-pvc
+  pvcAccessModes: ReadWriteMany
+  size: 100Mi
+  storageClass: 
+  existVolumePv:
+
+internalTlsEnable:
+
+tomcat:
+  connectionTimeout:
+  maxHttpHeaderSize:
+  maxThreads:
+  keepAliveTimeout:
+  acceptCount:
+
+LabelPrint:
+  enable:
+  servletIp:
+  servletPort:
+
+
+###############################################################################
+# To update the wdk/app.xml file take hierarchal structure and form parameter #
+# as below. Exclude tags <scope> and <config>.                                #
+#<application>                                                                #
+#     <language>                                                              #
+#        <supported_locales>                                                  #
+#           <locale>                                                          #
+# this should be converted to application.language.supported_locales.locale   #
+# and add equals operator then value                                          #
+#                                                                             #
+###############################################################################
+wdkAppXmlConfig:  
+  tagsnvalues:
+  # Syntax for specifying both English and Japanese language pack   
+  - application.language.supported_locales.locale=[en_US]
+  - application.language.default_locale=en_US
+  - application.authentication.enableskipsso=true
+  - application.session_config.enable_advanced_session_timeout_control=false
+  - application.session_config.timeout_control.client_warning_session_timeout=1  
+
+ 
+# log4j2 logging config details.
+logging:  
+  rootLoggerLevel: WARN
+  consoleThresholdLevel: WARN
+  filename: documentum.log
+  logFileSize: 10MB
+  maxLogFiles: 5
+  monitorInterval: 30
+  
+userProvidedServices:
+  newrelic:
+    enable:    
+    appName: <MY_APPLICATION>
+    proxyHost: 
+    proxyPort:
+    proxyScheme: 
+  
+dfcTracing:
+  enable: false
+  configMapName: records-dfcTracing-configMap
+  filePrefix: dfcTrace
+  logLevel: DEBUG  
+
+serviceAccount:
+  createserviceaccount: false
+  serviceAccountName: 
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+session:
+  timeout:

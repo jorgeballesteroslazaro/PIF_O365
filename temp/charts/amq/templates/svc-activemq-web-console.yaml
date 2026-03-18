@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.service.name }}-web-console
+  labels:
+    app: {{ .Values.service.name }}
+    chart: {{ .Chart.Name }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  type: {{ .Values.service.webConsole.type }}
+  ports:
+  - port: {{ .Values.service.webConsole.ports.external.webConsole | default 8161 }}
+    targetPort: {{ .Values.service.webConsole.ports.internal.webConsole | default 8161 }}
+    name: web-console
+    protocol: TCP
+  selector:
+    app: {{ .Values.service.name }}
+    release: {{ .Release.Name }}

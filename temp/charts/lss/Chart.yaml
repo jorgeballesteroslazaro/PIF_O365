@@ -1,0 +1,23 @@
+apiVersion: v2
+appVersion: 25.4.0
+dependencies:
+- name: ls-print
+  repository: https://artifactory.otxlab.net/artifactory/cs-lss-helm-rel
+  version: 25.4.0
+- name: ls-generic
+  repository: https://artifactory.otxlab.net/artifactory/cs-lss-helm-rel
+  version: 25.4.0
+- name: ls-sftp
+  repository: https://artifactory.otxlab.net/artifactory/cs-lss-helm-rel
+  version: 25.4.0
+- name: ls-headless
+  repository: https://artifactory.otxlab.net/artifactory/cs-lss-helm-rel
+  version: 25.4.0
+- alias: dfos
+  condition: global.dfosEnable
+  name: otom-os-service
+  repository: https://artifactory.otxlab.net/artifactory/cs-lss-helm-rel
+  version: 25.2.0
+description: A Life science solution helm chart
+name: lss
+version: 25.4.0

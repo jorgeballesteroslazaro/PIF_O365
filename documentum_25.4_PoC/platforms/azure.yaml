@@ -1,0 +1,244 @@
+################################################################################################
+#                                                                                              #
+#                                   This is a YAML-formatted file.                             #
+#                          Provide the values for variables to be passed to the templates.     #
+################################################################################################
+
+# Important: These are specific configuration values passed for Microsoft Azure. 
+# Other values for dctm-ingress still need to be configured in the documentum/values.yaml file.
+
+content-server:
+  # Description: Retain the default value.
+  platform: azure
+
+  # Description: Define the service annotations.
+  # You can retain the default value or modify as per your requirement.
+  serviceAnnotations: {}
+
+ijms:
+  # Description: Define the service annotations.
+  # You can retain the default value or modify as per your requirement.
+  serviceAnnotations: {}
+
+docbroker:
+  # Description: Retain the default value.
+  platform: azure
+
+dctm-ingress:
+  # Description: Retain the default value.
+  platform: azure
+
+  ingress:
+    # Description: Retain the default value.
+    class: nginx
+
+    # Description: Define the annotations.
+    # Note: If the value of global.internalTlsEnable is set to true, make sure you change the value of 
+    # dctm-ingress.ingress.annotations.nginx.ingress.kubernetes.io/backend-protocol to HTTPS. 
+    annotations:
+      nginx.ingress.kubernetes.io/proxy-body-size: "0"
+      nginx.ingress.kubernetes.io/affinity: cookie
+      nginx.ingress.kubernetes.io/session-cookie-hash: sha1
+      nginx.ingress.kubernetes.io/proxy-connect-timeout: "6000"
+      nginx.ingress.kubernetes.io/proxy-send-timeout: "6000"
+      nginx.ingress.kubernetes.io/proxy-read-timeout: "6000"
+      nginx.ingress.kubernetes.io/session-cookie-path: /
+      nginx.ingress.kubernetes.io/session-cookie-secure: "true"
+      nginx.ingress.kubernetes.io/session-cookie-samesite: None
+      nginx.ingress.kubernetes.io/proxy-buffer-size: "32k"
+      nginx.ingress.kubernetes.io/backend-protocol: HTTP
+
+contentconnect:
+  # Description: Retain the default value.
+  platform: azure
+
+  ingress:
+    # Description: Retain the default value.
+    class: nginx
+
+    # Description: Define the annotations.
+    annotations:
+      nginx.ingress.kubernetes.io/proxy-body-size: "0"
+      nginx.ingress.kubernetes.io/affinity: cookie
+      nginx.ingress.kubernetes.io/session-cookie-hash: sha1
+      nginx.ingress.kubernetes.io/proxy-connect-timeout: "60"
+      nginx.ingress.kubernetes.io/proxy-send-timeout: "60"
+      nginx.ingress.kubernetes.io/proxy-read-timeout: "60"
+
+  # Description: Define the service annotations.
+  # You can retain the default value or modify as per your requirement.
+  serviceAnnotations: {}
+
+d2classic:
+  # Description: Define the service annotations.
+  # You can retain the default value or modify as per your requirement.
+  serviceAnnotations: {}
+
+d2config:
+  # Description: Define the service annotations.
+  # You can retain the default value or modify as per your requirement.
+  serviceAnnotations: {}
+
+d2smartview:
+  # Description: Define the service annotations.
+  # You can retain the default value or modify as per your requirement..
+  serviceAnnotations: {}
+
+d2rest:
+  # Description: Define the service annotations.
+  # You can retain the default value or modify as per your requirement.
+  serviceAnnotations: {}
+
+adminconsole:
+  ## serviceAnnotations define custom annotations that need to be assigned to adminconsole service.
+  serviceAnnotations: {}
+
+smartviewm365:
+  # Description: Define the service annotations.
+  # You can retain the default value or modify as per your requirement.
+  serviceAnnotations: {}
+
+oesconnector:
+  # Description: Define the service annotations.
+  # You can retain the default value or modify as per your requirement.
+  serviceAnnotations: {}
+records:
+  service:
+    # Description: Define the service annotations.
+    # You can retain the default value or modify as per your requirement.
+    serviceAnnotations: {}
+
+da:
+  service:
+    # Description: Define the service annotations.
+    # You can retain the default value or modify as per your requirement.
+    serviceAnnotations: {}
+
+dfs:
+  # Description: Define the service annotations.
+  # You can retain the default value or modify as per your requirement.
+  serviceAnnotations: {}
+
+dctm-cmis:
+  # Description: Define the service annotations.
+  # You can retain the default value or modify as per your requirement.
+  serviceAnnotations: {}
+
+vpningress:
+  # Description: Retain the default value.
+  cloudPlatform: Azure
+
+  ingress:
+    # Description: Retain the default value.
+    class: nginx
+
+    # Description: Define the annotations.
+    # Note: If the value of global.internalTlsEnable is set to true, make sure you change the value of 
+    # vpningress.ingress.annotations.nginx.ingress.kubernetes.io/backend-protocol to HTTPS. 
+    annotations:
+      nginx.ingress.kubernetes.io/proxy-body-size: "0"
+      nginx.ingress.kubernetes.io/affinity: cookie
+      nginx.ingress.kubernetes.io/session-cookie-hash: sha1
+      nginx.ingress.kubernetes.io/proxy-connect-timeout: "6000"
+      nginx.ingress.kubernetes.io/proxy-send-timeout: "6000"
+      nginx.ingress.kubernetes.io/proxy-read-timeout: "6000"
+      nginx.ingress.kubernetes.io/proxy-buffer-size: "32k"
+      nginx.ingress.kubernetes.io/backend-protocol: HTTP
+      nginx.ingress.kubernetes.io/session-cookie-path: /
+      nginx.ingress.kubernetes.io/session-cookie-secure: "true"
+      nginx.ingress.kubernetes.io/session-cookie-samesite: None
+    pathType: ImplementationSpecific
+
+d2publicingress:
+  # Description: Retain the default value.
+  cloudPlatform: Azure
+
+  ingress:
+    # Description: Retain the default value.
+    class: nginx
+
+    # Description: Define the annotations.
+    # Note: If the value of global.internalTlsEnable is set to true, make sure you change the value of 
+    # d2publicingress.ingress.annotations.nginx.ingress.kubernetes.io/backend-protocol to HTTPS.
+    annotations:
+      nginx.ingress.kubernetes.io/proxy-body-size: "0"
+      nginx.ingress.kubernetes.io/affinity: cookie
+      nginx.ingress.kubernetes.io/session-cookie-hash: sha1
+      nginx.ingress.kubernetes.io/proxy-connect-timeout: "6000"
+      nginx.ingress.kubernetes.io/proxy-send-timeout: "6000"
+      nginx.ingress.kubernetes.io/proxy-read-timeout: "6000"
+      nginx.ingress.kubernetes.io/session-cookie-path: /
+      nginx.ingress.kubernetes.io/session-cookie-secure: "true"
+      nginx.ingress.kubernetes.io/session-cookie-samesite: None
+      nginx.ingress.kubernetes.io/proxy-buffer-size: "32k"
+      nginx.ingress.kubernetes.io/backend-protocol: HTTP
+
+    pathType: ImplementationSpecific
+
+appworks-gateway:
+  # Description: Define the service annotations.
+  # You can retain the default value or modify as per your requirement.
+  ingress:
+    ingressClassName: nginx
+    annotations:
+      kubernetes.io/tls-acme: "true"
+      kubernetes.io/ingress.allow-http: "false"
+      nginx.ingress.kubernetes.io/proxy-body-size: 20m
+      nginx.ingress.kubernetes.io/client-max-body-size: 20m
+  service:
+    annotations: []
+
+otiv:
+  # Description: Define the service annotations.
+  # You can retain the default value or modify as per your requirement.
+  global:
+    ingressClass: nginx
+    ingressAnnotations:
+      nginx.ingress.kubernetes.io/affinity: cookie
+
+documentum-search:
+  admin:
+    # Description: Define the service annotations.
+    # You can retain the default value or modify as per your requirement.
+    serviceAnnotations: {}
+
+dctm-rest:
+  # Description: Define the service annotations.
+  # You can retain the default value or modify as per your requirement.
+  serviceAnnotations: {}
+
+xPlore-OneD:
+  indexServerServiceAnnotations: {}
+  indexAgentServiceAnnotations: {}
+
+dtrbase:
+  service:
+    # Description: Define the service annotations.
+    # You can retain the default value or modify as per your requirement.
+    serviceAnnotations: {}
+
+xda:
+  # Description: Define the service annotations.
+  # You can retain the default value or modify as per your requirement.
+  serviceAnnotations: {}
+
+bps:
+  # Description: Define the service annotations.
+  # You can retain the default value or modify as per your requirement.
+  serviceAnnotations: {}
+
+dctm-workflow-designer:
+  # Description: Define the service annotations.
+  # You can retain the default value or modify as per your requirement.
+  serviceAnnotations: {}
+
+dctm-dcc:
+  # Description: Define the service annotations.
+  # You can retain the default value or modify as per your requirement.
+  serviceAnnotationsSyncagent: {}
+  serviceAnnotationsConsul: {}
+
+dctm-dms:
+  # Description: Define the service annotations.
+  # You can retain the default value or modify as per your requirement.
+  serviceAnnotations: {}

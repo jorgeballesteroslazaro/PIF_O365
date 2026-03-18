@@ -1,0 +1,21 @@
+#Service
+kind: Service
+apiVersion: v1
+metadata:
+  name: {{ .Values.prefix }}
+  namespace: {{ .Values.namespace  | default .Release.Namespace }}
+   {{- with .Values.serviceAnnotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  labels:
+    app: {{ .Values.prefix }}
+spec:
+  type: {{ (.Values.serviceType | default .Values.global.webappServiceType ) }}
+  ports:
+    - name: "http" 
+      port: 8080
+      targetPort: {{ include "oesconnector.servicePortNumber" . }}
+      protocol: TCP
+  selector:
+    app: {{ .Values.prefix }}

@@ -1,0 +1,37 @@
+{{- if .Values.global.dctmclientinstaller.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: adminconsole-settings-properties
+  {{- template "configMap.labels" . }}
+data:
+  settings.properties: |-
+
+    #If geolocation.enabled is set to true to enable the tracking of geolocation.
+    # Default value is false if not set
+    geolocation.enabled = false
+
+    # geolocation.required is used to enforce the user to provide geolocation. Only applicable if geolocation feature is enabled.
+    # Default value is false if not set
+    geolocation.required = false
+
+    #Default counter in seconds for the session timout warning dialog
+    # Minimum value is 120. It will be defaulted to 120 if specified with a value less than 120 in Smartview
+    sessiontimeout.counter = 120
+
+    #Provide the Smart view URL
+    #client.smartview.url=https://domain-name.com/D2-Smartview
+    {{- if $configFileAppendsValues := .Values.settings.settings_properties }}
+    {{ $configFileAppendsValues | indent 4 }}
+    {{- end }}
+
+{{- $configFileOverridesFile := printf "%s/%s" .Values.configFileOverrideFilesDir "settings.properties" }}
+{{- $configFileMsg0 := printf "\n\n##### Begin lines added from %s\n" $configFileOverridesFile }}
+{{- $configFileMsg1 := printf "##### End lines added from %s" $configFileOverridesFile }}
+{{- $configFileLinesToAppend := .Files.Get $configFileOverridesFile }}
+{{- if $configFileLinesToAppend }}
+{{ $configFileMsg0 | indent 4 }}
+{{ $configFileLinesToAppend | indent 4 }}
+{{ $configFileMsg1 | indent 4 }}
+{{- end }}
+{{- end }}

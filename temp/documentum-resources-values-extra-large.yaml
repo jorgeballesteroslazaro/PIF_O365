@@ -1,0 +1,796 @@
+# If you are using this particular resource yaml for upgrading your existing deployment to 24.2, please ensure that resources for all pods are equal or greater than values in existing deployment
+docbroker_count: &docbroker_count 4  #number of replicas of docbroker
+db:
+  database:
+    replicaCount: 2
+  alterParam:
+    max_connections: 1000
+    shared_buffers: 8GB
+  persistentVolume:
+    size: 200Gi
+  resources:
+    limits:
+      cpu: 40000m
+      memory: 32Gi
+    requests:
+      cpu: 24000m
+      memory: 24Gi
+docbroker:
+  docbroker:
+    replicaCount: *docbroker_count 
+  persistentVolume:
+    size: 1Gi
+  resources:
+    limits:
+      cpu: 600m
+      memory: 2Gi
+    requests:
+      cpu: 300m
+      memory: 1Gi
+  vault:
+    size: 100Mi
+content-server:
+  contentserver:
+    replicaCount: 6
+    docbrokersCount: *docbroker_count
+  persistentVolume:
+    size: 21Gi
+  dbrpersistentVolume:
+    size: 1Gi
+  resources:
+    limits:
+      cpu: 6000m
+      memory: 42Gi
+    requests:
+      cpu: 4000m
+      memory: 32Gi
+  vault:
+    size: 100Mi
+dctm-rest:
+  replicaCount: 4
+  custom:
+    pvcSize: 1Gi
+  resources:
+    limits:
+      cpu: 5700m 
+      memory: 13Gi
+    requests:
+      cpu: 800m
+      memory: 6Gi
+dctm-cmis:
+  replicaCount: 3
+  cmis:    
+    pvcSize: 2Gi
+    logs:
+      pvcSize: 2Gi
+  resources:
+    limits:
+      cpu: 3500m
+      memory: 6Gi
+    requests:
+      cpu: 3000m
+      memory: 6Gi
+dctm-workflow-designer:
+  replicaCount: 1
+  persistentVolume:
+    size: 2Gi
+  volumeClaimTemplates:
+    size: 200Mi
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 4Gi
+    requests:
+      cpu: 1000m
+      memory: 4Gi
+dfs:
+  replicaCount: 3
+  volumeClaimTemplate:
+    size: 1Gi
+    # storage class for the volumeClaimTemplates Ex : azurefile
+    logVctSize: 2Gi
+  extensionPVC:
+    PVCSize: 2Gi
+  resources:
+    limits:
+      cpu: 3500m
+      memory: 6Gi
+    requests:
+      cpu: 3000m
+      memory: 6Gi
+contentconnect:
+  replicaCount: 1
+  resources:
+    limits:
+      cpu: 800m
+      memory: 1Gi
+    requests:
+      cpu: 600m
+      memory: 0.8Gi
+  contentconnectdb:
+    replicaCount: 1
+    resources:
+      limits:
+        cpu: 0.5
+        memory: 600Mi
+      requests:
+        cpu: 0.4
+        memory: 500Mi
+dtrbase:
+  persistentVolumeClaim:
+    size: 1Gi
+  deployment:
+    replicaCount: 1
+  resources:
+    limits:
+      cpu: 1600m
+      memory: 16Gi
+    requests:
+      cpu: 800m
+      memory: 6Gi
+da:
+  replicaCount: 1
+  persistentVolumeClaim:
+    size: 1Gi
+  resources:
+    limits:
+      cpu: 400m
+      memory: 4Gi
+    requests:
+      cpu: 200m
+      memory: 2Gi
+records:
+  persistentVolumeClaim:
+    PVCsize: 1Gi
+  persistentVolumeClaimEC:
+    PVCsize: 1Gi
+  docbroker:
+    replicaCount: *docbroker_count
+  records:
+    replicaCount: 2
+  resources:
+    limits:
+      cpu: 1600m
+      memory: 8Gi
+    requests:
+      cpu: 800m
+      memory: 6Gi
+rqm:
+  containers:
+    rqm:
+      replicaCount: 1
+  resources:
+    limits:
+      cpu: 100m
+      memory: 400Mi
+    requests:
+      cpu: 100m
+      memory: 400Mi
+otds:
+  otdsws:
+    replicas: 3
+    resources:
+      requests:
+        cpu: 500m
+        memory: 1Gi
+      limits:
+        cpu: 2000m
+        memory: 4Gi
+d2classic:
+  replicaCount: 4
+  docbroker:
+    count: *docbroker_count
+  graylog:
+    volumeClaimTemplate:
+      logVctSize: 6Gi
+  customConfigurations:
+    persistentVolume: 
+      size: 2Gi
+  persistentVolume:
+    size: 1Gi
+  resources:
+    limits:
+      cpu: 6000m
+      memory: 16Gi
+    requests:
+      cpu: 2000m
+      memory: 8Gi
+d2config:
+  replicaCount: 1
+  docbroker:
+    count: *docbroker_count
+  graylog:
+    volumeClaimTemplate:
+      logVctSize: 6Gi
+  customConfigurations:
+    persistentVolume: 
+      size: 2Gi
+  persistentVolume:
+    size: 1Gi
+  extension:
+    PVCSize: 8Gi
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 12Gi
+    requests:
+      cpu: 600m
+      memory: 6Gi
+d2smartview:
+  replicaCount: 4
+  docbroker:
+    count: *docbroker_count
+  graylog:
+    volumeClaimTemplate:
+      logVctSize: 6Gi
+  customConfigurations:
+    persistentVolume: 
+      size: 2Gi
+  persistentVolume:
+    size: 1Gi
+  resources:
+    limits:
+      cpu: 8500m
+      memory: 16Gi
+    requests:
+      cpu: 2000m
+      memory: 8Gi
+d2rest:
+  replicaCount: 3
+  docbroker:
+    count: *docbroker_count
+  graylog:
+    volumeClaimTemplate:
+      logVctSize: 6Gi
+  customConfigurations:
+    persistentVolume: 
+      size: 2Gi
+  persistentVolume:
+    size: 1Gi
+  resources:
+    limits:
+      cpu: 1200m
+      memory: 8Gi
+    requests:
+      cpu: 600m
+      memory: 4Gi
+
+adminconsole:
+  replicaCount: 2
+  docbroker:
+    count: *docbroker_count
+  graylog:
+    volumeClaimTemplate:
+      logVctSize: 2Gi
+  customConfigurations:
+    persistentVolume: 
+      size: 2Gi
+  persistentVolume:
+    size: 1Gi
+  resources:
+    limits:
+      cpu: 2000m
+      memory: 4Gi
+    requests:
+      cpu: 300m
+      memory: 3Gi
+
+xPlore-OneD:
+  cps:
+    replicaCount: 2
+  persistentVolume:
+    size: 2851Gi
+  resources:
+    indexserver:
+      limits:
+        cpu: 2000m
+        memory: 24Gi
+      requests:
+        cpu: 1000m
+        memory: 12Gi
+    indexagent:
+      limits:
+        cpu: 2000m
+        memory: 4Gi
+      requests:
+        cpu: 1000m
+        memory: 2Gi
+    cps:
+      limits:
+        cpu: 2000m
+        memory: 12Gi
+      requests:
+        cpu: 1000m
+        memory: 6Gi
+  dcis-text-extractor:
+    fetcher:
+      replicaCount: 3
+      env:
+        JAVA_OPTS: -Xms2250m -Xmx9g
+      resources:
+        requests:
+          cpu: 500m
+          memory: 3Gi
+        limits:
+          cpu: 2000m
+          memory: 12Gi
+    parser:
+      replicaCount: 2
+      env:
+        JAVA_OPTS: -Xms2250m -Xmx9g
+      resources:
+        requests:
+          cpu: 1000m
+          memory: 3Gi
+        limits:
+          cpu: 4000m
+          memory: 12Gi
+      persistence:
+        size: 8Gi
+
+smartviewm365:
+  replicaCount: 1
+  graylog:
+    PVCSize: 4Gi 
+  extension:
+    PVCSize: 4Gi
+  resources:
+    limits:
+     cpu: 1000m
+     memory: 2Gi
+    requests:
+     cpu: 600m
+     memory: 1.5Gi
+notificationservice:
+  replicaCount: 2
+  resources:
+    limits:
+      cpu: 1200m
+      memory: 4Gi
+    requests:
+      cpu: 1000m
+      memory: 3Gi
+
+oesconnector:
+  replicaCount: 2
+  graylog:
+    PVCSize: 4Gi 
+  extension:
+    PVCSize: 4Gi
+  resources:
+    limits:
+      cpu: 1800m
+      memory: 3Gi
+    requests:
+      cpu: 1500m
+      memory: 2Gi
+
+    
+appworks-gateway:  
+  replicaCount: 1  
+  resources:
+    limits:
+      cpu: 400m
+      memory: 700Mi
+    requests:
+      cpu: 400m
+      memory: 700Mi
+otiv:
+  global:
+    # size of NFS storage to allocate for IV published artifacts
+    nfsPersistenceSize: 2Gi
+  amqp:
+    replicas: 10 
+    persistence:
+      size: 1Gi
+    resources:
+      limits:
+        cpu: 1500m
+        memory: 4Gi
+      requests:
+        cpu: 750m
+        memory: 1250Mi
+  asset:
+    replicas: 4  
+    resources:
+      enabled: true
+      limits:
+        cpu: 500m
+        memory: 1200Mi
+      requests:
+        cpu: 250m
+        memory: 600Mi
+  config:
+    replicas: 4 
+    resources:
+      enabled: true
+      limits:
+        cpu: 500m
+        memory: 2900Mi
+      requests:
+        cpu: 250m
+        memory: 1500Mi
+  highlight:
+    replicas: 4  
+    resources:
+      enabled: true
+      limits:
+        cpu: 500m
+        memory: 700Mi
+      requests:
+        cpu: 250m
+        memory: 350Mi
+  markup:
+    replicas: 4  
+    resources:
+      enabled: true
+      limits:
+        cpu: 500m
+        memory: 700Mi
+      requests:
+        cpu: 250m
+        memory: 350Mi        
+  publication:
+    replicas: 4  
+    resources:
+      enabled: true
+      limits:
+        cpu: 1000m
+        memory: 3700Mi
+      requests:
+        cpu: 500m
+        memory: 1850Mi        
+  publisher:
+    replicas: 2  
+    resources:
+      enabled: true
+      limits:
+        cpu: 2000m
+        memory: 4Gi
+      requests:
+        cpu: 1000m
+        memory: 2Gi    
+  viewer:
+    replicas: 3  
+    resources:
+      enabled: true
+      limits:
+        cpu: 500m
+        memory: 700Mi
+      requests:
+        cpu: 250m
+        memory: 350Mi
+bps:
+  docbroker:
+    count: *docbroker_count
+  replicaCount: 2
+  volumeClaimTemplates:  
+    size: 1Gi  
+  bpsConfig:
+    maxReplicas: 6
+    minReplicas: 4
+  resources:
+    limits:
+      cpu: 3000m
+      memory: 10Gi
+    requests:
+      cpu: 2800m
+      memory: 8Gi  
+xda:
+  replicaCount: 1  
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 4Gi
+    requests:
+      cpu: 1000m
+      memory: 4Gi
+documentum-search:
+  zookeeper:
+    replicaCount: 3
+    HEAP: -Xms1500m -Xmx6g
+    resources:
+      requests:
+        cpu: 500m
+        memory: 2Gi
+      limits:
+        cpu: 2000m
+        memory: 8Gi
+    persistence:
+      size: 8Gi
+  solr:
+    replicaCount: 3
+    javaMem: "-Xms6g -Xmx18g"
+    resources:
+      requests:
+        cpu: 1000m
+        memory: 6Gi
+      limits:
+        cpu: 4000m
+        memory: 24Gi
+    volumeClaimTemplates:
+      storageSize: 2851Gi
+  parser:
+    replicaCount: 2
+    env:
+      JAVA_OPTS: -Xms2250m -Xmx9g
+    resources:
+      requests:
+        cpu: 1000m
+        memory: 3Gi
+      limits:
+        cpu: 4000m
+        memory: 12Gi
+    persistence:
+      size: 8Gi
+  indexer:
+    replicaCount: 2
+    env:
+      JDK_JAVA_OPTIONS: -Xms2250m -Xmx9g
+      ACTIVEMQ_CONSUMER_WINDOW_SIZE_BYTES: "41943040"
+      ACTIVEMQ_CONSUMER_SIZE: 8
+    resources:
+      requests:
+        cpu: 1000m
+        memory: 3Gi
+      limits:
+        cpu: 2000m
+        memory: 12Gi
+  coresearch:
+    replicaCount: 1
+    env:
+      SOLR_NUM_REPLICAS: 3
+      ACTIVEMQ_CONSUMER_SIZE: 8
+      JDK_JAVA_OPTIONS: -Xms2250m -Xmx9g
+    resources:
+      requests:
+        cpu: 1000m
+        memory: 3Gi
+      limits:
+        cpu: 4000m
+        memory: 12Gi
+  fetcher:
+    replicaCount: 3
+    env:
+      JAVA_OPTS: -Xms2250m -Xmx9g
+    resources:
+      requests:
+        cpu: 500m
+        memory: 3Gi
+      limits:
+        cpu: 2000m
+        memory: 12Gi
+  index-agent:
+    replicaCount: 1
+    env:
+      JAVA_OPTS: -Xms3g -Xmx12g
+    resources:
+      requests:
+        cpu: 2000m
+        memory: 4Gi
+      limits:
+        cpu: 8000m
+        memory: 16Gi
+    persistence:
+      size: 8Gi
+  search-agent:
+    replicaCount: 3
+    env:
+      JAVA_OPTS: -Xms1500m -Xmx6g
+    resources:
+      requests:
+        cpu: 1000m
+        memory: 2Gi
+      limits:
+        cpu: 4000m
+        memory: 8Gi
+  admin:
+    replicaCount: 2
+    env:
+      JAVA_OPTS: -Xms750m -Xmx3g
+    resources:
+      requests:
+        cpu: 300m
+        memory: 1Gi
+      limits:
+        cpu: 1000m
+        memory: 4Gi
+dctm-dcc:
+  consul:
+    replicaCount: 1
+    resources:
+      limits:
+        cpu: 300m
+        memory: 400Mi
+      requests:
+        cpu: 300m
+        memory: 300Mi
+          
+  metadata:
+    replicaCount: 1
+    resources:
+      limits:
+        cpu: 900m
+        memory: 1.5Gi
+      requests:
+        cpu: 500m
+        memory: 800Mi
+
+  syncagent:
+    replicaCount: 2
+    resources:
+      limits:
+        cpu: 1800m
+        memory: 2.5Gi
+      requests:
+        cpu: 1500m
+        memory: 2Gi
+          
+  syncnshareManual:
+    replicaCount: 2
+    resources:
+      limits:
+        cpu: 1800m
+        memory: 2Gi
+      requests:
+        cpu: 1500m
+        memory: 1.8Gi
+          
+  coreNotification:
+    replicaCount: 1
+    resources:
+      limits:
+        cpu: 900m
+        memory: 1.5Gi
+      requests:
+        cpu: 500m
+        memory: 800Mi
+
+  mailService:
+    replicaCount: 1
+    resources:
+      limits:
+        cpu: 900m
+        memory: 1.5Gi
+      requests:
+        cpu: 500m
+        memory: 800Mi
+amq:
+  replicaCount: 1
+  AMQ_HEAP: -Xms1500m -Xmx6g
+  resources:
+    requests:
+      cpu: 2000m
+      memory: 4Gi
+    limits:
+      cpu: 2000m
+      memory: 8Gi
+  persistence:
+    size: 8Gi
+    
+ijms:
+  ijms:
+    replicaCount: 2
+  persistentVolume:
+    size: 3Gi
+  volumeClaimTemplate:
+    size: 1Gi
+    logVctSize: 2Gi
+  resources:
+    limits:
+      cpu: 100m
+      memory: 128Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+  docbroker:
+    docbrokersCount: 2
+dctm-dcis:
+  replicaCount: 4
+  resources:
+    requests:
+      cpu: 2000m
+      memory: 8Gi
+    limits:
+      cpu: 4000m
+      memory: 16Gi
+dctm-dms:
+  replicaCount: 2
+  dms:
+    pvcSize: 1Gi
+    logs:
+      pvcSize: 2Gi
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 8Gi
+    requests:
+      cpu: 1000m
+      memory: 8Gi
+lss: 
+  ls-print:
+    replicaCount: 3
+    persistentVolume: 
+      size: 8Gi
+    persistLogsOnPvc:
+      volumeClaimTemplate:
+        logVctSize: 2Gi  
+    resources:
+      limits:
+        cpu: 2000m
+        memory: 12Gi
+      requests:
+        cpu: 1000m
+        memory: 6Gi
+  dfos:
+    replicaCount:
+      osprimary: 3
+      oshaproxy: 3
+    memory:
+      osprimary: 6Gi
+      oshaproxy: 3Gi
+    cpu:
+      osprimary: 1000m
+      oshaproxy: 500m
+  ls-sftp:
+    sftp:
+      replicaCount: 2
+    persistentVolume:
+      submissions: 
+        size: 30Gi
+      users: 
+        size: 1Gi
+    persistLogsOnPvc:
+      volumeClaimTemplate:
+        logVctSize: 2Gi
+    resources:
+      limits:
+        cpu: 500m
+        memory: 4Gi
+      requests:
+        cpu: 300m
+        memory: 2Gi
+dctm-assap:
+  deployment:
+    replicaCount: 1
+  persistentVolumeClaim:
+    size: 1Gi
+  custom:
+    size: 22Mi
+  resources:
+    limits:
+      cpu: 800m
+      memory: 8Gi
+    requests:
+      cpu: 800m
+      memory: 8Gi
+
+dctm-assap-ilm:
+  deployment:
+    replicaCount: 1
+  persistentVolumeClaim:
+    size: 1Gi
+  custom:
+    size: 22Mi
+  resources:
+    limits:
+      cpu: 800m
+      memory: 8Gi
+    requests:
+      cpu: 800m
+      memory: 8Gi
+
+dctm-cssap:
+  deployment:
+    replicaCount: 1
+  persistentVolumeClaim:
+    size: 1Gi
+  custom:
+    size: 22Mi
+  resources:
+    limits:
+      cpu: 800m
+      memory: 8Gi
+    requests:
+      cpu: 800m
+      memory: 8Gi

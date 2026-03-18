@@ -1,0 +1,341 @@
+# Default values for d2smartview.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+namespace: 
+### Environment ###
+env:
+  tomcatJVMArgs: ""
+  webappName: 
+  domain: 
+
+## serviceAnnotations define custom annotations that need to be assigned to d2smartview service.
+## For example:
+##  cloud.google.com/backend-config: '{"ports": {"80": "abcd-d2smartview-backend"}}'
+##  cloud.google.com/neg: '{"ingress": true}'
+serviceAnnotations: {}
+
+serviceAccount: 
+  createserviceaccount: true
+  serviceAccountName: 
+  
+### Tomcat ###  
+tomcat:
+  catalinaHome: /opt/tomcat
+  connectionTimeoutInMilliseconds:    #Time that the server will wait for an incoming connection to be established before terminating the request in tomcat server
+  maxHttpHeaderSize:   #Max HTTP header size
+  logfilerotation: 7  #Log files are rotated "logfilerotation" times before being removed 
+  logfilesize: 5M  #Log files are rotated only if they grow bigger then "logfilesize" bytes
+  logrotateFrequency: 1d  #Log files are rotated every "logrotateFrequency". Ex., 10m, 10h, 10d
+  maxThreads:  # Max number of threads in the pool
+  keepAliveTimeout:  # Keep-alive timeout in milliseconds
+  acceptCount:  #Max queued connections in the pool in tomcat
+
+# Adds entries to the smartview pod's /etc/hosts file.
+#hostAliases:
+#- ip: "127.0.0.1"
+#  hostnames:
+#  - "foo.local"
+#  - "bar.local"
+
+### Docbroker ###
+docbroker:
+  count: 2
+  serviceName: 
+  port: 
+
+cs:
+  custom:
+    scriptinPVC: true
+    ##In the case of  hybrid installers approach, volumeMountName value should be custom-script-pvc and scriptPVCname value should be shared-pvc
+    volumeMountName: dcs-data-pvc  
+    scriptPVCname: dcs-pg-pvc      
+    PVCSubPath: initcontainercustomscripts/dcs-pg
+    
+methodsvr:
+  containerName: dcs-pg
+
+session:
+  allowTrustedLogin: 
+  
+removeDocumentation:   
+  
+### Docbase ###
+docbase:
+  name: 
+# if k8s version is < 1.19  default initial delay is set to 300 seconds and 60 seconds if k8s version is >= 1.19
+# Increase the initialDelaySeconds and add the value below if default value is not enough
+readinessProbe:
+  enable: true
+  initialDelaySeconds: 
+# if k8s version is < 1.19  default initial delay is set to 300 seconds and 60 seconds if k8s version is >= 1.19
+# Increase the initialDelaySeconds and add the value below if default value is not enough
+livenessProbe:
+  enable: true
+  initialDelaySeconds: 
+
+startupProbe:
+  enable: true
+  initialDelaySeconds: 180  
+
+replicaCount: 2
+
+fsGroup: 
+runAsNonRoot: true
+runAsUser: 1000
+
+images:
+  repository : 
+  name : 
+  tag : 
+  pullPolicy: 
+  pullSecrets:
+
+extensionImage:
+  repository: 
+  name : ot-dctm-client-smartview
+  tag : 25.4
+  pullPolicy: 
+
+extraInitContainers: []
+### Secret ###
+secret:
+  csConfigName: 
+
+### extra Environment Variables ###
+extraEnv:
+
+nameOverride: ""
+fullnameOverride: ""
+
+### Persistent Volume ###
+persistentVolume:
+  vctAccessModes: ReadWriteOnce
+  storageClass: 
+  size: 1Gi
+
+certificate:
+  use_certificate: 
+  dbrserviceName: 
+
+dbrpersistentVolume:
+  dbrdataPVCName: 
+
+### Graylog Enabled by default, set to false if logs mount to PVC ###
+graylog:
+  enable: 
+  volumeClaimTemplate:
+    logVctAccessModes: ReadWriteOnce
+    logVctSize: 2Gi
+    logVctStorageClass: 
+
+serviceType: 
+
+### Port for d2smartview Service ###
+servicePort: 
+
+### D2Smartview Extension image ###
+extension:  
+  createPVC: true
+  PVCAccessMode: ReadWriteMany
+  PVCStorageClass: 
+  PVCSize: 4Gi
+  pvcName: 
+  #Update the below parameters in case of Static Provisioning in AWS
+  staticPVName:
+  reclaimPolicy:
+  awsEFSCSIDriver: efs.csi.aws.com
+  awsEFSCSIHandle:
+
+# Set reports_plugin.enable to false, if reports is disabled
+reports_plugin:
+  enable: 
+
+### Custom Configuration ###
+customConfigurations:
+  custom: false
+  hook_approach: false
+  createPVC: false
+  scriptPVCname: d2custom-shared-pvc
+  persistentVolume:
+    awsEFS: false
+    awsEFSCSIDriver: efs.csi.aws.com
+    awsEFSCSIHandle:
+    existVolumePv:
+    reclaimPolicy: Retain
+    storageClass: 
+    size: 2Gi
+
+locale: 
+
+
+
+resources:
+  limits:
+    cpu: 100m
+    memory: 128Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+###############################################################
+#  BEGIN parameter value definitions for D2 smartview configuration files
+###############################################################
+
+# directory in chart holding any .properties config file "coda" files.
+# These files are appended to the corresponding default .properties config
+# file in the resulting config map definition.  This provides a convenient
+# way for solutions built on top of D2 to override settings in D2FS.properties,
+# settings.properties etc.
+configFileOverrideFilesDir: configFileOverrideFiles
+
+# parameters used to compose d2smartview-logback-xml config map
+logback:
+   file: 
+   - /opt/tomcat/logs/
+   - D2-Smartview
+   - /D2-Smartview.log
+   fileNamePattern: 
+   - /opt/tomcat/logs/
+   - D2-Smartview
+   - /D2-Smartview-%d{yyyy-MM-dd}-%i.log.zip   
+   logLevel: info
+
+   logback_xml: |-
+
+# parameters used to compose d2smartview-log4j-properties config map
+log4j:
+   file: 
+   - /opt/tomcat/logs/
+   - D2-Smartview
+   - /rest-api-log4j.log
+   logLevel: WARN
+   
+   log4j2_properties: |-
+
+catalina_configurations:
+    enable: false
+    proxy:
+        enable: false
+        proxyHost: 
+        proxyPort: 
+        noProxyHosts:
+
+restApiRuntime:   
+    context_config_location:
+    OTDS:
+      enable: 
+      # supported values for auth mode are ct-otds_token, ct-otds_ticket-otds_token
+      authMode: ct-otds_token
+      authSvc: 
+      clientId: 
+      appName: OpenText\u2122 Documentum\u2122 Content Management CE 25.4
+    ##When CC/D2 Mobile is enabled, enable the CookieConfiguration to true to set SameSite and session cookie attributes
+    CookieConfiguration:
+       enable: false
+      
+    ContentConnect:
+      enable: false
+      restAllowedOrigins: 
+
+    # Crypto salt for client token encryption and decryption
+    # For a multi-node deployment of REST servers, this property MUST be consistently set across all REST servers. For a
+    # single-node deployment of REST servers, this property is optional. The value CAN be any ascII characters. We recommend
+    # that you specify a text no less than 8 characters.    
+    cryptoKeySalt: 
+
+    # Update the disable User Agents to OT-DCC when Core Share is used for d2smartview
+    disableUserAgents: 
+
+    # Description: timeout value for Client session token timeout for dctm client smartview as per FEDRAMP Policy
+    clientSessionTokenTimeout: 
+    
+    rest_api_runtime_properties: |-
+   
+# parameters used to compose d2smartview-settings-properties config map
+settings:   
+   # "connection.remote.url" setting in "settings.properties"
+   # When using Ingress to expose webapp service inside the cluster to the outside user, 
+   # the ingress is behaving like the reverse proxy. The connectionRemoteUrl should be the 
+   # set to the URL of the Ingress resource that the outside user uses to access the 
+   # webapp inside the cluster.
+   connectionRemoteUrlProtocol: 
+   connectionRemoteUrl: 
+   
+   setting_properties: |-
+
+D2FS:
+  ####################################################
+  #       DCC / Core Integration Configuration       #
+  ####################################################
+  # To integrate with Core Share, configure the properties in this section, and also ensure that following properties
+  # are configured in D2 Keystore: dcc.user, dcc.password, core.clientId, core.clientSecret
+    
+  # Auth URL for Core OAuth2 integration. Default value is https://sso.core.opentext.com/otdsws/login
+  coreOAuth2AuthUrl:  
+    
+  # Access token URL for Core OAuth2 integration. Default value is https://sso.core.opentext.com/otdsws/oauth2/token
+  coreOAuth2AccessTokenUrl: 
+
+  # Allow Core Login UI to be displayed within IFrame inside D2 UI. If value is not provided, then it defaults to true
+  coreOAuth2UIwithinIFrame: false
+    
+  # DCC Url for Shared to Core
+  # Any changes to this property need application server restart.
+  dccUrl: 
+  
+  LoadOnStartup:
+
+  D2FS_properties: |-
+
+#############################################################
+#  END parameter value definitions for D2 smartview configuration files
+#############################################################
+
+### New Relic Configuration ###
+
+newrelic:
+  enable: 
+  app_name: DOCUMENTUM_D2SMARTVIEW-PROD-OT2_CFCR_BP2-ECD
+  proxy_host: 
+  proxy_port: 
+
+bravatls:
+  enable: false
+  certName:
+configMap:
+  vault_configmap_name: dctm-vault-configmap
+
+dms:
+  dmsServiceName: 
+  dmsHttpPort: 
+ 
+vault:
+  enable: 
+  vault_configmap: dctm-vault-configmap
+  createPVC: false
+  PVCName: dsis-binary-pvc
+  pvcAccessModes: ReadWriteMany
+  size: 100Mi
+  storageClass: 
+  existVolumePv:   
+  statusCheckRetryCount: 20
+  statusCheckTimeInterval: 1  
+  
+MIPTrusted: 
+  enable: false  
+  
+brava_parameters_properties: |-  
+
+dfc_properties: |-
+
+ESAPI_properties: |-
+
+validation_properties: |-
+
+web_xml: |-

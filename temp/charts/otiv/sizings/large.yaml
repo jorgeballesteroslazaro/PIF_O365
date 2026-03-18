@@ -1,0 +1,127 @@
+
+# Values set from https://intranet.opentext.com/intranet/llisapi.dll/app/nodes/187268746
+# See documents for assumptions
+
+global:
+  nfsPersistenceSize: 80Gi
+
+asset:
+  replicas: 4
+
+  resources:
+    enabled: true
+    requests:
+      cpu: 250m
+      memory: 0.6Gi
+    limits:
+      cpu: 500m
+      memory: 1.2Gi
+
+config:
+  replicas: 4
+
+  resources:
+    enabled: true
+    requests:
+      cpu: 250m
+      memory: 1.5Gi
+    limits:
+      cpu: 500m
+      memory: 2.9Gi
+
+highlight:
+  replicas: 4
+
+  resources:
+    enabled: true
+    requests:
+      cpu: 250m
+      memory: 0.35Gi
+    limits:
+      cpu: 500m
+      memory: 0.7Gi
+
+publication:
+  replicas: 4
+
+  resources:
+    enabled: true
+    requests:
+      cpu: 500m
+      memory: 1.85Gi
+    limits:
+      cpu: 1
+      memory: 3.7Gi
+
+publisher:
+  replicas: 8
+
+  resources:
+    enabled: true
+    requests:
+      cpu: 750m
+      memory: 2Gi
+    limits:
+      cpu: 1.5
+      memory: 4Gi
+
+viewer:
+  replicas: 3
+
+  resources:
+    enabled: true
+    requests:
+      cpu: 250m
+      memory: 0.35Gi
+    limits:
+      cpu: 500m
+      memory: 0.7Gi
+
+markup:
+  replicas: 4
+
+  resources:
+    enabled: true
+    requests:
+      cpu: 250m
+      memory: 0.35Gi
+    limits:
+      cpu: 500m
+      memory: 0.7Gi
+
+amqp:
+  persistence:
+    size: 8Gi
+  replicas: 2
+
+  resources:
+    requests:
+      cpu: 1
+      memory: 2Gi
+    limits:
+      cpu: 3
+      memory: 4Gi
+
+postgresql:
+  persistence:
+    size: 100Gi
+  resources:
+    requests:
+      cpu: 2000m
+      memory: 6Gi
+    limits:
+      cpu: 4000m
+      memory: 12Gi
+
+otds:
+  otdsws:
+    resources:
+      requests:
+        cpu: 1
+        memory: 1.5Gi
+      limits:
+        cpu: 2
+        memory: 3Gi
+      ## storage defines storage size for the OTDS volume
+      storage: 10Gi
+ 

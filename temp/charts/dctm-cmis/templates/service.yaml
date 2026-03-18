@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.serviceName }}
+{{- with .Values.serviceAnnotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+{{- end }}
+  labels:
+    {{- include "dctm-cmis.custom-labels" . | indent 4 }}
+spec:
+  type: {{ .Values.webappServiceType | default .Values.global.webappServiceType }}
+  ports:
+    - name: http
+      targetPort: 8080
+      port: {{ .Values.httpPort }}
+    - name: https
+      targetPort: 8443
+      port: {{ .Values.httpsPort }}
+  selector:
+    {{- include "dctm-cmis.custom-labels" .  | indent 4 }}

@@ -1,0 +1,24 @@
+#SFTP Service
+# This service will be used to copy files into pvc via sftp
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.userName }}-ssh-svc
+  {{- with .Values.serviceAnnotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }} 
+  labels:
+    app: {{ .Values.userName }}
+spec:
+  type: NodePort
+  ports:
+  - port: 22
+    protocol: TCP
+    name: ssh
+    targetPort: 22
+{{- if .Values.ports.nodePort }}
+    nodePort: {{ .Values.ports.nodePort }} 
+{{- end }}
+  selector:
+    app: {{ .Values.userName }}

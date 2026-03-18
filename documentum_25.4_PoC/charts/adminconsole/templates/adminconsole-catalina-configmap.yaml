@@ -1,0 +1,15 @@
+{{- if .Values.global.dctmclientinstaller.enabled }}
+{{- if or (eq .Values.catalina_configurations.enable true) (eq .Values.global.proxy.enabled true) }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: adminconsole-catalina-configmap
+  {{- template "configMap.labels" . }}
+data:
+  {{- if (default .Values.global.proxy.enabled .Values.catalina_configurations.proxy.enable) }}
+  catalina_opts: -Dhttp.proxyHost={{ .Values.catalina_configurations.proxy.proxyHost | default .Values.global.proxy.host }} -Dhttp.proxyPort={{ .Values.catalina_configurations.proxy.proxyPort | default .Values.global.proxy.port }} -Dhttp.nonProxyHosts="{{ .Values.catalina_configurations.proxy.noProxyHosts | default (include "formatNoProxy" .) }}" -Dhttps.proxyHost={{ .Values.catalina_configurations.proxy.proxyHost | default .Values.global.proxy.host }} -Dhttps.proxyPort={{ .Values.catalina_configurations.proxy.proxyPort | default .Values.global.proxy.port }} -Dhttps.nonProxyHosts="{{ .Values.catalina_configurations.proxy.noProxyHosts | default (include "formatNoProxy" .) }}"    
+  {{- else }}
+  catalina_opts: ""
+  {{- end }}
+{{- end }}
+{{- end }}

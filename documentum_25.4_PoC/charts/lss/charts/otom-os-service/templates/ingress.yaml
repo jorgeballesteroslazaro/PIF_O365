@@ -1,0 +1,330 @@
+{{- if eq .Values.services.ingress "true" }}
+
+{{- if eq .Values.ingress.class "alb" }}
+
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  namespace: {{ .Values.global.namespace }} 
+  name: "ws-{{ .Release.Name }}-{{ .Values.global.namespace }}-{{ .Values.components.osprimary }}"
+  annotations:
+    kubernetes.io/ingress.class: alb
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/certificate-arn: {{ .Values.ingress.sslcertificate }}
+    alb.ingress.kubernetes.io/ssl-policy: {{ .Values.ingress.sslpolicy }}
+    alb.ingress.kubernetes.io/load-balancer-name: "ws-{{ .Release.Name }}-{{ .Values.global.namespace }}-{{ .Values.components.osprimary }}"
+   
+spec:
+  rules:
+    - http:
+        paths:
+          - path: /*
+            backend:
+              serviceName: {{ .Release.Name }}-{{ .Values.global.namespace }}-{{ .Values.components.oshaproxy }}
+              servicePort: 4000
+  {{- end }}
+{{- end }}
+
+---
+
+{{- if eq .Values.services.ingress "true" }}
+
+{{- if eq .Values.ingress.class "alb" }}
+
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  namespace: {{ .Values.global.namespace }} 
+  name: "otos-{{ .Release.Name }}-{{ .Values.global.namespace }}-{{ .Values.components.osprimary }}"
+  annotations:
+    kubernetes.io/ingress.class: alb
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/certificate-arn: {{ .Values.ingress.sslcertificate }}
+    alb.ingress.kubernetes.io/ssl-policy: {{ .Values.ingress.sslpolicy }}
+    alb.ingress.kubernetes.io/load-balancer-name: "otos-{{ .Release.Name }}-{{ .Values.global.namespace }}-{{ .Values.components.osprimary }}"
+spec:
+  rules:
+    - http:
+        paths:
+          - path: /*
+            backend:
+              serviceName: {{ .Release.Name }}-{{ .Values.global.namespace }}-{{ .Values.components.oshaproxy }}
+              servicePort: 4000
+  {{- end }}
+{{- end }}
+
+---
+
+{{- if eq .Values.services.ingress "true" }}
+
+{{- if eq .Values.ingress.class "alb" }}
+
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  namespace: {{ .Values.global.namespace }} 
+  name: "activemq-{{ .Release.Name }}-{{ .Values.global.namespace }}-{{ .Values.components.osprimary }}"
+  annotations:
+    kubernetes.io/ingress.class: alb
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/certificate-arn: {{ .Values.ingress.sslcertificate }}
+    alb.ingress.kubernetes.io/ssl-policy: {{ .Values.ingress.sslpolicy }}
+    alb.ingress.kubernetes.io/load-balancer-name: "amq-{{ .Release.Name }}-{{ .Values.global.namespace }}-{{ .Values.components.osprimary }}"
+spec:
+  rules:
+    - http:
+        paths:
+          - path: /*
+            backend:
+              serviceName: {{ .Release.Name }}-{{ .Values.global.namespace }}-{{ .Values.components.oshaproxy }}
+              servicePort: 4000
+              
+  {{- end }}
+{{- end }}
+
+---
+
+{{- if eq .Values.services.ingress "true" }}
+
+{{- if eq .Values.ingress.class "nginx" }}
+
+{{- if .Capabilities.APIVersions.Has "networking.k8s.io/v1/Ingress" }}
+apiVersion: networking.k8s.io/v1
+{{ else }}
+apiVersion: extensions/v1beta1
+{{ end }}
+kind: Ingress
+metadata:
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/affinity: cookie
+    nginx.ingress.kubernetes.io/session-cookie-hash: sha1
+    nginx.ingress.kubernetes.io/session-cookie-name: route
+  name: {{ .Release.Name }}-{{ .Values.global.namespace }}-ingress
+  namespace: {{ .Values.global.namespace }}
+spec:
+  rules:
+{{- if eq .Values.services.osprimary "true" }}
+  - host: "{{ .Release.Name }}.{{ .Values.ingress.ingressdomain }}"
+    http:
+      paths:
+{{- if .Capabilities.APIVersions.Has "networking.k8s.io/v1/Ingress" }}
+      - path: /authsvc/
+        pathType: Prefix
+        backend:
+          service:
+            name: {{ .Release.Name }}-{{ .Values.global.namespace }}-{{ .Values.components.oshaproxy }}
+            port:
+              number: {{ .Values.ingress.oshttpport }}
+
+      - path: /odman/
+        pathType: Prefix
+        backend:
+          service:
+            name: {{ .Release.Name }}-{{ .Values.global.namespace }}-{{ .Values.components.oshaproxy }}
+            port:
+              number: {{ .Values.ingress.oshttpport }}
+              
+      - path: /otos_rest_wsg/
+        pathType: Prefix
+        backend:
+          service:
+            name: {{ .Release.Name }}-{{ .Values.global.namespace }}-{{ .Values.components.oshaproxy }}
+            port:
+              number: {{ .Values.ingress.oshttpport }} 
+              
+      - path: /otos_sa_web/
+        pathType: Prefix
+        backend:
+          service:
+            name: {{ .Release.Name }}-{{ .Values.global.namespace }}-{{ .Values.components.oshaproxy }}
+            port:
+              number: {{ .Values.ingress.oshttpport }}
+              
+      - path: /otos_sa_service/
+        pathType: Prefix
+        backend:
+          service:
+            name: {{ .Release.Name }}-{{ .Values.global.namespace }}-{{ .Values.components.oshaproxy }}
+            port:
+              number: {{ .Values.ingress.oshttpport }}
+              
+      - path: /HPOSGateway/
+        pathType: Prefix
+        backend:
+          service:
+            name: {{ .Release.Name }}-{{ .Values.global.namespace }}-{{ .Values.components.oshaproxy }}
+            port:
+              number: {{ .Values.ingress.oshttpport }}
+              
+      - path: /otos_sa_hpoxpd/
+        pathType: Prefix
+        backend:
+          service:
+            name: {{ .Release.Name }}-{{ .Values.global.namespace }}-{{ .Values.components.oshaproxy }}
+            port:
+              number: {{ .Values.ingress.oshttpport }}
+      
+      - path: /otos_sa_kyocera/
+        pathType: Prefix
+        backend:
+          service:
+            name: {{ .Release.Name }}-{{ .Values.global.namespace }}-{{ .Values.components.oshaproxy }}
+            port:
+              number: {{ .Values.ingress.oshttpport }}
+
+      - path: /otos_sa_ricoh/
+        pathType: Prefix
+        backend:
+          service:
+            name: {{ .Release.Name }}-{{ .Values.global.namespace }}-{{ .Values.components.oshaproxy }}
+            port:
+              number: {{ .Values.ingress.oshttpport }}
+
+      - path: /otos_sap_scps/
+        pathType: Prefix
+        backend:
+          service:
+            name: {{ .Release.Name }}-{{ .Values.global.namespace }}-{{ .Values.components.oshaproxy }}
+            port:
+              number: {{ .Values.ingress.oshttpport }}
+
+      - path: /otos_sap_scps_gw/
+        pathType: Prefix
+        backend:
+          service:
+            name: {{ .Release.Name }}-{{ .Values.global.namespace }}-{{ .Values.components.oshaproxy }}
+            port:
+              number: {{ .Values.ingress.oshttpport }}
+             
+      - path: /ipp/
+        pathType: Prefix
+        backend:
+          service:
+            name: {{ .Release.Name }}-{{ .Values.global.namespace }}-{{ .Values.components.oshaproxy }}
+            port:
+              number: {{ .Values.ingress.oshttpport }}
+              
+      - path: /OTOSCallback/
+        pathType: Prefix
+        backend:
+          service:
+            name: {{ .Release.Name }}-{{ .Values.global.namespace }}-{{ .Values.components.oshaproxy }}
+            port:
+              number: {{ .Values.ingress.oshttpport }}
+              
+      - path: /api/
+        pathType: Prefix
+        backend:
+          service:
+            name: {{ .Release.Name }}-{{ .Values.global.namespace }}-{{ .Values.components.oshaproxy }}
+            port:
+              number: {{ .Values.ingress.oshttpport }}
+
+      - path: /solr/
+        pathType: Prefix
+        backend:
+          service:
+            name: {{ .Release.Name }}-{{ .Values.global.namespace }}-{{ .Values.components.oshaproxy }}
+            port:
+              number: {{ .Values.ingress.oshttpport }}
+              
+      - path: /otos/api/
+        pathType: Prefix
+        backend:
+          service:
+            name: {{ .Release.Name }}-{{ .Values.global.namespace }}-{{ .Values.components.oshaproxy }}
+            port:
+              number: {{ .Values.ingress.oshttpport }}
+{{ else }}
+      - path: /authsvc/
+        backend:
+          serviceName: {{ .Release.Name }}-{{ .Values.global.namespace }}-{{ .Values.components.oshaproxy }}
+          servicePort: {{ .Values.ingress.oshttpport }}
+
+      - path: /odman/
+        backend:
+          serviceName: {{ .Release.Name }}-{{ .Values.global.namespace }}-{{ .Values.components.oshaproxy }}
+          servicePort: {{ .Values.ingress.oshttpport }}
+          
+      - path: /otos_rest_wsg/
+        backend:
+          serviceName: {{ .Release.Name }}-{{ .Values.global.namespace }}-{{ .Values.components.oshaproxy }}
+          servicePort: {{ .Values.ingress.oshttpport }}
+          
+      - path: /otos_sa_web/
+        backend:
+          serviceName: {{ .Release.Name }}-{{ .Values.global.namespace }}-{{ .Values.components.oshaproxy }}
+          servicePort: {{ .Values.ingress.oshttpport }}
+          
+      - path: /otos_sa_service/
+        backend:
+          serviceName: {{ .Release.Name }}-{{ .Values.global.namespace }}-{{ .Values.components.oshaproxy }}
+          servicePort: {{ .Values.ingress.oshttpport }}
+          
+      - path: /HPOSGateway/
+        backend:
+          serviceName: {{ .Release.Name }}-{{ .Values.global.namespace }}-{{ .Values.components.oshaproxy }}
+          servicePort: {{ .Values.ingress.oshttpport }}
+          
+      - path: /otos_sa_hpoxpd/
+        backend:
+          serviceName: {{ .Release.Name }}-{{ .Values.global.namespace }}-{{ .Values.components.oshaproxy }}
+          servicePort: {{ .Values.ingress.oshttpport }}
+      
+      - path: /otos_sa_kyocera/
+        backend:
+          serviceName: {{ .Release.Name }}-{{ .Values.global.namespace }}-{{ .Values.components.oshaproxy }}
+          servicePort: {{ .Values.ingress.oshttpport }}
+
+      - path: /otos_sa_ricoh/
+        backend:
+          serviceName: {{ .Release.Name }}-{{ .Values.global.namespace }}-{{ .Values.components.oshaproxy }}
+          servicePort: {{ .Values.ingress.oshttpport }}
+
+      - path: /otos_sap_scps/
+        backend:
+          serviceName: {{ .Release.Name }}-{{ .Values.global.namespace }}-{{ .Values.components.oshaproxy }}
+          servicePort: {{ .Values.ingress.oshttpport }}
+
+      - path: /otos_sap_scps_gw/
+        backend:
+          serviceName: {{ .Release.Name }}-{{ .Values.global.namespace }}-{{ .Values.components.oshaproxy }}
+          servicePort: {{ .Values.ingress.oshttpport }}      
+    
+      - path: /ipp/
+        backend:
+          serviceName: {{ .Release.Name }}-{{ .Values.global.namespace }}-{{ .Values.components.oshaproxy }}
+          servicePort: {{ .Values.ingress.oshttpport }}
+          
+          
+      - path: /OTOSCallback/
+        backend:
+          serviceName: {{ .Release.Name }}-{{ .Values.global.namespace }}-{{ .Values.components.oshaproxy }}
+          servicePort: {{ .Values.ingress.oshttpport }}
+          
+      - path: /api/
+        backend:
+          serviceName: {{ .Release.Name }}-{{ .Values.global.namespace }}-{{ .Values.components.oshaproxy }}
+          servicePort: {{ .Values.ingress.oshttpport }}
+
+      - path: /solr/
+        backend:
+          serviceName: {{ .Release.Name }}-{{ .Values.global.namespace }}-{{ .Values.components.oshaproxy }}
+          servicePort: {{ .Values.ingress.oshttpport }}
+          
+      - path: /otos/api/
+        backend:
+          serviceName: {{ .Release.Name }}-{{ .Values.global.namespace }}-{{ .Values.components.oshaproxy }}
+          servicePort: {{ .Values.ingress.oshttpport }}
+		  
+{{- end }}	  
+{{- end }} 
+
+  
+  
+{{- end }}  
+{{- end }}

@@ -1,0 +1,47 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.serviceName }}-configmap-cmis-runtime
+data:
+  cmis-runtime.properties: |
+    # mandatory runtime properties
+    resource.bundle=cmis-messages
+    resource.bundle.1=cmis-rs-messages
+    ###############################
+    # Runtime Properties
+    ###############################
+    cmis.mime_type.cache_expiration_after_x_seconds=3600
+    cmis.token.cache_expiration_after_x_seconds=3600
+    cmis.repository_list.cache_enabled=true
+    cmis.repository_list.cache_auto_renew_enabled=true
+    cmis.repository_list.cache_expiration_after_x_seconds=300
+    cmis.type_info.cache_expiration_after_x_seconds=3600
+    cmis.mime_type.cache_size=10
+    cmis.token.cache_size=50
+    cmis.type_info.cache_size=10
+    cmis.temp_file_cleaner.periodically_cleanup_every_x_seconds=600
+    cmis.temp_file.expiration_after_x_seconds=600
+    cmis.default_max_items=100
+    cmis.max_items_upper_limit=2000
+    cmis.exception.full_message.append=true
+    ###############################
+    # Anonymous Access
+    ###############################
+    cmis.anonymous_access.repository[0]=
+    cmis.anonymous_access.principal.username[0]=
+    cmis.anonymous_access.principal.password[0]=
+    ###############################
+    # Anonymous Access
+    ###############################
+    security.configuration.file=cmis-security.xml
+    cmis.spn=
+    cmis.jaas.conf=
+    cmis.krb5.conf=
+    cmis.jcsi.nameservers=
+    cmis.jcsi.maxpacketsize=
+    cmis.cors.filter.enabled=
+    cmis.cors.allowed.origins=
+    cmis.cors.allowed.methods=
+    cmis.cors.allowed.headers=
+    cmis.cors.exposed.headers=
+    cmis.mtom_status_enabled={{ .Values.mtom_status_enabled }}

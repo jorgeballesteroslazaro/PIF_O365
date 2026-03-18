@@ -1,0 +1,12 @@
+{{- if (empty (.Values.otds.enable | quote) | ternary .Values.global.otdsEnabled .Values.otds.enable) }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.deployment.name }}-otdsproperties-configmap
+  namespace: {{ .Values.namespace | default .Release.Namespace}}
+data:
+  otdsoauth.properties: |
+   otds_url={{ .Values.otds.url | default (include "documentum.publicOtdsSvcUrl" .) }}
+   client_id={{ .Values.otds.clientID | default .Values.global.oauthClient}}
+   scheme= {{ .Values.otds.scheme | default .Values.global.ingressProtocol}}
+{{ end }}

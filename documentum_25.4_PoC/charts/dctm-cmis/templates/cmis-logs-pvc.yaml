@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ .Values.serviceName }}-logs-pvc
+spec:
+  accessModes:
+    - {{ .Values.cmis.logs.pvcAccessModes }}
+  storageClassName: {{ .Values.cmis.logs.storageClass | default .Values.global.rwmStorage }}
+{{ if .Values.cmis.logs.existVolumePv }}
+  volumeName: {{ .Values.cmis.logs.existVolumePv }}
+{{ end }}
+  resources:
+    requests:
+      storage: {{ .Values.cmis.logs.pvcSize }}

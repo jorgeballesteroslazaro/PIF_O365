@@ -1,0 +1,1 @@
+Copy the Workflow Designer Trust Store file and paste it in this secrets folder.

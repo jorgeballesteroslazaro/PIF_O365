@@ -1,0 +1,31 @@
+#Servics
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.serviceName }}
+  {{- with .Values.serviceAnnotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}  
+  labels:
+    app: {{ .Values.serviceName }}
+spec:
+  ports:
+  - port: {{ .Values.ports.jmsport }}
+    name: ijmsport
+  clusterIP: None
+  selector:
+    app: {{ .Values.serviceName }}
+---
+#JMS Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.serviceName }}-jms-service
+spec:
+  type: ClusterIP
+  ports:
+    - port: {{ .Values.ports.jmsport }}
+  selector:
+    app: {{ .Values.serviceName }}
+---

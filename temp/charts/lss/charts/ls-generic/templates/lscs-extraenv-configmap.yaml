@@ -1,0 +1,48 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: lscs-extra-env-configmap
+data:
+  DOCBASE_NAME: {{ default "" .Values.global.docbase | quote }}
+  D2_CLIENT_URL: {{ include "documentum.publicIngress" . }}/D2  
+  lmsApiPasswordKey: {{ default "" .Values.global.lmsApiPasswordKey | quote }}
+  lsd2svKeystorePasswordKey: {{ default "" .Values.global.lsd2svKeystorePasswordKey | quote }}
+  otdsClientSecretKey: {{ default "" .Values.global.otdsClientSecretKey | quote }}
+  docbaseOwnerPasswordKey: {{ default "" .Values.global.docbaseOwnerPasswordKey | quote }}
+  installOwnerPasswordKey: {{ default "" .Values.global.installOwnerPasswordKey | quote }}
+  globalRegistryPasswordKey: {{ default "" .Values.global.globalRegistryPasswordKey | quote }}
+  ihubServicePasswordKey: {{ default "" .Values.global.ihubServicePasswordKey | quote }}       
+  keyStorePassword: {{ default "changeit" .Values.global.keyStorePassword | quote }}
+  OTOSCertificate: {{ default "" .Values.global.otosCertificate | b64enc }}
+  IVCertificate: {{ default "" .Values.global.ivCertificate | b64enc }}
+  lsVersion: {{ default "" .Values.global.lsVersion | quote }}
+  isReportsEnabled: {{ default "" .Values.global.dtrbase.enabled | quote }}
+
+{{- if .Values.global.proxy.enabled }} 
+{{- if .Values.global.proxy.host }} 
+  LS_PROXY_SCHEME: {{ .Values.global.proxy.protocol | quote }} 
+  LS_PROXY_HOST: {{ .Values.global.proxy.host | quote }}
+  LS_PROXY_PORT: {{ .Values.global.proxy.port | quote }}
+  HTTP_PROXY: {{(printf "%s://%s:%s" .Values.global.proxy.protocol .Values.global.proxy.host (toString .Values.global.proxy.port)) | quote  }}
+  HTTPS_PROXY: {{(printf "%s://%s:%s" .Values.global.proxy.protocol .Values.global.proxy.host (toString .Values.global.proxy.port)) | quote }}
+  JAVA_OPTS: " -Djava.net.preferIPv4Stack=true -Dhttp.proxyHost={{ .Values.global.proxy.host }} -Dhttp.proxyPort={{ .Values.global.proxy.port }} -Dhttp.nonProxyHosts='{{ "" | default (include "formatNoProxy" . ) }}|{{ (include "lss.formatNoProxy" . ) }}' -Dhttps.proxyHost={{ .Values.global.proxy.host }} -Dhttps.proxyPort={{ .Values.global.proxy.port }} -Dhttps.nonProxyHosts='{{ "" | default (include "formatNoProxy" . ) }}|{{ (include "lss.formatNoProxy" . ) }}' "
+  CATALINA_OPTS: " -Dhttp.proxyHost={{ .Values.global.proxy.host }} -Dhttp.proxyPort={{ .Values.global.proxy.port }} -Dhttp.nonProxyHosts='{{ "" | default (include "formatNoProxy" . ) }}|{{ (include "lss.formatNoProxy" . ) }}' -Dhttps.proxyHost={{ .Values.global.proxy.host }} -Dhttps.proxyPort={{ .Values.global.proxy.port }} -Dhttps.nonProxyHosts='{{ "" | default (include "formatNoProxy" . ) }}|{{ (include "lss.formatNoProxy" . ) }}' "
+{{- end }}
+{{- if .Values.global.proxy.noProxy }}
+  NO_PROXY: "{{ .Values.global.proxy.noProxy }},{{ .Values.global.noproxy.services }}"
+{{- end }}
+{{- else }}
+  LS_PROXY_SCHEME: ""
+  LS_PROXY_HOST: ""
+  LS_PROXY_PORT: ""
+  HTTP_PROXY: ""
+  HTTPS_PROXY: ""
+  NO_PROXY: ""
+  JAVA_OPTS: ""
+  CATALINA_OPTS: ""
+{{- end }}     
+{{- if .Values.contentserver.extraEnv }}
+{{- range $key, $value := .Values.contentserver.extraEnv }}
+  {{ $key }}: {{ default "" $value | quote }}  
+{{- end }}   
+{{- end }}

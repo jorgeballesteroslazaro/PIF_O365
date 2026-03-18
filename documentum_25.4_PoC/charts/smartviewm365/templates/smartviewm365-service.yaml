@@ -1,0 +1,21 @@
+#Service
+kind: Service
+apiVersion: v1
+metadata:
+  name: {{ .Chart.Name }}
+  namespace: {{ .Values.namespace  | default .Release.Namespace }}
+   {{- with .Values.serviceAnnotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  labels:
+    app: {{ .Chart.Name }}
+spec:
+  type: {{ (.Values.serviceType | default .Values.global.webappServiceType ) }}
+  ports:
+    - name: "http" 
+      port: 8080
+      targetPort: {{ include "ccsmartview.servicePortNumber" . }}
+      protocol: TCP
+  selector:
+    app: {{ .Chart.Name }}

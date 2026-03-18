@@ -1,0 +1,143 @@
+#######################################################
+# Documentum ASSAP-ILM default values.                #
+# This is a YAML-formatted file.                      #
+# Declare variables to be passed into your templates. #
+#######################################################
+
+# Persistent Volume Claim details.
+persistentVolumeClaim:
+  pvcName: assap-ilm-pvc
+  accessMode: ReadWriteMany
+  size: 1Gi
+  storageClass:
+  awsEFSCSIDriver: efs.csi.aws.com
+  awsEFSCSIHandle:
+#Give the dockbroker pvc name where the certifcates are mounted. This will be needed if use_certificate is set to "true"
+dbrpersistentVolume:
+  dbrdataPVCName:
+custom:
+  PVCname: assap-ilm-custom-pvc
+  size: 22Mi
+# Service details
+service:
+  name: assap-ilm-svc
+  type: ClusterIP
+  port: 8080
+  serviceAnnotations: {}
+  # Comment out above line and Uncomment the following two lines for deploying on AWS
+  # serviceAnnotations:
+  # alb.ingress.kubernetes.io/healthcheck-path: /dmwebdav
+  # alb.ingress.kubernetes.io/healthcheck-interval-seconds: '120'
+#For secure connection with Content Server
+certificate:
+  use_certificate:
+  #Give the service name of dockbroker here
+  dbrserviceName:
+# Deployment details
+# Service Account section
+assapilm:
+  serviceAccount:
+    createserviceaccount:
+    serviceAccountName:
+deployment:
+  name: assapilm
+  appName: assapilm
+  # Change the below as part of helm optimization
+  replicaCount: 1
+  strategyType: RollingUpdate
+  openshift: false
+# VE# 4852332 - Added the documentum useCSDfcConfigMap support
+cs:
+  useCSDfcConfigMap: true
+  configMapName:
+  csSecretConfigName:
+  allowTrustedLogin: false
+  custom:
+    scriptinPVC: true
+    ##In the case of  hybrid installers approach, volumeMountName value should be custom-script-pvc and scriptPVCname value should be shared-pvc
+    volumeMountName: dcs-data-pvc
+    scriptPVCname: dcs-pg-pvc
+    PVCSubPath: initcontainercustomscripts/dcs-pg
+    sapcSubPath: initcontainercustomscripts/dcs-pg/SAPC/logs
+# dfc:
+#   properties:
+#     - dfc.data.dir=/var/documentum
+#     - dfc.docbroker.host[0]=<DOCBROKER_POD>.<DOCBROKER_CONTAINER>.<NAMESPACE>.svc.cluster.local
+#     - dfc.docbroker.port[0]=<DFC_DOCBROKER_PORT>
+#     - dfc.globalregistry.repository=<DFC_BOFREGISTRY_REPOSITORY>
+#     - dfc.globalregistry.username=<DFC_BOFREGISTRY_USERNAME>
+#     - dfc.globalregistry.password=<DFC_BOFREGISTRY_PASSWORD>
+#     - dfc.security.ssl.truststore=/opt/assap_ilm_config/secure/dfc.keystore
+#     - dfc.security.ssl.truststore_password=<DFC_SSL_TRUSTSTORE_PASSWORD>
+#     - dfc.security.ssl.use_existing_truststore=false
+#     - dfc.session.secure_connect_default=try_secure_first
+#     - dfc.dsis.enabled=false
+#     - dfc.dsis.daemon.url=http\://localhost\:8200/dsis
+#     - dfc.dsis.daemon.token=
+logging:
+  rootloggerLevel: FATAL
+  appenderFilePoliciesSizeSize: 500KB
+  appenderFileStrategyMax: 1
+  appenderA1FilterThresholdLevel: ERROR
+  appenderF1PoliciesSizeSize: 10MB
+  appenderF1StrategyMax: 10
+  appenderWebdavPoliciesTimeInterval: 1
+  appenderWebdavPoliciesTimeModulate: true
+  appenderWebdavPoliciesSizeSize: 500KB
+  appenderWebdavStrategyMax: 100
+  appenderResponsePoliciesTimeInterval: 1
+  appenderResponsePoliciesTimeModulate: true
+  appenderResponsePoliciesSizeSize: 500KB
+  appenderResponseStrategyMax: 100
+  appenderFileTracePoliciesSizeSize: 100MB
+  appenderFileTraceStrategyMax: 10
+  loggerWebdavloggerLevel: DEBUG
+  loggerResponseloggerLevel: INFO
+  loggerTracingloggerLevel: DEBUG
+  loggerTracingloggerAdditivity: false
+  loggerDebugloggerLevel: DEBUG
+  loggerWebloggerLevel: DEBUG
+  monitorInterval: 30
+# Vault Properties
+vault:
+  enable:
+  serviceAccountName:
+  daemonurl: http://localhost:8200/dsis
+  vault_configmap: dctm-vault-configmap
+  createPVC: false
+  PVCName: dsis-binary-pvc
+  volumeName: dsis-binary-volume
+  configMapVolName: vault-volume
+  pvcAccessModes: ReadWriteMany
+  size: 100Mi
+  storageClass: trident-nfs
+  existVolumePv:
+  # Docker images details
+  # Change docker image properties according your repository/artifactory.
+images:
+  assapilm:
+    repository:
+    name:
+    tag: ""
+    pullPolicy:
+  pullSecret:
+# User provided services
+userProvidedServices:
+  newrelic:
+    enable: false
+    appName: DOCUMENTUM_ASSAP_ILM-PROD-OT2_CFCR_BP2-ECD
+    licenseKey: newrelicLicensekey
+    proxyHost:
+    proxyPort:
+    proxyScheme:
+# resources
+resources:
+  limits:
+    cpu: 400m
+    memory: 4Gi
+  requests:
+    cpu: 400m
+    memory: 4Gi
+nodeSelector: {}
+tolerations: []
+affinity: {}

@@ -1,0 +1,1 @@
+Place the certificate inside the adminconsole/certificate directory so that adminconsole helm chart would pick the certificate.

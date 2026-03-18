@@ -1,0 +1,69 @@
+{{- if .Values.global.dctmclientinstaller.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: d2classic-shiro-ini
+  {{- template "configMap.labels" . }}
+data:
+  shiro.ini: |-
+    {{- if eq .Values.shiro.SSOType "OTDS" }}
+    [main]
+    X3-OTDS=com.emc.x3.portal.server.filters.authc.X3OTDSAuthenticationFilter
+    X3-OTDS.defaultRepository={{ .Values.docbase.name | default .Values.global.docbase }}
+    {{- if eq .Values.global.internalTlsEnable true }}
+    X3-OTDS.apiSvc={{ include "documentum.publicOtdsSvcUrl" . }}
+    {{- else }}
+    X3-OTDS.apiSvc={{ .Values.shiro.OTDS.apiSvc }}
+    {{- end }}
+    X3-OTDS.authSvc={{ .Values.shiro.OTDS.authSvc | default (include "documentum.publicOtdsSvcUrl" .) }}
+    X3-OTDS.clientId={{ .Values.shiro.OTDS.clientId | default .Values.global.oauthClient }}
+    {{- if .Values.env.subscriptionName }}
+    X3-OTDS.subscriptionName={{ .Values.env.subscriptionName }}
+    {{- end }}
+    X3-OTDS.appName={{ .Values.shiro.OTDS.appName }}
+    X3-OTDS.userLoginNameMapping=oTExternalID3
+    #X3-OTDS.forceLogOutFromOtds
+    #X3-OTDS.resourceId
+    #X3-OTDS.defaultDMTicketTimeout
+    [urls]
+    /**/servlet/CheckInWithLifeCycle = anon
+    /**/servlet/Checkin = anon
+    /**/servlet/CheckinPdfFile = anon
+    /**/servlet/DoOperation = anon
+    /**/servlet/Download = anon
+    /**/servlet/ExportContent = anon
+    /**/servlet/ExportDictionary = anon
+    /**/servlet/ExportTaxonomy = anon
+    /**/servlet/ExportValues = anon
+    /**/servlet/ExtractProperties = anon
+    /**/servlet/GetBocsUploadUrl = anon
+    /**/servlet/GetResource/** = anon
+    /**/servlet/ImportDictionary = anon
+    /**/servlet/ImportStructure = anon
+    /**/servlet/ImportTaxonomy = anon
+    /**/servlet/ImportValues = anon
+    /**/servlet/LoadOnStartup = anon
+    /**/servlet/RefreshCache = anon
+    /**/servlet/ReloadOptions = anon
+    /**/servlet/SetFile = anon
+    /**/servlet/ViewLinkDestination = anon
+    /**/logoutService = anon
+    /**/ws = anon
+    /**/ws/* = anon
+    /d2_otds.html = anon
+    /ready = anon
+    /live = anon
+    /d2_external_signoff_page.jsp = anon
+    /errors/500.jsp = anon
+    /errors/401.jsp = anon
+    /errors/css/** = anon
+    /errors/image/** = anon
+    /resources/** = anon
+    /igc/** = anon
+    /igcresource/igc/** = anon
+    /** = X3-OTDS
+    {{- if $configFileAppendsValues := .Values.shiro.shiro_ini }}
+    {{ $configFileAppendsValues }}
+    {{- end }}
+    {{- end }}
+    {{- end }}

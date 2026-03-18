@@ -1,0 +1,51 @@
+{{- if .Values.global.dctmclientinstaller.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: d2smartview-web-xml
+  {{- template "configMap.labels" . }}
+data:
+  web.xml: |-
+    <?xml version="1.0" encoding="UTF-8"?>
+    <web-app xmlns="http://java.sun.com/xml/ns/javaee"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="http://java.sun.com/xml/ns/javaee
+              http://java.sun.com/xml/ns/javaee/web-app_3_0.xsd"
+              version="3.0" >
+        <display-name>rest-api-project</display-name>
+        <description>Documentum REST Services</description>
+        <error-page>
+            <error-code>404</error-code>
+            <location>/errors/redirect/404</location>
+        </error-page>
+
+        <error-page>
+            <error-code>500</error-code>
+            <location>/errors/redirect/500</location>
+        </error-page>
+
+        <listener>
+            <listener-class>net.sf.ehcache.constructs.web.ShutdownListener</listener-class>
+        </listener>
+
+        <listener>
+            <listener-class>com.emc.d2fs.dctm.web.services.D2fsPropertyFileMonitorDestroy</listener-class>
+        </listener>
+
+        <listener>
+            <listener-class>com.documentum.fc.client.web.ShutdownListener</listener-class>
+        </listener>
+
+        <listener>
+            <listener-class>com.emc.common.dctm.contents.D2FileCleanerThreadDestroy</listener-class>
+        </listener>
+
+        <listener>
+            <listener-class>com.emc.d2.rest.context.ShutdownListener</listener-class>
+        </listener>
+
+    {{- if $configFileAppendsValues := .Values.web_xml }}
+    {{ $configFileAppendsValues | nindent 4 }}
+    {{- end }}
+    </web-app>
+    {{- end }}

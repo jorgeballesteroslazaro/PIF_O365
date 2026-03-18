@@ -1,0 +1,1032 @@
+################################################################################################
+#                                                                                              #
+#                                   This is a YAML-formatted file.                             #
+#    Retain all the default values unless specified for any changes required in configuration. #
+################################################################################################
+
+vaultConfigMapName: &vaultConfigmapName dctm-vault-configmap
+
+# Description: Prefix for Notification Service
+notificationServicePrefix: &notificationServicePrefix notification-service
+
+# Description: # Prefix of the notification service pod.
+notificationServicePort: &notificationServicePort 9004
+otds:
+  otdsws:
+    serviceName: otdsws
+    migration:
+      serviceName: opendj
+db:
+  serviceName: db-pg
+  configMap:
+    configName: alter
+    volumeName: alter-volume
+docbroker:
+  logging:
+    fluentdConf:
+      fluentd_configMap_name: fluentd-configmap
+content-server:
+  serviceName: dcs-pg
+  contentserver:
+    jmsProtocol: http
+  logging:
+    cs:
+      configMap_name: cs-logging-configmap
+    jms:
+      acs_configMap_name: acs-logging-configmap
+      serverApps_configMap_name: serverapps-logging-configmap
+      dmotdsrest_configMap_name: dmotdsrest-logging-configmap
+      oauth_configMap_name: oauth-logging-configmap
+      otdsauth_configMap_name: otdsauth-logging-configmap
+      saml_configMap_name: saml-logging-configmap
+    bpm:
+      bpm_configMap_name: bpm-logging-configmap
+    fluentdConf:
+      fluentd_configMap_name: fluentd-configmap
+    logrotate_configMap_name: logrotate-configmap
+    d2:
+      logback:
+        d2_configMap_name: d2-logback-configmap
+    ts:
+      thumbnailserver_configMap_name: thumbnailserver-logging-configmap
+  otds:
+    configNameOption: HOSTNAME
+    otdsAPIsvc: otdsws:80/otdsws
+    # Description: Minimum heap size JVM parameter for OTDS authentication license server. Retain the default value.
+    otds_jvm_xms: -Xms100m
+    # Description: Maximum heap size JVM parameter for OTDS authentication license server. Retain the default value.
+    otds_jvm_xmx: -Xmx1024m
+  dbrpersistentVolume:
+    dbrdataPVCName: certdbr-data-pvc
+  vault:
+    vault_configmap: *vaultConfigmapName
+    PVCName: dsis-binary-pvc
+    pvcAccessModes: ReadWriteMany
+  ports:
+    # Description: If you set the value of global.internalTlsEnable to true, change the value to 9082
+    # for communication of Java Method Server using the secured port.
+    jmsport: 9080
+
+cs-logging-configMap:
+  serviceName: dcs-pg
+  configMap:
+    cs_configMap_name: cs-logging-configmap
+    acs_configMap_name: acs-logging-configmap
+    serverApps_configMap_name: serverapps-logging-configmap
+    bpm_configMap_name: bpm-logging-configmap
+    otdsauth_configMap_name: otdsauth-logging-configmap
+    dmotdsrest_configMap_name: dmotdsrest-logging-configmap
+    saml_configMap_name: saml-logging-configmap
+    oauth_configMap_name: oauth-logging-configmap
+    fluentd_configMap_name: fluentd-configmap
+    logrotate_configmap_name: logrotate-configmap
+    d2_configMap_name: d2-logback-configmap
+    vault_configmap_name: *vaultConfigmapName
+    thumbnailserver_configMap_name: thumbnailserver-logging-configmap
+  loggingConfiguration:
+    containerName: dcs-pg
+
+# Description: For the enabled components that are deployed in the secured mode, change the value to secured ports.
+# For example: If Foundation REST API is enabled and deployed in the secured mode, change the value of 
+# dctm-ingress.restService.servicePort to 8443.
+dctm-ingress:
+  jmsService:
+    servicePort: 9080
+  jmsBase:
+    servicePort: 9080
+  acsService:
+    servicePort: 9080
+  tnsService:
+    serviceName: dcs-pg-tns-service
+    servicePort: 8081
+  d2clientService:
+    serviceName: d2classic
+  d2configService:
+    serviceName: d2config
+  d2smartview:
+    serviceName: d2smartview
+  d2rest:
+    serviceName: d2rest
+  otdsadmin:
+    serviceName: otdsws
+    servicePort: 80
+  otdsws:
+    serviceName: otdsws
+    servicePort: 80
+  otdstenant:
+    serviceName: otdsws
+    servicePort: 80
+  daService:
+    serviceName: da-svc
+    servicePort: 8080
+  bpsService:
+    serviceName: bps
+    servicePort: 8080
+  xdaService:
+    serviceName: xda
+    servicePort: 7000
+  dsearchadminService:
+    serviceName: indexserver
+    servicePort: 9300
+  documentumSearchService:
+    serviceName: ds-admin
+    servicePort: 8800
+  indexagentService:
+    serviceName: indexagent
+    servicePort: 9200
+  dtrbaseService:
+    serviceName: dtrbase
+    servicePortCore: 5001
+    servicePortServlet: 8080
+  restService:
+    serviceName: dctm-rest
+  cmisService:
+    serviceName: dctm-cmis
+    servicePort: 8080
+  dmotdsrestService:
+    servicePort: 9080
+  dfsService:
+    serviceName: dfs-server
+    servicePort: 8080
+  workflowDesignerService:
+    serviceName: dctm-workflow-designer-service
+    servicePort: 8080
+  bpm:
+    # Description: BPM cluster IP service port.
+    servicePort: 9080
+  recordsService:
+    serviceName: records-svc
+    servicePort: 8080
+  ccService:
+    serviceName: cc
+    servicePort: 8080
+  ccadminService:
+    serviceName: cc-admin
+    servicePort: 80
+  smartviewm365:
+    serviceName: smartviewm365
+    servicePort: 8080
+  oes:
+    serviceName: oes
+    servicePort: 8080
+  dmsService:
+    serviceName: dctm-dms
+  ijms:
+    serviceName: ijms-jms-service
+    servicePort: 9180
+  adminconsole:
+    serviceName: adminconsole
+  assapservice:
+    serviceName: assap-svc
+    # Description: If the Documentum Archive Services for SAP is deployed in the secured mode, change the value according to the secured port.
+    # For example: 8087
+    servicePort: 8080
+  cssapservice:
+    serviceName: cssap-svc
+    # Description: If the Documentum Content Services for SAP is deployed in the secured mode, change the value according to the secured port.
+    # For example: 8089
+    servicePort: 8080
+  assapilmservice:
+    serviceName: assap-ilm-svc
+    # Description: If the Documentum Archive Services for SAP ILM is deployed in the secured mode, change the value according to the secured port.
+    # For example: 8088
+    servicePort: 8080
+  dc4spService:
+    # Description: Service name of the dctm-ingress for LSS DC4SP Service.
+    serviceName: dc4sp-svc
+
+  d2xmlViewerService:
+    # Description: Service name of the dctm-ingress for LSS XMLViewer Service.
+    serviceName: d2classic
+
+  d2lsService:
+    # Description: Service name of the dctm-ingress for LSS D2LS Service.
+    serviceName: d2classic
+
+  lsprintService:
+    # Description: Service name of the dctm-ingress for LSS LSPrint Service.
+    serviceName: lsprint-svc
+
+  lssftpService:
+    # Description: Service name of the dctm-ingress for LSS SFTP service.
+    serviceName: sftp-svc
+
+dctm-dcc:
+  graylog:
+    name: graylog-sidecar
+  metadata:
+    configMap:
+      serviceRegistry:
+        serverPort: 9000
+        serverHost: dcc-metadata-service
+    service:
+      servicePort: 9000
+      targetPort: 9000
+  syncagent:
+    configMap:
+      serviceRegistry:
+        serverHost: dcc-syncagent-service
+  syncnshareManual:
+    configMap:
+      serviceRegistry:
+        serverHost: dcc-syncagent-manual-service
+  coreNotification:
+    configMap:
+      serviceRegistry:
+        serverPort: 9002
+        serverHost: dcc-core-notification-service
+    service:
+      servicePort: 9002
+      targetPort: 9002
+  mailService:
+    configMap:
+      serviceRegistry:
+        serverPort: 9001
+        serverHost: dcc-mail-service
+    service:
+      servicePort: 9001
+      targetPort: 9001
+
+dctm-rest:
+  serviceName: dctm-rest
+  customLabels:
+    app: dctm-rest
+  containerName: rest-container
+  vault:
+    # Description: Path of the volume mount for the Vault configuration.
+    # Retain the default value or modify the default value required for Vault to pass them to the application.properties file. For more information about the properties 
+    # in the application.properties file, see OpenText Documentum Content Management - Server and Server Extensions Installation Guide.
+    vault_config_mount_path: /opt/dctm_docker/vault_config
+
+    # Description: Path of the volume mount for the Documentum Secret Integration Service binary volume.
+    # Retain the default value or modify the default value required for Vault to pass them to the application. properties file. For more information about the
+    # properties in the application.properties file, see OpenText Documentum Content Management - Server and Server Extensions Installation Guide.
+    binary_volume_mount_path: /opt/dctm_docker/dsis_binary_volume/dsis
+    vaultConfigmap: *vaultConfigmapName
+    PVCName: dsis-binary-pvc
+  custom:
+    pvcAccessModes: ReadWriteMany
+    scriptPVCname: custom-script-pvc
+
+dctm-cmis:
+  serviceName: dctm-cmis
+  customLabels:
+    app: cmis
+  containerName: cmis-container
+  cmisMainContainer:
+    name: cmis-main-container
+  cmisInitContainers:
+    name: cmis-init-container
+  cmis:
+    logs:
+      pvcAccessModes: ReadWriteMany
+    pvcName: cmis-pvc
+    pvcAccessModes: ReadWriteMany
+  graylog:
+    name: graylog
+  vault:
+    vaultConfigmap: *vaultConfigmapName
+    PVCName: dsis-binary-pvc
+
+    # Description: Path of the volume mount for the Vault configuration.
+    # Retain the default value or modify the default value required for Vault to pass them to the application.properties file. For more information about the properties
+    # in the application.properties file, see OpenText Documentum Content Management - Server and Server Extensions Installation Guide.
+    vault_config_mount_path: /opt/dctm_docker/vault_config
+
+    # Description: Path of the volume mount for the Documentum Secret Integration Service binary volume.
+    # Retain the default value or modify the default value required for Vault to pass them to the application.properties file. For more information about the properties
+    # in the application.properties file, see OpenText Documentum Content Management - Server and Server Extensions Installation Guide.
+    binary_volume_mount_path: /opt/dctm_docker/dsis_binary_volume
+
+  single_helm:
+    # Description: Enable single Helm for Foundation CMIS API Services.
+    enable: true
+  newrelic:
+    licenseKeyName: newrelicLicensekey
+
+dctm-workflow-designer:
+  # Description: Application name within Workflow Designer application server. The value of this variable is set to DocumentumWorflowDesigner.
+  contextPath: DocumentumWorkflowDesigner
+
+  # Description: Volume used by OpenText Documentum Content Management Server and connection broker to store OpenText Documentum Content Management Server and connection broker certificates. 
+  # Must match the persistentVolume name provided in the connection broker's file.
+  dbrpersistentVolume:
+    dbrdataPVCName: certdbr-data-pvc
+  persistentVolume:
+    pvcAccessModes: ReadWriteOnce
+  vault:
+    vault_configmap: *vaultConfigmapName
+    PVCName: dsis-binary-pvc
+    pvcAccessModes: ReadWriteMany
+    vault_config_mount_path: /opt/dctm_docker/vault_config
+    binary_volume_mount_path: /opt/dctm_docker/dsis_binary_volume
+
+contentconnect:
+  # Description: If Vault is not enabled, then the following configurations are used.
+
+  secret:
+    # Description: This attribute is set with the value of the secret name where OpenText Content Connect database password will be configured.
+    name: cc-secret
+
+    # Description: This attribute is set with the value of the secret type created for database password.
+    type: Opaque
+
+  vault:
+    # Description: This attribute is set with the value of the configMap name the 
+    # OpenText Documentum Content Management Server has created for the Vault configuration.
+    VAULT_CONFIGMAP: *vaultConfigmapName
+
+dtrbase:
+  persistentVolumeClaim:
+    pvcName: dtr-pvc
+  methodsvr:
+    containerName: dcs-pg
+  deployment:
+    name: dtrbase
+    appName: dtrbase
+  containers:
+    dtrbase:
+      name: dtrbase
+  certificate:
+    dbrDataPVCName: certdbr-data-pvc
+  vault:
+    vaultConfigmap: *vaultConfigmapName
+    PVCName: dsis-binary-pvc
+
+da:
+  extension:
+    PVCAccessMode: ReadWriteMany
+  deployment:
+    name: da
+    appName: da-app
+  persistentVolumeClaim:
+    pvcName: da-pvc
+  service:
+    name: da-svc
+    port: 8080
+  vault:
+    vault_configmap: *vaultConfigmapName
+    PVCName: dsis-binary-pvc
+    pvcAccessModes: ReadWriteMany
+
+dfs:
+  serviceName: dfs-server
+  containers:
+    initcontainer:
+      name: dfsinit
+    dfs:
+      name: dfs
+      probing:
+        # Description: Foundation SOAP API URL that must be probed for readiness and liveness.
+        url: /dfs/services/core/QueryService?wsdl
+    fluentd:
+      name: fluentd
+    graylog:
+      name: graylog
+  vault:
+    vaultConfigmap: *vaultConfigmapName
+    PVCName: dsis-binary-pvc
+    # Description: Path of the volume mount for the Vault configuration. Retain the default value or modify the default value required for Vault to pass
+    # them to the application.properties file. For more information about the properties in the application.properties file, 
+    # see OpenText Documentum Content Management - Server and Server Extensions Installation Guide.
+    vault_config_mount_path: /opt/dctm_docker/vault_config
+
+    # Description: Path of the volume mount for the Documentum Secret Integration Service binary volume.
+    # Retain the default value or modify the default value required for Vault to pass them to the application.properties file. For more information about theproperties in the
+    # application.properties file, see OpenText Documentum Content Management - Server and Server Extensions Installation Guide.
+    binary_volume_mount_path: /opt/dctm_docker/dsis_binary_volume
+  newrelic:
+    licenseKeyName: newrelicLicensekey
+
+  configMap:
+    fluentd_configMap_name: dfsfluentd-configmap
+
+  volumeClaimTemplate:
+    logVctAccessModes: ReadWriteOnce
+  extensionPVC:
+    PVCAccessMode: ReadWriteOnce
+
+recordsdarinstallation:
+  serviceName: darinstall-svc
+  persistentVolumeClaim:
+    pvcName: darpvc
+  certificate:
+    dbrDataPVCName: certdbr-data-pvc
+  containers:
+    recordsdarinstallation:
+      name: darinstallation
+
+records:
+  service:
+    name: records-svc
+    port: 8080
+  custom:
+    scriptPVCname: dcs-pg-pvc
+  deployment:
+    name: records
+  containers:
+    records:
+      name: records
+      containerPort: 8080
+      probing:
+        healthPort: 8080
+  persistentVolumeClaim:
+    PVCAccessMode: ReadWriteMany
+  persistentVolumeClaimEC:
+    pvcName: records
+
+    # Description: Applicable modes are ReadWriteMany and ReadWriteOnce.
+    PVCAccessMode: ReadWriteMany
+
+  vault:
+    vault_configmap: *vaultConfigmapName
+    PVCName: dsis-binary-pvc
+    pvcAccessModes: ReadWriteMany
+
+rqm:
+  custom:
+    scriptPVCname: dcs-pg-pvc
+  serviceName: rqm
+  persistentVolumeClaim:
+    pvcName: rqm-pvc
+    accessMode: ReadWriteMany
+  containers:
+    rqm:
+      name: rqm
+      containerName: RQMContainer
+  vault:
+    vault_configmap: *vaultConfigmapName
+    PVCName: dsis-binary-pvc
+    pvcAccessModes: ReadWriteMany
+
+d2config:
+  cs:
+    custom:
+      # In the case of  hybrid installers approach, volumeMountName value should be custom-script-pvc and 
+      # scriptPVCname value should be shared-pvc.
+      # Description: Custom volume mount name.
+      volumeMountName: dcs-data-pvc
+
+      # Description: Name of the custom script in PVC.
+      scriptPVCname: dcs-pg-pvc
+  methodsvr:
+    # Description: Service name on which Documentum Server method server is running.
+    containerName: dcs-pg
+  docbroker:
+    serviceName: dbr
+  shiro:
+    SSOType: OTDS
+d2classic:
+  cs:
+    custom:
+      # In the case of  hybrid installers approach, volumeMountName value should be custom-script-pvc and 
+      # scriptPVCname value should be shared-pvc.
+      # Description: Custom volume mount name.
+      volumeMountName: dcs-data-pvc
+
+      # Description: Name of the custom script in PVC.
+      scriptPVCname: dcs-pg-pvc
+  methodsvr:
+    # Description: Service name on which OpenText Documentum Content Management Server method server is running.
+    containerName: dcs-pg
+d2smartview:
+  cs:
+    custom:
+      # In the case of  hybrid installers approach, volumeMountName value should be custom-script-pvc and 
+      # scriptPVCname value should be shared-pvc.
+      # Description: Custom volume mount name.
+      volumeMountName: dcs-data-pvc
+
+      # Description: Name of the custom script in PVC.
+      scriptPVCname: dcs-pg-pvc
+  methodsvr:
+    # Description: Service name on which Server method server is running.
+    containerName: dcs-pg
+d2rest:
+  cs:
+    custom:
+      # In the case of  hybrid installers approach, volumeMountName value should be custom-script-pvc and 
+      # scriptPVCname value should be shared-pvc.
+      # Description: Custom volume mount name.
+      volumeMountName: dcs-data-pvc
+
+      # Description: Name of the custom script in PVC.
+      scriptPVCname: dcs-pg-pvc
+  methodsvr:
+    # Description: Service name on which OpenText Documentum Content Management Server method server is running.
+    containerName: dcs-pg
+
+adminconsole:
+  cs:
+    custom:
+      # In the case of  hybrid installers approach, volumeMountName value should be custom-script-pvc and 
+      # scriptPVCname value should be shared-pvc.
+      # Description: Custom volume mount name.
+      volumeMountName: dcs-data-pvc
+
+      # Description: Name of the custom script in PVC.
+      scriptPVCname: dcs-pg-pvc
+  methodsvr:
+    # Description: Service name on which Server method server is running.
+    containerName: dcs-pg
+
+ijms:
+  serviceName: ijms
+  ijms:
+    liveness:
+      livenessScript: /opt/dctm_docker/ijms-liveness.sh
+    readiness:
+      readinessScript: /opt/dctm_docker/ijms-readiness.sh
+  ingress:
+    port: 80
+  volumeClaimTemplate:
+    vctAccessModes: ReadWriteOnce
+    logVctAccessModes: ReadWriteOnce
+  service:
+    port: 80
+  persistentVolume:
+    ijmsdataPVCName: ijms-data-pvc
+    pvcAccessModes: ReadWriteMany
+  vault:
+    vault_configmap: *vaultConfigmapName
+    PVCName: dsis-binary-pvc
+
+xPlore-OneD:
+  ingress:
+    enable: false
+  persistentVolume:
+    # If isExist is true, then accessModes,size,storageClass will not be effective.
+    accessModes: ReadWriteMany
+  vault:
+    vaultConfigmap: *vaultConfigmapName
+    PVCName: dsis-binary-pvc
+  dcis-text-extractor:
+    #Give the dockbroker p
+    fetcher:
+      service:
+        name: ds-fetcher
+        port: 8900
+        targetPort: 8900
+      vault:
+        vault_configmap: *vaultConfigmapName
+    parser:
+      service:
+        name: ds-parser
+        port: 8400
+        targetPort: 8400
+      persistence:
+        pvcName: parser-pvc
+
+smartviewm365:
+  extension:
+    PVCAccessMode: ReadWriteMany
+
+  # Description: Graylog is enabled by default. Set the value to false if logs mount to PVC.
+  graylog:
+    PVCAccessMode: ReadWriteMany
+    pvcName: smartviewm365-logs-pvc
+
+notificationservice:
+  # Description: Container name prefix for the init container.
+  prefix: *notificationServicePrefix
+
+  configMap:
+    extApiconfig:
+      # Description: This is the variable to set the number of child threads that needs to be created.
+      notification_processing_child_threads_max_count: 5
+
+      # Description: This is the variable to set the notification service port.
+      service_port: *notificationServicePort
+
+      # Description: This is the variable to set the interval at which notification service needs to run delta query.
+      schedule_interval: 60
+
+      #Description: This is the variable to set the interval at which OES notification service should retry for loading configuration from database.
+      config_load_from_database_retry_interval: 10
+
+      #Description: This is the variable to set retry interval for OTDS authentication from notification service.
+      otds_auth_rerty_interval: 10
+
+      #Description: This is the variable which contains OTDS account lockout period after multiple failed OTDS authentication.
+      otds_account_lockout_period: 900
+
+      #Description: This is the variable to store how many time notification service will safely retry for OTDS authentication before accoutn lockout.
+      otds_max_retries_before_account_lockout: 2
+
+  # Description: Graylog is enabled by default. Set the value to false if logs mount to PVC.
+  graylog:
+    PVCAccessMode: ReadWriteMany
+    pvcName: ns-logs-pvc
+
+oesconnector:
+  # Description: Prefix of the notification service pod.
+  notificationServicePrefix: *notificationServicePrefix
+
+  configMap:
+    setupConfig:
+      notificationservicePort: *notificationServicePort
+
+  # Description: Graylog is enabled by default. Set the value to false if logs mount to PVC.
+  graylog:
+    PVCAccessMode: ReadWriteMany
+    pvcName: oesconnector-logs-pvc
+
+bps:
+  # Description: Volume used by OpenText Documentum Content Management Server and connection broker to store the OpenText Documentum Content Management Server and connection broker certificates. 
+  # Must match the persistentVolume name given in the connection broker's file.
+  dbrpersistentVolume:
+    dbrdataPVCName: certdbr-data-pvc
+
+    # Description: Domain is optional and can be left blank.
+    domain:
+  newrelic:
+    # Description: Key Name of New Relic license in cs-secrets. 
+    # This value is referenced from cs-secrets and needs to be changed accordingly.
+    licenseKeyName: newrelicLicensekey
+  vault:
+    vault_configmap: *vaultConfigmapName
+    PVCName: dsis-binary-pvc
+    pvcAccessModes: ReadWriteMany
+    vault_config_mount_path: /opt/dctm_docker/vault_config
+    binary_volume_mount_path: /opt/dctm_docker/dsis_binary_volume
+
+xda:
+  # Description: Volume used by OpenText Documentum Content Management Server and connection broker to store the OpenText Documentum Content Management Server and connection broker certificates. 
+  # Must match the persistentVolume name given in the connection broker's file.
+  dbrpersistentVolume:
+    dbrdataPVCName: certdbr-data-pvc
+
+  newrelic:
+    # Description: Key Name of New Relic license in cs-secrets. 
+    # This value is referenced from cs-secrets and needs to be changed accordingly.
+    licenseKeyName: newrelicLicensekey
+  vault:
+    vault_configmap: *vaultConfigmapName
+    PVCName: dsis-binary-pvc
+    pvcAccessModes: ReadWriteMany
+    vault_config_mount_path: /opt/dctm_docker/vault_config
+    binary_volume_mount_path: /opt/dctm_docker/dsis_binary_volume
+
+d2publicingress:
+  d2classicservice:
+    # Description: Service name of the d2publicingress for Classic View.
+    serviceName: d2classic
+  d2smartviewservice:
+    # Description: Service name of the d2publicingress for Smart View.
+    serviceName: d2smartview
+  d2restservice:
+    # Description: Service name of the d2publicingress for Client REST API.
+    serviceName: d2rest
+  dctmrestservice:
+    # Description: Service name of the d2publicingress for Foundation REST API.
+    serviceName: dctm-rest
+  otdsws:
+    # Description: Service name of the d2publicingress for OTDS.
+    serviceName: otdsws
+    # Description: Service port of the d2publicingress for OTDS.
+    servicePort: 80
+  dtrbaseService:
+    # Description: Service name of the d2publicingress for dtrbase.
+    serviceName: dtrbase
+    # Description: Service core port of the d2publicingress for dtrbase.
+    servicePortCore: 5001
+    # Description: Servlet port of the d2publicingress for dtrbase.
+    servicePortServlet: 8080
+  smartviewm365:
+    # Description: Service name of the d2publicingress for OpenText Documentum CM for Microsoft 365.
+    serviceName: smartviewm365
+    # Description: Service port number of the d2publicingress for OpenText Documentum CM for Microsoft 365.
+    servicePort: 8080
+  recordsService:
+    # Description: Service name of the d2publicingress for Records service.
+    serviceName: records-svc
+    # Description: Service port number of the d2publicingress for Records service.
+    servicePort: 8080
+  dcc:
+    syncnshareManual:
+      service:
+        # Description: Service port of the d2publicingress for syncnshareManual.
+        servicePort: 8080
+  oes:
+    # Description: Service name of the d2publicingress for OpenText Documentum Content Management Online Editing Service.
+    serviceName: oes
+    # Description: Service port of the d2publicingress for OES.
+    servicePort: 8080
+
+  dc4spService:
+    # Description: Service name of the d2publicingress for LSS DC4SP Service.
+    serviceName: dc4sp-svc
+
+  d2xmlViewerService:
+    # Description: Service name of the d2publicingress for LSS XMLViewer Service.
+    serviceName: d2classic
+
+  d2lsService:
+    # Description: Service name of the d2publicingress for LSS D2LS Service.
+    serviceName: d2classic
+
+  lsprintService:
+    # Description: Service name of the d2publicingress for LSS LSPrint Service.
+    serviceName: lsprint-svc
+
+vpningress:
+  daService:
+    # Description: Service name of the vpningress for Documentum Administrator.
+    serviceName: da-svc
+    # Description: Service port of the vpningress for da.
+    servicePort: 8080
+  d2configService:
+    # Description: Service name of the vpningress for client configuration.
+    serviceName: d2config
+  adminConsoleService:
+    # Description: Service name of the vpningress for adminconsole configuration.
+    serviceName: adminconsole
+  workflowDesignerService:
+    # Description: Service name of the vpningress for Workflow Designer.
+    serviceName: dctm-workflow-designer-service
+    # Description: Service port of the vpningress for Workflow designer
+    servicePort: 8080
+  dfsService:
+    # Description: Service name of the vpningress for Foundation SOAP API.
+    serviceName: dfs-server
+    # Description: Service port of the vpningress for dfs.
+    servicePort: 8080
+  cmisService:
+    # Description: Service name of the vpningress for Foundation CMIS API.
+    serviceName: dctm-cmis
+    # Description: Service port of the vpningress for cmis.
+    servicePort: 8080
+  xdaService:
+    # Description: Service name of the vpningress for xda.
+    serviceName: xda
+    # Description: Service port of the vpningress for xda.
+    servicePort: 7000
+  documentumSearchService:
+    # Description: Service name of the vpningress for Documentum CM Search.
+    serviceName: ds-admin
+    # Description: Service port of the vpningress for Documentum Search.
+    servicePort: 8800
+  dcc:
+    consul:
+      service:
+        # Description: Service port of the vpningress for consul.
+        servicePort: 8500
+    syncagent:
+      service:
+        # Description: Service port of the vpningress for syncagent
+        servicePort: 8080
+  dmsService:
+    # Description: Service name of the vpningress for Messaging Service.
+    serviceName: dctm-dms
+    # Description: Service port of the vpningress for DMS
+    servicePort: 8489
+  otdsws:
+    # Description: Service name of the vpningress for OTDS.
+    serviceName: otdsws
+    # Description: Service port of the vpningress for OTDS
+    servicePort: 80
+  lssftpService:
+    # Description: Service name of the vpningress for LSS SFTP service.
+    serviceName: sftp-svc
+
+documentum-search:
+  zookeeper:
+    ports:
+      client:
+        containerPort: 2181
+  solr:
+    port: 8983
+  indexer:
+    service:
+      port: 8080
+  coresearch:
+    service:
+      name: ds-coresearch
+      port: 8081
+      targetPort: 8081
+  admin:
+    service:
+      name: ds-admin
+      port: 8800
+      targetPort: 8800
+    vault:
+      vault_configmap: *vaultConfigmapName
+  search-agent:
+    service:
+      name: ds-search-agent
+    env:
+      AGENT_ENGINE_HOST_NAME: ds-search-agent # has to be service name
+    vault:
+      vault_configmap: *vaultConfigmapName
+  index-agent:
+    service:
+      name: ds-index-agent
+    csreadiness:
+      jmsServicePort: 9080
+    vault:
+      vault_configmap: *vaultConfigmapName
+    persistence:
+      pvcName: index-agent-pvc
+  fetcher:
+    service:
+      name: ds-fetcher
+      port: 8900
+      targetPort: 8900
+    vault:
+      vault_configmap: *vaultConfigmapName
+  parser:
+    service:
+      name: ds-parser
+      port: 8400
+      targetPort: 8400
+    persistence:
+      pvcName: parser-pvc
+    vault:
+      vault_configmap: *vaultConfigmapName
+
+  global:
+    graylog_name: graylog-sidecar
+
+amq:
+  service:
+    name: amq
+  persistence:
+    pvcName: amq-pvc
+
+dctm-dcis:
+  service:
+    name: dctm-dcis
+
+lss:
+  ls-headless:
+    dc4spHeadless:
+      # Description: Target port of the DC4SP headless service
+      targetPort: 80
+
+dctm-dms:
+  secret:
+    name: dms-secret-config
+  dmsMainContainer:
+    containerName: dms-container
+  dmsInitContainers:
+    name: dms-init-container
+  dms:
+    pvcName: dms-pvc
+    pvcAccessModes: ReadWriteMany
+    probing:
+      # Description: Messaging Service URL that must be probed for readiness, liveness, and startup.
+      url: /dms-ws
+    logs:
+      pvcAccessModes: ReadWriteMany
+  jmx:
+    rmiRegistryPort: 8490
+  httpPort: 8489
+  httpsPort: 8443
+  vault:
+    vaultConfigmap: *vaultConfigmapName
+    PVCName: dsis-binary-pvc
+
+    # Description: Path of the volume mount for the Vault configuration. Retain the default value or modify the default value required for Vault to pass them to the 
+    # application.properties file. For more information about the properties in the application.properties file, 
+    # see OpenText Documentum Content Management - Server and Server Extensions Installation Guide.
+    vault_config_mount_path: /opt/dctm_docker/vault_config
+
+    # Description: Path of the volume mount for the Documentum Secret Integration Service binary volume.
+    # Retain the default value or modify the default value required for Vault to pass them to the application.properties file. 
+    # For more information about the properties in the application.properties file, 
+    # see OpenText Documentum Content Management - Server and Server Extensions Installation Guide.
+    binary_volume_mount_path: /opt/dctm_docker/dsis_binary_volume
+  graylog:
+    name: graylog
+  newrelic:
+    licenseKeyName: newrelicLicensekey
+
+dctm-assap:
+  dbrpersistentVolume:
+    dbrdataPVCName: certdbr-data-pvc
+  persistentVolumeClaim:
+    pvcName: assap-pvc
+    accessMode: ReadWriteMany
+  custom:
+    PVCname: assap-custom-pvc
+  service:
+    name: assap-svc
+    type: ClusterIP
+    # Description: If the Documentum Archive Services for SAP is deployed in the secured mode, change the value according to the secured port.
+    # For example: 8087
+    port: 8080
+  containers:
+    assap:
+      name: assap
+      kubernetes: true
+      externalFolderPath: /opt/tomcat/webapps/assap/external-configurations
+      dcsPvcPath: /opt/common/dcs
+      # Description: If the Documentum Archive Services for SAP is deployed in the secured mode, change the value according to the secured port.
+      # For example: 8087
+      containerPort: 8080
+      ignoreMarker: "NO"
+      probing:
+        healthPath: /assap
+        # Description: If the Documentum Archive Services for SAP is deployed in the secured mode, change the value according to the secured port.
+        # For example: 8087
+        healthPort: 8080
+  vault:
+    serviceAccountName:
+    daemonurl:
+    vault_configmap: *vaultConfigmapName
+    createPVC: false
+    PVCName: dsis-binary-pvc
+    volumeName: dsis-binary-volume
+    configMapVolName: vault-volume
+    pvcAccessModes: ReadWriteMany
+    size: 100Mi
+    storageClass: trident-nfs
+    existVolumePv:
+dctm-assap-ilm:
+  #Give the dockbroker pvc name where the certifcates are mounted. This will be needed if use_certificate is set to "true"
+  dbrpersistentVolume:
+    dbrdataPVCName: certdbr-data-pvc
+  persistentVolumeClaim:
+    pvcName: assap-ilm-pvc
+    accessMode: ReadWriteMany
+  custom:
+    PVCname: assap-ilm-custom-pvc
+  # Service details
+  service:
+    name: assap-ilm-svc
+    type: ClusterIP
+    # Description: If the Documentum Archive Services for SAP ILM is deployed in the secured mode, change the value according to the secured port.
+    # For example: 8088
+    port: 8080
+  containers:
+    assapilm:
+      name: assapilm
+      kubernetes: true
+      externalFolderPath: /opt/tomcat/webapps/dmwebdav/external-configurations
+      # Description: If the Documentum Archive Services for SAP ILM is deployed in the secured mode, change the value according to the secured port.
+      # For example: 8088
+      containerPort: 8080
+      ignoreMarker: "NO"
+      dcsPvcPath: /opt/common/dcs
+      probing:
+        healthPath: /dmwebdav
+        # Description: If the Documentum Archive Services for SAP ILM is deployed in the secured mode, change the value according to the secured port.
+        # For example: 8088
+        healthPort: 8080
+  vault:
+    serviceAccountName:
+    daemonurl:
+    vault_configmap: *vaultConfigmapName
+    createPVC: false
+    PVCName: dsis-binary-pvc
+    volumeName: dsis-binary-volume
+    configMapVolName: vault-volume
+    pvcAccessModes: ReadWriteMany
+    size: 100Mi
+    storageClass: trident-nfs
+    existVolumePv:
+dctm-cssap:
+  #Give the dockbroker pvc name where the certifcates are mounted. This will be needed if use_certificate is set to "true"
+  dbrpersistentVolume:
+    dbrdataPVCName: certdbr-data-pvc
+
+  persistentVolumeClaim:
+    pvcName: cssap-pvc
+    accessMode: ReadWriteMany
+
+  custom:
+    PVCname: cssap-custom-pvc
+  # Service details
+  service:
+    name: cssap-svc
+    type: ClusterIP
+    # Description: If the Documentum Content Services for SAP is deployed in the secured mode, change the value according to the secured port.
+    # For example: 8089
+    port: 8080
+  containers:
+    cssap:
+      name: cssap
+      kubernetes: true
+      externalFolderPath: /opt/tomcat/webapps/HvpWorker/external-configurations
+      # Description: If the Documentum Content Services for SAP is deployed in the secured mode, change the value according to the secured port.
+      # For example: 8089
+      containerPort: 8080
+      dcsPvcPath: /opt/common/dcs
+      ignoreMarker: "NO"
+      probing:
+        healthPath: /HvpWorker/hvpCommand
+        # Description: If the Documentum Content Services for SAP is deployed in the secured mode, change the value according to the secured port.
+        # For example: 8089
+        healthPort: 8080
+  vault:
+    serviceAccountName:
+    daemonurl:
+    vault_configmap: *vaultConfigmapName
+    createPVC: false
+    PVCName: dsis-binary-pvc
+    volumeName: dsis-binary-volume
+    configMapVolName: vault-volume
+    pvcAccessModes: ReadWriteMany
+    size: 100Mi
+    storageClass: trident-nfs
+    existVolumePv:

@@ -1,0 +1,36 @@
+#Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.serviceName | default .Values.global.dmsServiceName }}
+{{- with .Values.serviceAnnotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+{{- end }}
+spec:
+  {{- $type := .Values.webappServiceType | default .Values.global.webappServiceType }}
+  type: {{ $type }}
+  sessionAffinity: ClientIP
+  ports:
+    - name: http
+      targetPort: 8489
+      port: {{ .Values.httpPort }}
+    - name: https
+      targetPort: 8443
+      port: {{ .Values.httpsPort }}
+    - name: registry-port
+      protocol: TCP
+      port: {{ .Values.jmx.rmiRegistryPort }}
+      targetPort: {{ .Values.jmx.rmiRegistryPort }}
+      {{- if (eq $type "NodePort") }}
+      nodePort: {{ .Values.jmx.rmiRegistryNodePort }}
+      {{- end }}
+    - name: rmi-server-port
+      protocol: TCP
+      port: {{ .Values.jmx.rmiServerPort }}
+      targetPort: {{ .Values.jmx.rmiServerPort }}
+      {{- if (eq $type "NodePort") }}
+      nodePort: {{ .Values.jmx.rmiServerNodePort }}
+      {{- end }}
+  selector:
+    app: {{ .Values.serviceName | default .Values.global.dmsServiceName }}

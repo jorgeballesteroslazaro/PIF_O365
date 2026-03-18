@@ -1,0 +1,133 @@
+# Default values for bps.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+#Prefix
+prefix: <prefix>bps
+
+#Docker image
+image:
+  repository: 
+  name: <bps_image_name>
+  tag: 25.4
+  pullPolicy: 
+  pullSecrets:
+  
+#Replica count
+replicaCount: 1
+
+#volumeClaimTemplates details
+volumeClaimTemplates:
+  # storage class for the volumeClaimTemplates Ex : azurefile
+  storageClassReadWriteOnce: 
+  # The size specified must accomodate all the log files 
+  size: 1Gi
+
+serviceType:
+
+#Docbase Connection Info
+docbaseConnection:
+  use_certificate: 
+  truststorePassword: <truststore_password>
+  docbroker: 
+  port: 
+  jmsport: 
+  #Name of the JMS Service. Refer JMS service name of type ClusterIP from CS Service Yaml
+  jmsservicename: 
+  docbase: 
+  username: 
+  password: <password>
+  #Domain is optional and can be left blank
+  domain:
+  globalRegistryRepository: 
+  globalRegistryUsername: 
+  globalRegistryPassword: <password>
+  
+docbroker:
+  count: 2
+
+env:
+  domain: 
+
+#Volume used by CS and Broker to store CS and Broker certificates. Should match the persistentVolume name given in Broker values.yaml
+dbrpersistentVolume:
+  dbrdataPVCName: 
+  
+#Tomcat Admin credentials:
+tomcat:
+  username: <username>
+  password: <password>
+  javaOptions: <javaOptions>
+  logfilerotation: 7 #Log files are rotated "logfilerotation" times before being removed
+  logfilesize: 5M #Log files are rotated only if they grow bigger then "logfilesize" bytes
+  logrotateFrequency: 1d #Log files are rotated every "logrotateFrequency". Ex., 10m, 10h, 10d
+  httpPort: 8080
+  httpsPort: 8443
+  
+
+#CS Secret. Used to fetch TrustStore Password and Newrelic License Value
+secret:
+  name: 
+  
+#Newrelic agent configuration
+newrelic:
+  enable: 
+  #Key Name of Newrelic License Key in CS Secrets. This value is referenced from yaml file of CS Secrets, needs to be changed accordingly. 
+  licenseKeyName: newrelicLicensekey
+  app_name: <newrelic_app_name>
+  proxy_host: 
+  proxy_port: 
+  
+#BPS config:
+bpsConfig:
+  #polling interval in seconds
+  pollingInterval: 300
+  # Message store home dir is optional. If configured, uncomment the varibale 'messageStoreHomeDir' and configure message store directory. 
+  # Also, configure the message store volume mount configuration in bps-statefulset.yaml to persist the messages stored in message store in the event of pod failure.
+  # messageStoreHomeDir: /home/xcpuser/documentum/msgstore
+  instanceName: bps
+  haEnabled: false
+  maxReplicas: 3
+  minReplicas: 1
+
+resources: {}
+# We usually recommend not to specify default resources and to leave this as a conscious
+# choice for the user. This also increases chances charts run on environments with little
+# resources, such as Minikube. If you do want to specify resources, uncomment the following
+# lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+ # limits:
+  #  cpu: 4000m
+   # memory: 12Gi
+  #requests:
+   # cpu: 100m
+    #memory: 4Gi
+    
+#DFC properties:
+#Below path should always be /home/xcpuser/<any_folder_name>
+dfc:
+  dataDir: /home/xcpuser/documentum
+
+msgraph:
+    proxyServer:
+    proxyPort:
+    
+serviceAccount:
+  createserviceaccount: true
+  serviceAccountName: 
+
+serviceAnnotations: {}
+  
+vault:
+  enable: 
+  vault_configmap: dctm-vault-configmap
+  createPVC: false
+  PVCName: dsis-binary-pvc
+  pvcAccessModes: ReadWriteMany
+  size: 100Mi
+  storageClass: 
+  existVolumePv:
+  vault_timeout: 30
+  statusCheckRetryCount: 20
+  statusCheckTimeInterval: 1
+
+ingressPassword:

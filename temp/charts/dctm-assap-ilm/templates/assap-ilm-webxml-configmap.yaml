@@ -1,0 +1,206 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:  
+  name: {{ .Values.deployment.name }}-webxml-configmap
+data:
+  web.xml: |
+    <?xml version="1.0" encoding="ISO-8859-1"?>
+    <!DOCTYPE web-app PUBLIC "-//Sun Microsystems, Inc.//DTD Web Application 2.3//EN" "http://java.sun.com/dtd/web-app_2_3.dtd">
+    <web-app>
+    <display-name>Documentum WebDAV Server</display-name>
+    <!-- Definition and configuration of servlet filters -->
+    <filter>
+    <filter-name>webdavlog</filter-name>
+    <filter-class>com.emc.documentum.webdav.filter.DwLogFilter</filter-class>
+    </filter>
+    <filter-mapping>
+    <filter-name>webdavlog</filter-name>
+    <servlet-name>dmwebdav</servlet-name>
+    </filter-mapping>
+    <servlet>
+    <servlet-name>dmwebdav</servlet-name>
+    <display-name>Documentum WebDAV Services</display-name>
+    <servlet-class>com.emc.documentum.webdav.servlet.DwWebDAVServlet</servlet-class>
+    <init-param>
+    <param-name>docbase</param-name>
+    <param-value>{{ .Values.global.docbase }}</param-value>
+    <description>
+    Name of the Docbase to be made accessible through Documentum WebDAV Services
+    </description>
+    </init-param>
+    <init-param>
+    <param-name>auth-type</param-name>
+    <param-value>{{ .Values.webxml.auth_type }}</param-value>
+    <description>
+    The Authetication mechanism to use to authorize users. The only valid values at this time are BASIC and ANONYMOUS. When ANONYMOUS is the auth-type, the parameters anonymous_user, anonymous_password and anonymous_domain will also have to be specified. The default value is BASIC.
+    </description>
+    </init-param>
+    <init-param>
+    <param-name>anonymous-user</param-name>
+    <param-value>{{ .Values.global.installOwnerUsername }}</param-value>
+    <description>
+    The User Name to be used to connect to the Docbase. This will only be used when auth-type is set to ANONYMOUS.
+    </description>
+    </init-param>
+    <init-param>
+    <param-name>anonymous-password</param-name>
+    <param-value>{{ .Values.docbasePassword }}</param-value>
+    <description>
+    The Password to be used to connect to the Docbase. This will only be used when auth-type is set to ANONYMOUS.
+    </description>
+    </init-param>
+    <init-param>
+    <param-name>anonymous-domain</param-name>
+    <param-value>{{ .Values.webxml.anonymousDomain }}</param-value>
+    <description>
+    The NT Domain to be used to connect to the Docbase. This will only be used when auth-type is set to ANONYMOUS.
+    </description>
+    </init-param>
+    <init-param>
+    <param-name>session-timeout</param-name>
+    <param-value>{{ .Values.webxml.sessionTimeout }}</param-value>
+    <description>
+    This init-parameter determines the session timeout period in minutes. If a particular WebDAV Session has been inactive for more than the specified number of minutes, the session would timeout and the user would be prompted to Login again when accessing Documentum WebDAV Services.
+    </description>
+    </init-param>
+    <init-param>
+    <param-name>grace-period</param-name>
+    <param-value>{{ .Values.webxml.gracePeriod }}</param-value>
+    <description>
+    The grace period in seconds the lock cleanup thread should wait beyond the lock_expiration_date before cleaning up the webdav_lock object. The default value is 0 seconds.
+    </description>
+    </init-param>
+    <init-param>
+    <param-name>docbase-root</param-name>
+    <param-value>/</param-value>
+    <description>
+    The cabinet or the cabinet/folder path to be exposed by Documentum WebDAV Services. For example, if the docbase-root is specified to be /Website, only the document folders within the /Website cabinet will be exposed to the WebDAV client. A request of the format /context-path/servlet-path/ will be mapped to /Website/. The default value is "/" that means the complete Docbase is exposed.
+    </description>
+    </init-param>
+    <init-param>
+    <param-name>buffer-size</param-name>
+    <param-value>{{ .Values.webxml.bufferSize }}</param-value>
+    <description>
+    The default buffer size while creating temp files
+    </description>
+    </init-param>
+    <init-param>
+    <param-name>depth-limit</param-name>
+    <param-value>{{ .Values.webxml.depthLimit }}</param-value>
+    <description>
+    This init-parameter determines the depth limit for PROPFIND and other methods, to avoid performance hits on the server for requests with infinite depth. The default value is '1'.
+    </description>
+    </init-param>
+    <init-param>
+    <param-name>max-number-of-search-results</param-name>
+    <param-value>{{ .Values.webxml.maxSearchResults }}</param-value>
+    <description>
+    This init-parameter determines the maximum number of search results that will be returned for a given SEARCH query. If this value is "-1", all results are returned.
+    </description>
+    </init-param>
+    <init-param>
+    <param-name>special-prefixes</param-name>
+    <param-value>/files/,/wcm/</param-value>
+    <description>
+    </description>
+    </init-param>
+    <init-param>
+    <param-name>/files/</param-name>
+    <param-value>com.emc.documentum.webdav.applications.DwContextHook</param-value>
+    <description>
+    </description>
+    </init-param>
+    <init-param>
+    <param-name>/wcm/</param-name>
+    <param-value>com.emc.documentum.webdav.applications.DwContextHook</param-value>
+    <description>
+    </description>
+    </init-param>
+    <init-param>
+    <param-name>default-servlet</param-name>
+    <param-value>{{ .Values.webxml.defaultServlet }}</param-value>
+    <description>
+    By default, Documentum WebDAV Services is mapped as the default servlet of the web application context (the url-pattern in servlet-mapping is '/'). If you want to change the mapping so the servlet is no longer the default servlet, you must change this initialization parameter to indicate the situation to the servlet, by setting it to 'false'. The default value is 'true'.
+    </description>
+    </init-param>
+    <init-param>
+    <param-name>default-port</param-name>
+    <param-value>{{ .Values.webxml.defaultPort }}</param-value>
+    <description>
+    The port to of the of the servlet
+    The default port for Apache Tomcat is '8080'. 
+    The default port for BEA WebLogic is '7001'.
+    The default port for IBM WebSphere Application Server is '80'.
+    </description>
+    </init-param>
+    <init-param>
+    <param-name>dmcl-trace</param-name>
+    <param-value>{{ .Values.webxml.dmclTrace }}</param-value>
+    <description>
+    If this value is set to '1', DMCL tracing is enabled
+    </description>
+    </init-param>
+    <init-param>
+    <param-name>dfc-trace</param-name>
+    <param-value>{{ .Values.webxml.dfcTrace }}</param-value>
+    <description>
+    If this value is set to '1', DFC tracing is enabled
+    </description>
+    </init-param>
+    <init-param>
+    <param-name>documentObjectType_{{ .Values.global.docbase }}</param-name>
+    <param-value>sap_ilm_document</param-value>
+    <description>
+    The docbase object type that will be used while creating new objects.
+    </description>
+    </init-param>  
+    <init-param>
+    <param-name>folderObjectType_{{ .Values.global.docbase }}</param-name>
+    <param-value>sap_ilm_folder</param-value>
+    <description>
+    The docbase object type that will be used while creating new objects.
+    </description>
+    </init-param> 
+    <init-param>
+    <param-name>return200ForCollection</param-name>
+    <param-value>{{ .Values.webxml.return200forcollection }}</param-value>
+    <description>
+    This is to enable new certification for SAP Client, this returns 200 instead of 403 for collection objects for a HEAD/GET method.
+    </description>
+    </init-param>
+    <init-param>
+    <param-name>return401ForCachedSessionFailure</param-name>
+    <param-value>{{ .Values.webxml.return401forcachedsessionfailure }}</param-value>
+    <description>
+    If there is an issue with re-using a cached valid session, server returns 401 .. a rare scenario
+    </description>
+    </init-param>
+    <init-param>
+    <param-name>extensions-enabled</param-name>
+    <param-value>{{ .Values.webxml.extensionsEnabled }}</param-value>
+    <description>
+    Setting this value to true allows the WebDAV server to query the content server to see if any namespace extensions have been installed.  These extensions are called for PropPatch and PropFind methods. They are also invoked during the delete method.
+    </description>
+    </init-param>
+    <load-on-startup>1</load-on-startup>
+    </servlet>
+    <!-- Servlet to get Docbase map -->
+    <servlet>
+    <servlet-name>service</servlet-name>
+    <servlet-class>com.emc.documentum.webdav.servlet.DwInitServlet</servlet-class>
+    </servlet>
+    <!-- The mapping for Documentum WebDAV Services. If you change the mapping so that Documentum WebDAV Services isn't the default servlet anymore, make sure to set the init-parameter 'default-servlet' to 'false'. -->
+    <servlet-mapping>
+    <servlet-name>dmwebdav</servlet-name>
+    <url-pattern>/files/*</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+    <servlet-name>dmwebdav</servlet-name>
+    <url-pattern>/wcm/*</url-pattern>
+    </servlet-mapping>
+    <!-- added for Docbase map -->
+    <servlet-mapping>
+    <servlet-name>service</servlet-name>
+    <url-pattern>/service</url-pattern>
+    </servlet-mapping>
+    </web-app>

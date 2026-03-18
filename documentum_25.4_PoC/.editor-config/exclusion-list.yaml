@@ -1,0 +1,180 @@
+docbroker:
+  - dockerimages-values|docbroker.images.contentserver.tag
+  - dockerimages-values|docbroker.images.contentserver.name
+  - dockerimages-values|docbroker.extraInitContainers
+
+content-server:
+  - dockerimages-values|content-server.images.contentserver.tag
+  - dockerimages-values|content-server.images.contentserver.name
+  - dockerimages-values|content-server.extraInitContainers
+  - ls-config|content-server.extraInitContainers
+
+dctm-rest:
+  - dockerimages-values|dctm-rest.restInitContainers.imageTag
+  - dockerimages-values|dctm-rest.restInitContainers.imageName
+  - dockerimages-values|dctm-rest.extraInitContainers.imageTag
+
+dtrbase:
+  - dockerimages-values|dtrbase.images.dtrbase.tag
+  - dockerimages-values|dtrbase.images.dtrbase.name
+
+adminconsole:
+  - configuration|adminconsole.restApiRuntime.OTDS.appName
+
+dctm-cmis:
+  - dockerimages-values|dctm-cmis.cmisInitContainers.image.tag
+  - dockerimages-values|dctm-cmis.cmisInitContainers.image.name
+
+dctm-workflow-designer:
+  - dockerimages-values|dctm-workflow-designer.image.tag
+  - dockerimages-values|dctm-workflow-designer.image.name
+  - dockerimages-values|dctm-workflow-designer.extraInitContainers
+  - ls-config|dctm-workflow-designer.extraInitContainers
+
+contentconnect:
+  - dockerimages-values|contentconnect.images.cc.tag
+  - dockerimages-values|contentconnect.images.cc.name
+  - dockerimages-values|contentconnect.images.ccdb.tag
+  - dockerimages-values|contentconnect.images.ccdb.name
+
+da:
+  - dockerimages-values|da.images.da.tag
+  - dockerimages-values|da.images.da.name
+  - dockerimages-values|da.images.extensionImage.tag
+  - dockerimages-values|da.images.extensionImage.name
+
+dfs:
+  - dockerimages-values|dfs.containers.initcontainer.image.tag
+  - dockerimages-values|dfs.containers.initcontainer.image.name
+
+records:
+  - dockerimages-values|records.images.extensionImage.tag
+  - dockerimages-values|records.images.extensionImage.name
+
+rqm:
+  - dockerimages-values|rqm.images.rqm.tag
+  - dockerimages-values|rqm.images.rqm.name
+
+dctm-dcc:
+  - dockerimages-values|dctm-dcc.consul.image.tag
+  - dockerimages-values|dctm-dcc.consul.image.name
+  - dockerimages-values|dctm-dcc.metadata.image.tag
+  - dockerimages-values|dctm-dcc.metadata.image.name
+  - dockerimages-values|dctm-dcc.syncagent.image.tag
+  - dockerimages-values|dctm-dcc.syncagent.image.name
+  - dockerimages-values|dctm-dcc.syncnshareManual.image.tag
+  - dockerimages-values|dctm-dcc.syncnshareManual.image.name
+  - dockerimages-values|dctm-dcc.coreNotification.image.tag
+  - dockerimages-values|dctm-dcc.coreNotification.image.name
+  - dockerimages-values|dctm-dcc.mailService.image.tag
+  - dockerimages-values|dctm-dcc.mailService.image.name
+  - dockerimages-values|dctm-dcc.database.dbSchemaInit.image.tag
+  - dockerimages-values|dctm-dcc.database.dbSchemaInit.image.name
+
+otds:
+  - dockerimages-values|otds.otdsws.image.tag
+  - dockerimages-values|otds.otdsws.image.name
+  - dockerimages-values|otds.otdsws.otdsdb.dbImage.tag
+
+d2config:
+  - dockerimages-values|d2config.extensionImage.tag
+  - dockerimages-values|d2config.extensionImage.name
+  - dockerimages-values|d2config.extraInitContainers
+  - configuration|d2config.shiro.OTDS.appName
+  - ao-config|d2config.customConfigurations.filename
+  - configuration|d2config.customConfigurations.filename
+  - ls-config|d2config.extraInitContainers
+
+d2classic:
+  - dockerimages-values|d2classic.extensionImage.tag
+  - dockerimages-values|d2classic.extensionImage.name
+  - dockerimages-values|d2classic.extraInitContainers
+  - configuration|d2classic.shiro.OTDS.appName
+  - ao-config|d2classic.shiro.OTDS.appName
+  - ls-config|d2classic.extraInitContainers
+
+ijms:
+  - dockerimages-values|ijms.images.ijms.tag
+  - dockerimages-values|ijms.images.ijms.name
+  - dockerimages-values|ijms.extraInitContainers
+
+d2smartview:
+  - dockerimages-values|d2smartview.extensionImage.tag
+  - dockerimages-values|d2smartview.extensionImage.name
+  - dockerimages-values|d2smartview.extraInitContainers
+  - ao-config|d2smartview.restApiRuntime.OTDS.appName
+  - ls-config|d2smartview.extraInitContainers
+
+d2rest:
+  - dockerimages-values|d2rest.extensionImage.tag
+  - dockerimages-values|d2rest.extensionImage.name
+  - dockerimages-values|d2rest.extraInitContainers
+  - configuration|d2rest.restApiRuntime.OTDS.appName
+
+appworks-gateway:
+  - dockerimages-values|appworks-gateway.global.imageTag
+  - dockerimages-values|appworks-gateway.image.tag
+  - dockerimages-values|appworks-gateway.image.awgInitContainer.tag
+  - dockerimages-values|appworks-gateway.image.appsInitContainer.tag
+
+xPlore-OneD:
+  - dockerimages-values|xPlore-OneD.image.indexserver.tag
+  - dockerimages-values|xPlore-OneD.image.indexserver.name
+  - dockerimages-values|xPlore-OneD.image.indexagent.tag
+  - dockerimages-values|xPlore-OneD.image.indexagent.name
+  - dockerimages-values|xPlore-OneD.image.cps.tag
+  - dockerimages-values|xPlore-OneD.image.cps.name
+
+otiv:
+  - dockerimages-values|otiv.global.imageBaseTag
+  - dockerimages-values|otiv.global.secretlink.image.tag
+  - dockerimages-values|otiv.global.secretlink.image.name
+  - dockerimages-values|otiv.initialization.image.tag
+  - dockerimages-values|otiv.initialization.image.name
+  - dockerimages-values|otiv.amqp.image.tag
+  - dockerimages-values|otiv.amqp.image.name
+  - dockerimages-values|otiv.viewer.image.tag
+  - dockerimages-values|otiv.viewer.image.name
+  - dockerimages-values|otiv.markup.image.tag
+  - dockerimages-values|otiv.markup.image.name
+  - dockerimages-values|otiv.config.image.tag
+  - dockerimages-values|otiv.config.image.name
+  - dockerimages-values|otiv.highlight.image.tag
+  - dockerimages-values|otiv.highlight.image.name
+  - dockerimages-values|otiv.publication.image.tag
+  - dockerimages-values|otiv.publication.image.name
+  - dockerimages-values|otiv.publisher.image.tag
+  - dockerimages-values|otiv.publisher.image.name
+  - dockerimages-values|otiv.asset.image.tag
+  - dockerimages-values|otiv.asset.image.name
+
+smartviewm365:
+  - dockerimages-values|smartviewm365.notificationservice.image.tag
+  - dockerimages-values|smartviewm365.notificationservice.image.name
+  - dockerimages-values|smartviewm365.extensionImage.tag
+  - dockerimages-values|smartviewm365.extensionImage.name
+  - dockerimages-values|smartviewm365.extraInitContainers
+
+bps:
+  - dockerimages-values|bps.image.tag
+  - dockerimages-values|bps.image.name
+
+xda:
+  - dockerimages-values|xda.image.tag
+  - dockerimages-values|xda.image.name
+
+dctm-dcis:
+  - dockerimages-values|dctm-dcis.image.tag
+  - dockerimages-values|dctm-dcis.image.name
+
+lss:
+  - dockerimages-values|lss.ls-print.extensionImage.tag
+  - dockerimages-values|lss.ls-print.extensionImage.name
+  - dockerimages-values|lss.ls-sftp.image.tag
+  - dockerimages-values|lss.ls-sftp.image.name
+  - ls-config|lss.ls-print.extraInitContainers
+  - ls-config|global.appname
+
+dctm-dms:
+  - dockerimages-values|dctm-dms.dmsInitContainers.image.tag
+  - dockerimages-values|dctm-dms.dmsInitContainers.image.name

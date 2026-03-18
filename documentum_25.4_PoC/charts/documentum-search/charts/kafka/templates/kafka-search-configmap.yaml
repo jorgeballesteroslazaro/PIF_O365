@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kafka-search-configmap
+  
+data:
+  bootstrap.server: {{ include "kafka.fullname" . }}:{{ .Values.service.port | int64 }}
+  kafka.host: {{ include "kafka.fullname" . }}

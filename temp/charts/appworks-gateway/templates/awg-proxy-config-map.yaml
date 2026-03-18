@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name:   awg-proxy-config-map
+  labels: {{ include "appworks-gateway.labels" . | nindent 4 }}
+data:
+  {{- range .Values.tenants }}
+  {{- if .proxy.automate }}
+  proxy_{{ .name }}.json: |-
+    {{- $fileContent := $.Files.Get .proxy.filePath }}
+    {{- $fileContent | nindent 4 }}
+  {{- end }}
+  {{- end }}
+  {{- if .Values.proxy.automate }}
+  proxy_otag.json: |-
+    {{- .Files.Get .Values.proxy.filePath | nindent 4 }}
+  {{- end }}

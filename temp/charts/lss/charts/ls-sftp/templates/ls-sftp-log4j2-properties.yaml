@@ -1,0 +1,45 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ls-sftp-log4j2-properties
+  {{- template "configMap.labels" . }}
+data:
+  log4j2.properties: |-
+    # Copyright (c) 2017. Open Text Corporation. All Rights Reserved.
+    #
+    # Set root logger to WARN and add an appender called A1.
+
+    rootLogger.level={{ .Values.webapps.log4j2.rootLogLevel }}
+    rootLogger.appenderRefs=A1, SFTPFILE
+    rootLogger.appenderRef.A1.ref=STDOUT
+    rootLogger.appenderRef.SFTPFILE.ref=SFTPLog
+    monitorInterval=60
+    
+    #------------------- CONSOLE --------------------------
+    
+    appender.A1.type=Console
+    appender.A1.name=STDOUT
+    appender.A1.layout.type=PatternLayout
+    appender.A1.layout.pattern=%d{yyyy-MM-dd HH:mm:ss.SSS} [%-5p] [%t] %c: %m%n
+    appender.A1.filter.threshold.type=ThresholdFilter
+    appender.A1.filter.threshold.level=ERROR
+    
+    #------------------SFTP log----------------------------
+    appender.SFTPFILE.type=RollingFile
+    appender.SFTPFILE.name=SFTPLog
+    appender.SFTPFILE.fileName={{ .Values.webapps.log4j2.path }}
+    appender.SFTPFILE.filePattern=${filename}.%d{yyyy-MM-dd}
+    appender.SFTPFILE.layout.type=PatternLayout
+    appender.SFTPFILE.layout.pattern=%d{ABSOLUTE} %5p [%t] %c - %m%n
+    appender.SFTPFILE.policies.type=Policies
+    appender.SFTPFILE.policies.time.type=TimeBasedTriggeringPolicy
+    appender.SFTPFILE.policies.time.interval=1
+    appender.SFTPFILE.policies.time.modulate=true
+    appender.SFTPFILE.policies.size.type=SizeBasedTriggeringPolicy
+    appender.SFTPFILE.policies.size.size=100MB
+    appender.SFTPFILE.strategy.type=DefaultRolloverStrategy
+    appender.SFTPFILE.strategy.max=5
+
+
+
+      

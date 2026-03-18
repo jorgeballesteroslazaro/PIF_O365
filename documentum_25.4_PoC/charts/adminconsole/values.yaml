@@ -1,0 +1,261 @@
+# Default values for adminconsole.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+namespace: 
+### Environment ###
+env:
+  tomcatJVMArgs: ""
+  webappName: 
+  domain: 
+
+## serviceAnnotations define custom annotations that need to be assigned to adminconsole service.
+## For example:
+##  cloud.google.com/backend-config: '{"ports": {"80": "abcd-adminconsole-backend"}}'
+##  cloud.google.com/neg: '{"ingress": true}'
+serviceAnnotations: {}
+
+serviceAccount: 
+  createserviceaccount: true
+  serviceAccountName: 
+  
+### Tomcat ###  
+tomcat:
+  catalinaHome: /opt/tomcat
+  connectionTimeoutInMilliseconds:   #Time that the server will wait for an incoming connection to be established before terminating the request in tomcat server
+  maxHttpHeaderSize:   #Max HTTP header size
+  logfilerotation: 7  #Log files are rotated "logfilerotation" times before being removed 
+  logfilesize: 5M  #Log files are rotated only if they grow bigger then "logfilesize" bytes
+  logrotateFrequency: 1d  #Log files are rotated every "logrotateFrequency". Ex., 10m, 10h, 10d
+  maxThreads: #The maximum number of threads that can be used for the connector
+  keepAliveTimeout: #The maximum time (in milliseconds) that the connection to the server can remain idle before being closed.
+  acceptCount:   #Max queued connections in the pool in tomcat
+
+# Adds entries to the adminconsole pod's /etc/hosts file.
+#hostAliases:
+#- ip: "127.0.0.1"
+#  hostnames:
+#  - "foo.local"
+#  - "bar.local"
+
+### Docbroker ###
+docbroker:
+  count: 2
+  serviceName: 
+  port: 
+
+cs:
+  custom:
+    scriptinPVC: true
+    ##In the case of  hybrid installers approach, volumeMountName value should be custom-script-pvc and scriptPVCname value should be shared-pvc
+    volumeMountName: dcs-data-pvc  
+    scriptPVCname: dcs-pg-pvc      
+    PVCSubPath: initcontainercustomscripts/dcs-pg
+    
+methodsvr:
+  containerName: dcs-pg
+
+session:
+  allowTrustedLogin: 
+  
+removeDocumentation: 
+  
+### Docbase ###
+docbase:
+  name: 
+# if k8s version is < 1.19  default initial delay is set to 300 seconds and 60 seconds if k8s version is >= 1.19
+# Increase the initialDelaySeconds and add the value below if default value is not enough
+readinessProbe:
+  enable: true
+  initialDelaySeconds: 
+# if k8s version is < 1.19  default initial delay is set to 300 seconds and 60 seconds if k8s version is >= 1.19
+# Increase the initialDelaySeconds and add the value below if default value is not enough
+livenessProbe:
+  enable: true
+  initialDelaySeconds: 
+
+startupProbe:
+  enable: true
+  initialDelaySeconds: 180  
+
+replicaCount: 2
+
+fsGroup: 
+runAsNonRoot: true
+runAsUser: 1000
+
+images:
+  repository : 
+  name : 
+  tag : 
+  pullPolicy: 
+  pullSecrets:
+
+extensionImage:
+  repository: 
+  name : ot-dctm-admin-console
+  tag : 25.4.0
+  pullPolicy: 
+
+extraInitContainers: []
+### Secret ###
+secret:
+  csConfigName: 
+
+### extra Environment Variables ###
+extraEnv:
+
+nameOverride: ""
+fullnameOverride: ""
+
+### Persistent Volume ###
+persistentVolume:
+  vctAccessModes: ReadWriteOnce
+  storageClass: 
+  size: 1Gi
+
+certificate:
+  use_certificate: 
+  dbrserviceName: 
+
+dbrpersistentVolume:
+  dbrdataPVCName: 
+
+### Graylog Enabled by default, set to false if logs mount to PVC ###
+graylog:
+  enable: 
+  volumeClaimTemplate:
+    logVctAccessModes: ReadWriteOnce
+    logVctSize: 2Gi
+    logVctStorageClass: 
+
+serviceType: 
+
+servicePort: 
+
+### adminconsole Extension image ###
+extension:  
+  createPVC: true
+  PVCAccessMode: ReadWriteMany
+  PVCStorageClass: 
+  PVCSize: 4Gi
+  pvcName: 
+  #Update the below parameters in case of Static Provisioning in AWS
+  staticPVName:
+  reclaimPolicy:
+  awsEFSCSIDriver: efs.csi.aws.com
+  awsEFSCSIHandle:
+
+### Custom Configuration ###
+customConfigurations:
+  custom: false
+  locale: 
+
+resources:
+  limits:
+    cpu: 100m
+    memory: 128Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+###############################################################
+#  BEGIN parameter value definitions for adminconsole configuration files
+###############################################################
+
+# directory in chart holding any .properties config file "coda" files.
+# These files are appended to the corresponding default .properties config
+# file in the resulting config map definition.  This provides a convenient
+# way for solutions built on top of D2 to override settings in client.properties,
+# settings.properties etc.
+configFileOverrideFilesDir: configFileOverrideFiles
+
+# parameters used to compose adminconsole-log4j-properties config map
+log4j:
+   file: 
+   - /opt/tomcat/logs/
+   - AdminConsole
+   - /admin-rest-api.log
+   logLevel: WARN
+   
+   log4j2_properties: |-
+
+catalina_configurations:
+    enable: false
+    proxy:
+        enable: false
+        proxyHost: 
+        proxyPort: 
+        noProxyHosts:
+
+restApiRuntime:   
+    context_config_location:
+    OTDS:
+      enable: 
+      # supported values for auth mode are ct-otds_token, ct-otds_ticket-otds_token
+      authMode: ct-otds_token
+      authSvc: 
+      clientId: 
+      appName: OpenText\u2122 Documentum\u2122 Admin Console CE 25.4.0
+    ##Enable the CookieConfiguration to true to set SameSite and session cookie attributes
+    CookieConfiguration:
+       enable: false
+      
+    # Crypto salt for client token encryption and decryption
+    # For a multi-node deployment of AdminConsole servers, this property MUST be consistently set across all AdminConsole servers. For a
+    # single-node deployment of AdminConsole servers, this property is optional. The value CAN be any ascII characters. We recommend
+    # that you specify a text no less than 8 characters.    
+    cryptoKeySalt: 
+    
+    rest_api_runtime_properties: |-
+   
+# parameters used to compose adminconsole-settings-properties config map
+settings:   
+   setting_properties: |-
+   
+### New Relic Configuration ###
+
+newrelic:
+  enable: 
+  app_name: DOCUMENTUM_ADMINCONSOLE-PROD-OT2_BP2-ECD
+  proxy_host: 
+  proxy_port: 
+
+customcert:
+  enable: false
+  certName: 
+
+configMap:
+  vault_configmap_name: dctm-vault-configmap
+
+dms:
+  dmsServiceName: 
+  dmsHttpPort: 
+ 
+vault:
+  enable: 
+  vault_configmap: dctm-vault-configmap
+  createPVC: false
+  PVCName: dsis-binary-pvc
+  pvcAccessModes: ReadWriteMany
+  size: 100Mi
+  storageClass: 
+  existVolumePv:   
+  statusCheckRetryCount: 20
+  statusCheckTimeInterval: 1  
+  
+MIPTrusted: 
+  enable: false  
+  
+dfc_properties: |-
+
+web_xml: |-
+
+trust_properties: |-
+
+mailapp_properties: |-

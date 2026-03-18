@@ -1,0 +1,512 @@
+{{- if .Values.global.dctmclientinstaller.enabled }}
+#Service
+kind: Service
+apiVersion: v1
+metadata:
+  name: {{ .Chart.Name }}
+  namespace: {{ .Values.namespace | default .Release.Namespace  }}
+  {{- with .Values.serviceAnnotations }}
+  annotations:
+      {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  type: {{ .Values.serviceType | default .Values.global.webappServiceType }}
+  ports:
+    - port: {{ template "d2classic.servicePort" .  }}
+  selector:
+    app: {{ .Chart.Name }}
+---
+#Persistent Volume when efs is enabled for hook approach
+{{- if and .Values.customConfigurations.persistentVolume.awsEFS .Values.customConfigurations.hook_approach }}
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: {{ .Values.customConfigurations.persistentVolume.existVolumePv }}
+spec:
+  capacity:
+    storage: {{ .Values.customConfigurations.persistentVolume.size }}
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: {{ .Values.customConfigurations.persistentVolume.reclaimPolicy }}
+  storageClassName: {{ .Values.customConfigurations.persistentVolume.storageClass | default .Values.global.rwmStorage }}
+  csi:
+    driver: {{ .Values.customConfigurations.persistentVolume.awsEFSCSIDriver }}
+    volumeHandle: {{ .Values.customConfigurations.persistentVolume.awsEFSCSIHandle }}
+{{- end }}
+
+---
+#Persistent Volume Claim when createPVC is true for hook approach
+{{- if and .Values.customConfigurations.createPVC .Values.customConfigurations.hook_approach }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ .Values.customConfigurations.scriptPVCname }}
+  namespace: {{ .Values.namespace | default .Release.Namespace }}
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: {{ .Values.customConfigurations.persistentVolume.storageClass | default .Values.global.rwmStorage }}
+  {{- if .Values.customConfigurations.persistentVolume.existVolumePv }}
+  volumeName: {{ .Values.customConfigurations.persistentVolume.existVolumePv }}
+  {{- end }}
+  resources:
+    requests:
+      storage: {{ .Values.customConfigurations.persistentVolume.size }}
+{{- end }}
+---
+#StatefulSet
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+   name: {{ .Chart.Name }}
+   namespace: {{ .Values.namespace | default .Release.Namespace }}
+spec:
+  serviceName: "{{ .Chart.Name }}"
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Chart.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Chart.Name }}
+      annotations:
+        checksum/adminmessages: {{ include (print $.Template.BasePath "/d2classic-adminmessages-properties.yaml") . | sha256sum }}
+        checksum/antisamy: {{ include (print $.Template.BasePath "/d2classic-antisamy-xml.yaml") . | sha256sum }}
+        checksum/applicationcontext: {{ include (print $.Template.BasePath "/d2classic-applicationcontext-xml.yaml") . | sha256sum }}
+        checksum/bravacert: {{ include (print $.Template.BasePath "/d2classic-brava-certificate.yaml") . | sha256sum }}
+        checksum/bravaparam: {{ include (print $.Template.BasePath "/d2classic-bravaparameters-properties.yaml") . | sha256sum }}
+        checksum/ctfconfig: {{ include (print $.Template.BasePath "/d2classic-ctfconfig-json.yaml") . | sha256sum }}
+        checksum/d2cache: {{ include (print $.Template.BasePath "/d2classic-d2-cache-xml.yaml") . | sha256sum }}
+        checksum/dfc: {{ include (print $.Template.BasePath "/d2classic-dfc-properties.yaml") . | sha256sum }}
+        checksum/esapi: {{ include (print $.Template.BasePath "/d2classic-esapi-properties.yaml") . | sha256sum }}
+        checksum/serverxml: {{ include (print $.Template.BasePath "/d2classic-server-xml.yaml") . | sha256sum }}
+        checksum/settings: {{ include (print $.Template.BasePath "/d2classic-settings-properties.yaml") . | sha256sum }}
+        checksum/shiro: {{ include (print $.Template.BasePath "/d2classic-shiro-ini.yaml") . | sha256sum }}
+        checksum/smtpc6: {{ include (print $.Template.BasePath "/d2classic-smtpc6-properties.yaml") . | sha256sum }}
+        checksum/validation: {{ include (print $.Template.BasePath "/d2classic-validation-properties.yaml") . | sha256sum }}
+        checksum/webxml: {{ include (print $.Template.BasePath "/d2classic-web-xml.yaml") . | sha256sum }}
+    spec:
+      securityContext:
+        fsGroup: {{ .Values.fsGroup | default .Values.global.fsGroup }}
+        fsGroupChangePolicy: "OnRootMismatch"
+        runAsNonRoot: {{ .Values.runAsNonRoot }}
+        runAsUser: {{ .Values.runAsUser }}
+{{ if (empty (.Values.images.pullSecrets | quote) | ternary .Values.global.pullSecretName .Values.images.pullSecrets) }}
+      imagePullSecrets:
+      - name: {{ .Values.images.pullSecrets | default .Values.global.pullSecretName }}
+{{ end }}
+      initContainers:
+      - name: d2classicextension
+        image: {{ .Values.extensionImage.repository | default .Values.global.repository }}/{{ .Values.extensionImage.name }}:{{ .Values.extensionImage.tag }}
+        imagePullPolicy: {{ .Values.extensionImage.pullPolicy | default .Values.global.pullPolicyType }}
+        command: ['/bin/sh', '-c', '. /opt/d2classic/initstartup.sh']
+        volumeMounts:
+          - name: extensionpvc
+            mountPath: /opt/d2extension
+            subPath: d2classic
+        resources:
+          limits:
+            cpu: {{ .Values.resources.limits.cpu }}
+            memory: {{ .Values.resources.limits.memory }}
+          requests:
+            cpu: {{ .Values.resources.requests.cpu }}
+            memory: {{ .Values.resources.requests.memory }}
+{{- if .Values.extraInitContainers }}
+{{ include "resolveInitContainers" (dict "initContainerLists" .Values.extraInitContainers "global" .Values.global "nindent" 6) }}
+{{- end }}
+{{- if .Values.nodeSelector }}
+      nodeSelector:
+{{ toYaml .Values.nodeSelector | indent 8 }}
+{{- end }}
+      serviceAccountName: {{ .Values.serviceAccount.serviceAccountName | default .Values.global.documentumserviceaccount }}
+      containers:
+      - name: {{ .Chart.Name }}
+        image: {{ .Values.images.repository | default .Values.global.repository }}/{{ .Values.images.name | default .Values.global.appserverImageName }}:{{ .Values.images.tag | default .Values.global.appserverImageTag }}
+        imagePullPolicy: {{ .Values.images.pullPolicy | default .Values.global.pullPolicyType }}
+{{- if or .Values.customConfigurations.custom .Values.d2report.enable | default .Values.global.dtrbase.enabled}}
+        command: ['bin/sh', '-c', 'mkdir -p /opt/D2-install;sudo cp -pRf /opt/d2extension/d2classic/* /opt/D2-install/;sudo chown -Rf 1000:1000 /opt/D2-install/;. /opt/D2-install/extensionstartup.sh']
+{{- else }}
+        command: ['bin/sh', '-c', 'mkdir -p /opt/D2-install;cp -pRf /opt/d2extension/d2classic/* /opt/D2-install/;sudo chown -Rf 1000:1000 /opt/D2-install/;. /opt/D2-install/extensionstartup.sh']
+{{- end }}
+        resources:
+          limits:
+            cpu: {{ .Values.resources.limits.cpu }}
+            memory: {{ .Values.resources.limits.memory }}
+          requests:
+            cpu: {{ .Values.resources.requests.cpu }}
+            memory: {{ .Values.resources.requests.memory }}
+        lifecycle:
+          preStop:
+            exec:
+              command: ['/bin/sh', '-c', 'sh .{{ .Values.tomcat.catalinaHome }}/webapps/{{ .Values.env.webappName | default .Values.global.d2classicWebappName }}/utils/d2cleanuputil/D2UserSessionCleanupUtil.sh']
+        env:
+        - name: KUBERNETES
+          value: "true"
+        - name: CONTAINER_NAME
+          value: {{ .Chart.Name | quote }}
+        - name: D2INSTALL_USE_CS_CUSTOM_SCRIPTS_APPROACH
+          value: "true"
+        - name: DSIS_STATUS_CHECK_RETRY_COUNT
+          value: "{{ .Values.vault.statusCheckRetryCount  }}"
+        - name: DSIS_STATUS_CHECK_TIME_INTERVAL
+          value: "{{ .Values.vault.statusCheckTimeInterval  }}"
+{{- if .Values.env.subscriptionName }}
+        - name: SUBSCRIPTION_NAME
+          value: {{ .Values.env.subscriptionName  }}
+{{- end }}
+        - name: DOCBROKERS_COUNT
+          value: {{ .Values.docbroker.count | quote}}
+        - name: DOCBROKER_SERVICE_NAME
+          value: {{ .Values.userName  }}{{ .Values.docbroker.serviceName | default .Values.global.dbrServiceName }}
+        - name: DOCBROKER_CLUSTER_SPACE
+          value: {{ .Values.env.domain | default (include "documentum.envDomain" .) }}
+        - name: DOCBROKER_PORT
+          value: {{ .Values.docbroker.port | default .Values.global.dbr_port | quote }}
+        - name: METHOD_SVR_HOST
+          value: {{ .Values.methodsvr.containerName }}-jms-service
+        - name: METHOD_SVR_PORT
+          value: {{ .Values.global.jmsPort | quote }}
+        - name: BOF_REGISTRY_USER_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.secret.csConfigName | default .Values.global.csSecrets }}
+              key: globalRegistryPassword
+        - name: INSTALL_OWNER
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.secret.csConfigName | default .Values.global.csSecrets }}
+              key: installOwner
+        - name: INSTALL_OWNER_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.secret.csConfigName | default .Values.global.csSecrets }}
+              key: installOwnerPassword
+        - name: INGRESS_KEYSTORE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.secret.csConfigName | default .Values.global.csSecrets }}
+              key: ingress.keystorepassword
+        - name: DOCBASE_NAME
+          value: {{ .Values.docbase.name | default .Values.global.docbase }}
+        - name: TOMCAT_JVM_ARGS
+          value: {{ .Values.env.tomcatJVMArgs }}
+        - name: WEBAPP_NAME
+          value: {{ .Values.env.webappName | default .Values.global.d2classicWebappName }}
+        - name: DMS_SERVICE_NAME
+          value: {{ .Values.dms.dmsServiceName | default .Values.global.dmsServiceName }}
+        - name: DMS_HTTP_PORT
+          value: {{ .Values.dms.dmsHttpPort | default .Values.global.dmsHttpPort | quote}}
+
+{{- if .Values.env.appTitle }}
+        - name: APP_TITLE
+          value: {{ .Values.env.appTitle }}
+{{- end }}
+        - name: TOMCAT_LOG_FILE_ROTATION
+          value: {{ .Values.tomcat.logfilerotation | quote }}
+        - name: TOMCAT_LOG_FILE_SIZE
+          value: {{ .Values.tomcat.logfilesize | quote }}
+        - name: TOMCAT_LOGROTATE_FREQUENCY
+          value: {{ .Values.tomcat.logrotateFrequency | quote }}
+{{ if (empty (.Values.certificate.use_certificate | quote) | ternary .Values.global.useCertificate .Values.certificate.use_certificate) }}
+        - name: DOCBASE_USE_CERTIFICATES
+          value: {{ (empty (.Values.certificate.use_certificate | quote) | ternary .Values.global.useCertificate .Values.certificate.use_certificate) | quote }}
+{{ end }}
+{{- if .Values.bravatls.enable }}
+        - name: BRAVA_CERTIFICATE
+          value: {{ .Values.bravatls.certName | quote }}
+{{ end }}
+      {{- if (empty (.Values.d2report.enable | quote) | ternary .Values.global.dtrbase.enabled .Values.d2report.enable) }}
+        - name: D2REPORT_ENABLE
+          value: {{ (empty (.Values.d2report.enable | quote) | ternary .Values.global.dtrbase.enabled .Values.d2report.enable) | quote }}
+        - name: DCTM_REPORTS_HOST
+          value: {{ .Values.d2report.dctm_reports_host | default (include "documentum.publicIngressWithoutProtocol" .) }}
+        - name: D2_HOST
+          value: {{ .Values.d2report.d2_host | default (include "documentum.publicIngressWithoutProtocol" .) }}
+        - name: DCTM_REPORTS_PORT
+          value: {{ .Values.d2report.dctm_reports_port | quote }}
+        - name: DCTM_REPORTS_SCHEME
+          value: {{ .Values.d2report.dctm_reports_scheme | quote }}
+        - name: D2_PORT
+          value: {{ .Values.d2report.d2_port | quote }}
+        - name: D2_SCHEME
+          value: {{ .Values.d2report.d2_scheme | quote }}
+      {{- end }}
+      {{- if (empty (.Values.newrelic.enable | quote) | ternary .Values.global.newrelic .Values.newrelic.enable) }}
+        - name: NEWRELIC_ENABLE
+          value: {{ (empty (.Values.newrelic.enable | quote) | ternary .Values.global.newrelic .Values.newrelic.enable) | quote  }}
+        - name: NEWRELIC_APP_NAME
+          value: {{ .Values.newrelic.app_name }}.{{ .Release.Namespace }}
+        - name: NEWRELIC_PROXY_HOST
+          value: {{ .Values.newrelic.proxy_host | default .Values.global.newrelicProxyHost }}
+        - name: NEWRELIC_PROXY_PORT
+          value: {{ .Values.newrelic.proxy_port | default .Values.global.newrelicProxyPort | quote  }}
+        - name: NEWRELIC_LICENSE_KEY
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.secret.csConfigName | default .Values.global.csSecrets }}
+              key: newrelicLicensekey
+      {{- end }}
+{{- if .Values.customConfigurations.custom }}
+        - name: CUSTOM_IMPORT
+          value: {{ .Values.customConfigurations.custom | quote }}
+{{- end }}
+        - name: LOCALE_NAME
+          value: {{ .Values.locale | default .Values.global.locale | quote }}
+
+{{- if .Values.customConfigurations.hook_approach }}
+        - name: HOOK_APPROACH
+          value: {{ .Values.customConfigurations.hook_approach | quote }}
+{{- end }}
+{{- if (empty (.Values.vault.enable | quote) | ternary .Values.global.isVaultEnabled .Values.vault.enable) }}
+        - name: DFC_DSIS_ENABLED
+          value: {{ (empty (.Values.vault.enable | quote) | ternary .Values.global.isVaultEnabled .Values.vault.enable) | quote }}
+        - name: DFC_DSIS_DAEMON_TOKEN
+          value: {{ .Values.vault.daemontoken | quote }}
+        - name: DFC_DSIS_DAEMON_URL
+          value: {{ .Values.vault.daemonurl | default "http://localhost:8200/dsis" | quote }}
+{{- end }}
+{{- if .Values.MIPTrusted.enable }}
+        - name: MIP_ENABLED
+          value: {{ .Values.MIPTrusted.enable | quote }}
+{{- end }}
+        - name: DFC_SSL_TRUSTSTORE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.secret.csConfigName | default .Values.global.csSecrets }}
+              key: csCertTrustPassword
+        - name: POD_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+{{- if .Values.extraEnv }}
+{{ toYaml .Values.extraEnv | indent 8 }}
+{{- end }}
+        ports:
+        - containerPort: 8080
+          name: clientport
+        volumeMounts:
+{{- if (empty (.Values.vault.enable | quote) | ternary .Values.global.isVaultEnabled .Values.vault.enable) }}
+        - mountPath: /opt/dctm_docker/vault_config_map
+          name: vault-volume
+          #subPath: application.properties
+{{- end }}
+{{- if (empty (.Values.vault.enable | quote) | ternary .Values.global.isVaultEnabled .Values.vault.enable) }}
+        - mountPath: /opt/dctm_docker/dsis_binary_volume
+          name: dsis-binary-volume
+          subPath: dsis-binary
+{{- end }}
+{{- if .Values.bravatls.enable }}
+     {{ $chartName := .Chart.Name }}
+     {{ range $path, $_ :=  .Files.Glob "certificates/*" }}
+        - mountPath: /opt/brava/certificates/{{ base $path }}
+          name: {{ $chartName }}-brava-certs
+          subPath: {{ base $path }}
+     {{ end }}
+{{- end }}
+        - mountPath: {{ .Values.tomcat.catalinaHome }}/CustomConf/DFCKeystore
+          name: {{ .Chart.Name }}-vct
+          subPath: {{ .Chart.Name }}_dfc_keystore_file
+{{- if .Values.cs.custom.scriptinPVC }}
+        - mountPath: /opt/D2CS-install
+          name: {{ .Values.cs.custom.volumeMountName }}
+          subPath: {{ .Values.cs.custom.PVCSubPath }}/d2
+{{- else }}
+        - mountPath: /opt/D2CS-install
+          name: dcs-data-pvc
+          subPath: D2CS-install/d2-dcs
+{{- end }}
+{{ if (empty (.Values.certificate.use_certificate | quote) | ternary .Values.global.useCertificate .Values.certificate.use_certificate) }}
+        - mountPath: /opt/dctm/certificate
+          name: {{ .Values.dbrpersistentVolume.dbrdataPVCName | default .Values.global.dbrdataPVCName }}
+          subPath: certificate/{{ .Values.dbrpersistentVolume.dbrdataPVCName | default .Values.global.dbrdataPVCName }}
+{{ end }}
+        - mountPath: {{ .Values.tomcat.catalinaHome }}/CustomConf
+          name: {{ .Chart.Name }}-conf-files
+        - mountPath: {{ .Values.tomcat.catalinaHome }}/conf/server_configmap.xml
+          name: {{ .Chart.Name }}-appserver-server-xml
+          subPath: server.xml
+        - mountPath: {{ .Values.tomcat.catalinaHome }}/webapps/{{ .Values.env.webappName | default .Values.global.d2classicWebappName }}/WEB-INF/web.xml
+          name: {{ .Chart.Name }}-appserver-web-xml
+          subPath: web.xml
+{{- if .Values.d2report.enable | default .Values.global.dtrbase.enabled}}
+        - mountPath: /opt/D2-install/custom/dtr_build/
+          name: d2report
+{{- end }}
+{{- if and .Values.customConfigurations.custom .Values.customConfigurations.hook_approach }}
+        - mountPath: /opt/D2-install/custom
+          name: customconfig
+          subPath: d2classic
+{{- else if .Values.customConfigurations.custom }}
+        - mountPath: /opt/D2-install/custom
+          name: customconfig
+{{- end }}
+        - mountPath: /opt/d2extension/
+          name: extensionpvc
+          subPath: d2classic
+{{ if (empty (.Values.graylog.enable | quote) | ternary (not .Values.global.grayLogEnable) .Values.graylog.enable) }}
+        - mountPath: {{ .Values.tomcat.catalinaHome }}/logs/{{ .Values.env.webappName | default .Values.global.d2classicWebappName }}
+          name: shared-logs
+          subPath: {{ .Values.env.webappName | default .Values.global.d2classicWebappName }}/logs
+        - mountPath: {{ .Values.tomcat.catalinaHome }}/logs/
+          name: shared-logs
+          subPath: logs
+{{- end }}
+{{ $kubeversion := printf "%s.%s" .Capabilities.KubeVersion.Major .Capabilities.KubeVersion.Minor | replace "+" "" | float64 }}
+        resources:
+{{ toYaml .Values.resources | indent 12 }}
+{{- if eq .Values.readinessProbe.enable true }}
+        readinessProbe:
+          httpGet:
+            path: /{{ .Values.env.webappName | default .Values.global.d2classicWebappName }}/ready
+            port: 8080
+{{- if ge $kubeversion 1.19 }}
+          initialDelaySeconds: {{ default 60 .Values.readinessProbe.initialDelaySeconds }}
+{{- else }}
+          initialDelaySeconds: {{ default 250 .Values.readinessProbe.initialDelaySeconds }}
+{{- end }}
+          periodSeconds: 60
+          failureThreshold: 5
+          successThreshold: 1
+          timeoutSeconds: 60
+{{- end }}
+{{- if eq .Values.livenessProbe.enable true }}
+        livenessProbe:
+          httpGet:
+            path: /{{ .Values.env.webappName | default .Values.global.d2classicWebappName }}/live
+            port: 8080
+{{- if ge $kubeversion 1.19 }}
+          initialDelaySeconds: {{ default 60 .Values.livenessProbe.initialDelaySeconds }}
+{{- else }}
+          initialDelaySeconds: {{ default 250 .Values.livenessProbe.initialDelaySeconds }}
+{{- end }}
+          periodSeconds: 60
+          failureThreshold: 5
+{{- end }}
+{{ if ge $kubeversion 1.19 }}
+{{- if eq .Values.startupProbe.enable true }}
+        startupProbe:
+          httpGet:
+            path: /{{ .Values.env.webappName | default .Values.global.d2classicWebappName }}/live
+            port: 8080
+          initialDelaySeconds: {{ .Values.startupProbe.initialDelaySeconds }}
+          failureThreshold: 5
+          successThreshold: 1
+          timeoutSeconds: 60
+          periodSeconds: 60
+{{- end }}
+ {{- end }}
+      volumes:
+{{- if (empty (.Values.vault.enable | quote) | ternary .Values.global.isVaultEnabled .Values.vault.enable) }}
+        - name: vault-volume
+          configMap:
+            name: {{ .Values.vault.vault_configmap }}
+{{- end }}
+{{- if (empty (.Values.vault.enable | quote) | ternary .Values.global.isVaultEnabled .Values.vault.enable) }}
+        - name: dsis-binary-volume
+          persistentVolumeClaim:
+            claimName: dsis-binary-pvc
+{{- end }}
+{{- if .Values.d2report.enable | default .Values.global.dtrbase.enabled}}
+        - name: d2report
+          emptyDir: {}
+{{- end }}
+{{ if (empty (.Values.graylog.enable | quote) | ternary (not .Values.global.grayLogEnable) .Values.graylog.enable) }}
+        - name: shared-logs
+          emptyDir: {}
+{{ end }}
+{{- if and .Values.customConfigurations.custom .Values.customConfigurations.hook_approach }}
+        - name: customconfig
+          persistentVolumeClaim:
+            claimName: {{ .Values.customConfigurations.scriptPVCname }}
+{{- else if .Values.customConfigurations.custom }}
+        - name: customconfig
+          emptyDir: {}
+{{- end }}
+        - name: extensionpvc
+          persistentVolumeClaim:
+            claimName: {{ .Values.extension.pvcName | default .Values.global.tomcatbase_commonpvcname }}
+        - name: {{ .Values.cs.custom.volumeMountName }}
+          persistentVolumeClaim:
+            claimName: {{ .Values.cs.custom.scriptPVCname }}
+{{ if (empty (.Values.certificate.use_certificate | quote) | ternary .Values.global.useCertificate .Values.certificate.use_certificate) }}
+        - name: {{ .Values.dbrpersistentVolume.dbrdataPVCName | default .Values.global.dbrdataPVCName }}
+          persistentVolumeClaim:
+            claimName: {{ .Values.certificate.dbrserviceName | default .Values.global.dbrServiceName }}-pvc
+{{- end }}
+{{- if .Values.bravatls.enable }}
+        - name: {{ .Chart.Name }}-brava-certs
+          secret:
+            secretName: {{ .Chart.Name }}-brava-certs
+{{- end }}
+        - name: {{ .Chart.Name }}-conf-files
+          projected:
+            sources:
+            - configMap:
+                name: {{ .Chart.Name }}-adminmessages-properties
+            - configMap:
+                name: {{ .Chart.Name }}-antisamy-xml
+            - configMap:
+                name: {{ .Chart.Name }}-applicationcontext-xml
+            - configMap:
+                name: {{ .Chart.Name }}-ctfconfig-json
+            - configMap:
+                name: {{ .Chart.Name }}-d2-cache-xml
+            - configMap:
+                name: {{ .Chart.Name }}-d2fs-properties
+            - configMap:
+                name: {{ .Chart.Name }}-dfc-properties
+            - configMap:
+                name: {{ .Chart.Name }}-esapi-properties
+            - configMap:
+                name: {{ .Chart.Name }}-log4j2-properties
+            - configMap:
+                name: {{ .Chart.Name }}-logback-xml
+            - configMap:
+                name: {{ .Chart.Name }}-settings-properties
+{{ if (empty (.Values.shiro.enable | quote) | ternary .Values.global.otdsEnabled .Values.shiro.enable) }}
+            - configMap:
+                name: {{ .Chart.Name }}-shiro-ini
+{{- end }}
+            - configMap:
+                name: {{ .Chart.Name }}-validation-properties
+            - configMap:
+                name: {{ .Chart.Name }}-bravaparameters-properties
+        - name: {{ .Chart.Name }}-appserver-server-xml
+          projected:
+            sources:
+            - configMap:
+                name: {{ .Chart.Name }}-server-xml
+        - name: {{ .Chart.Name }}-appserver-web-xml
+          projected:
+            sources:
+            - configMap:
+                name: {{ .Chart.Name }}-web-xml
+  volumeClaimTemplates:
+  - metadata:
+      name: {{ .Chart.Name }}-vct
+    spec:
+      accessModes:
+        - {{ .Values.persistentVolume.vctAccessModes }}
+      resources:
+         requests:
+            storage: {{ .Values.persistentVolume.size }}
+      storageClassName: {{ .Values.persistentVolume.storageClass | default .Values.global.rwoStorage }}
+{{ if (empty (.Values.graylog.enable | quote) | ternary (not .Values.global.grayLogEnable) .Values.graylog.enable) }}
+  - metadata:
+      name: shared-logs
+    spec:
+      accessModes:
+        - {{ .Values.graylog.volumeClaimTemplate.logVctAccessModes }}
+      resources:
+         requests:
+            storage: {{ .Values.graylog.volumeClaimTemplate.logVctSize }}
+      storageClassName: {{ .Values.graylog.volumeClaimTemplate.logVctStorageClass | default .Values.global.rwoStorage }}
+{{ end }}
+{{- end }}
+

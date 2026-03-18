@@ -1,0 +1,10 @@
+apiVersion: v2
+appVersion: 22.1.0140.0066
+dependencies:
+- condition: global.dctm-dcis.enabled
+  name: dcis-text-extractor
+  repository: ""
+  version: "25.4"
+description: xPlore Helm Chart for Kubernetes
+name: xPlore-OneD
+version: 22.1.14

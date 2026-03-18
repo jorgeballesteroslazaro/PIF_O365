@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.serviceName | default .Values.global.dmsServiceName}}-configmap
+data:
+  dms.properties: |
+    ####################### Database Properties ##############################
+    dms.db.type = {databaseType}
+    dms.db.host = {{ .Values.database.host | default .Values.global.db_hostname }}
+    dms.db.port = {{ .Values.database.port | default .Values.global.dbport }}
+    dms.db.id = {{ .Values.database.id | default .Values.global.db_service }}
+    dms.db.name = dm_{{ .Values.database.schema_name | default .Values.global.docbase }}_docbase
+    dms.jdbc.schema.name = {{ .Values.database.schema_name | default .Values.global.docbase }}
+    dms.jdbc.username = {{ .Values.database.username | default .Values.global.docbase}}
+    dms.jdbc.password = {dmsJdbcPassword}
+    dms.db.sql.instance = {{ .Values.database.sql_instance }}
+    
+    ####################### Push and Pull Properties ##############################
+    dms.webservice.update.url = {{ .Values.proxy.enabled | ternary (include "dms.proxyUrl" .) (.Values.ingress.url | default (include "documentum.vpnIngress" .) | trimSuffix "/") }}
+    dms.unavailable.destination.interval.milliseconds = 600000
+    dms.job.push.scheduler.delay.milliseconds = 60000
+    
+    ####################### JMX Properties ##############################
+    dms.jmx.host = {{ .Values.jmx.host }}
+    dms.rmi.registry.port = {{ .Values.jmx.rmiRegistryPort }}
+    dms.rmi.server.port = {{ .Values.jmx.rmiServerPort }}
+    dms.jmx.username = dmsAdmin
+    dms.jmx.password = {dmsJmxPassword}

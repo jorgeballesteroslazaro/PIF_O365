@@ -1,0 +1,72 @@
+# To migrate records in otds v21.3 or earlier to a SQL based OTDS (v22 or later), do the following steps:
+# - update the global.database properties within this file if necessary
+# - scale down the current otds statefulset: kubectl -n <namespace> scale sts otds --replicas=0
+# - install otds migration helm chart, e.g.:
+#     helm install -n <namespace> otds-migrate ./otiv-22.2.0.tgz -f otdsMigrate.yaml
+# - after a couple of minutes, check otdsws logs to verify no evidence of migration errors
+#     kubectl -n <namespace> logs otdsws-*
+# - delete otds migration helm chart, e.g.:
+#     helm -n <namespace> delete otds-migrate
+# - only for dev deployments where postgresql is running in a container, delete the pg-otiv statefulset and secret:
+#     kubectl -n <namespace> delete sts pg-otiv
+#     kubectl -n <namespace> delete secret pg-otiv
+# - update the otds password, i.e. global.masterPassword and otds.otdsws.otadminPassword in otivValues.yaml,
+#     to match the otds password established in prior release
+# - run helm upgrade command to update otiv deployment, e.g.:
+#     helm upgrade -n <namespace> -i otiv ./otiv-22.2.0.tgz -f otivValues.yaml ...
+
+postgresql:
+  enabled: false
+
+amqp:
+  enabled: false
+
+asset:
+  enabled: false
+
+config:
+  enabled: false
+
+highlight:
+  enabled: false
+
+markup:
+  enabled: false
+
+metis:
+  enabled: false
+
+publication:
+  enabled: false
+
+publisher:
+  enabled: false
+
+viewer:
+  enabled: false
+
+global:
+  otdsMigration: true
+  serviceAccountName: default
+
+  dbSecretName:   otiv-base-secrets
+  dbSecretKey:    pithos-password
+  ivDbSecretKey: iv-password
+
+  database:
+    hostname: pg-otiv
+    port:     5432
+    ## Database name that psql initially connects with prior to command execution
+    adminDatabase: postgres
+    adminUsername: postgres
+
+
+otds:
+  otdsws:
+    migration:
+      enabled: true
+      usingLegacyImage: true
+      legacyImagePVC: otds-data-otds-0
+
+ingress:
+  enabled: false

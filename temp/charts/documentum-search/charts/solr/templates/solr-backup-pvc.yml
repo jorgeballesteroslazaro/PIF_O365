@@ -1,0 +1,15 @@
+{{- if .Values.backup.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ .Values.service.name }}-backup-pvc
+  annotations:
+    "helm.sh/resource-policy": keep
+spec:
+  accessModes:
+    - {{ .Values.backup.persistence.accessMode }}
+  resources:
+    requests:
+      storage: {{ .Values.backup.persistence.storageSize }}
+  storageClassName: {{ .Values.backup.persistence.storageClass | default .Values.global.rwmStorage }}
+{{- end }}

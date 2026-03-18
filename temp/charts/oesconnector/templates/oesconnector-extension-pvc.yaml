@@ -1,0 +1,14 @@
+{{- if .Values.extension.createPVC }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ .Values.extension.pvcName |  default .Values.global.tomcatbase_commonpvcname }}
+  namespace: {{ .Values.namespace  | default .Release.Namespace }}
+spec:
+  accessModes:
+    - {{ .Values.extension.PVCAccessMode }}
+  storageClassName: {{ .Values.extension.PVCStorageClass  |  default .Values.global.rwmStorage }}
+  resources:
+    requests:
+      storage: {{ .Values.extension.PVCSize }}
+{{- end }}

@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: parser-configmap
+
+data:
+  parser.server.url: http://{{ .Values.service.name }}:{{ .Values.service.targetPort }}/api/v1/extractor

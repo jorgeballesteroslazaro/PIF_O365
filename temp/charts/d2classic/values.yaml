@@ -1,0 +1,341 @@
+# Default values for d2classic
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+namespace: 
+### Environment ###
+env:
+  # Only used in cloud tenant environment to add subscriptionName query string 
+  # parameter to the OTDS authentication URL when redirecting the user.
+  #subscriptionName: subscription1
+  tomcatJVMArgs: ""
+  webappName: 
+  # By Default the appTitle is OpenText™ | Documentum™ Classic View that gets displayed on the Browser tab.
+  # Update to a custom appTitle below when required 
+  appTitle: 
+  domain: 
+
+## serviceAnnotations define custom annotations that need to be assigned to d2classic service.
+## For example:
+##  cloud.google.com/backend-config: '{"ports": {"80": "abcd-d2classic-backend"}}'
+##  cloud.google.com/neg: '{"ingress": true}'
+serviceAnnotations: {}
+
+serviceAccount: 
+  createserviceaccount: true
+  serviceAccountName: 
+
+### Tomcat ###  
+tomcat:
+  catalinaHome: /opt/tomcat
+  connectionTimeoutInMilliseconds:   #Time that the server will wait for an incoming connection to be established before terminating the request in tomcat server
+  maxHttpHeaderSize:   #Max HTTP header size
+  logfilerotation: 7  #Log files are rotated "logfilerotation" times before being removed 
+  logfilesize: 5M  #Log files are rotated only if they grow bigger then "logfilesize" bytes
+  logrotateFrequency: 1d  #Log files are rotated every "logrotateFrequency". Ex., 10m, 10h, 10d
+  maxThreads:  # Max number of threads in the pool
+  keepAliveTimeout:  # Keep-alive timeout in milliseconds
+  acceptCount:  #Max queued connections in the pool in tomcat
+  
+### Docbroker ###
+
+docbroker:
+  count: 2
+  serviceName: 
+  port: 
+
+cs:
+  custom:
+    scriptinPVC: true
+    ##In the case of  hybrid installers approach, volumeMountName value should be custom-script-pvc and scriptPVCname value should be shared-pvc
+    volumeMountName: dcs-data-pvc
+    scriptPVCname: dcs-pg-pvc
+    PVCSubPath: initcontainercustomscripts/dcs-pg
+
+methodsvr:
+  containerName: dcs-pg
+
+session:
+  allowTrustedLogin: 
+
+### Docbase ###
+docbase:
+  name: 
+# if k8s version is < 1.19  default initial delay is set to 250 seconds and 60 seconds if k8s version is >= 1.19
+# Increase the initialDelaySeconds and add the value below if default value is not enough
+readinessProbe:
+  enable: true
+  initialDelaySeconds: 
+# if k8s version is < 1.19  default initial delay is set to 250 seconds and 60 seconds if k8s version is >= 1.19
+# Increase the initialDelaySeconds and add the value below if default value is not enough
+livenessProbe:
+  enable: true
+  initialDelaySeconds: 
+  
+startupProbe:
+  enable: true
+  initialDelaySeconds: 180  
+  
+replicaCount: 2
+
+fsGroup: 
+runAsNonRoot: true
+runAsUser: 1000
+
+images:
+  repository : 
+  name : 
+  tag : 
+  pullPolicy: 
+  pullSecrets:
+
+extensionImage:
+  repository: 
+  name : ot-dctm-client-classic
+  tag : 25.4
+  pullPolicy: 
+ 
+extraInitContainers: []
+### Secret ###
+secret:
+  csConfigName: 
+
+### extra Environment Variables ###
+extraEnv:
+  
+nameOverride: ""
+fullnameOverride: ""
+
+### Persistent Volume ###
+persistentVolume:
+  vctAccessModes: ReadWriteOnce
+  storageClass: 
+  size: 1Gi
+
+certificate:
+  use_certificate: 
+  dbrserviceName: 
+
+dbrpersistentVolume:
+  dbrdataPVCName: certdbr-data-pvc
+
+### Graylog Enabled by default, set to false if logs mount to PVC ###
+graylog:
+  enable: 
+  volumeClaimTemplate:
+    logVctAccessModes: ReadWriteOnce
+    logVctSize: 2Gi
+    logVctStorageClass: 
+
+serviceType: 
+
+### Port for d2classic Service ###
+servicePort: 
+  
+### d2report Configuration ###
+d2report:
+  enable: 
+  dctm_reports_host: 
+  d2_host: 
+  dctm_reports_port: "443"
+  d2_port: "443"
+  d2_scheme: "https:"
+  dctm_reports_scheme: "https"
+### D2Classic Extension image ###
+extension:  
+  createPVC: true
+  PVCAccessMode: ReadWriteMany
+  PVCStorageClass: 
+  PVCSize: 4Gi
+  pvcName: 
+  #Update the below parameters in case of Static Provisioning in AWS
+  staticPVName:
+  reclaimPolicy:
+  awsEFSCSIDriver: efs.csi.aws.com
+  awsEFSCSIHandle:
+### Custom Configuration ###
+customConfigurations:
+  custom: false
+  hook_approach: false
+  createPVC: false
+  scriptPVCname: d2custom-shared-pvc
+  persistentVolume:
+    awsEFS: false
+    awsEFSCSIDriver: efs.csi.aws.com
+    awsEFSCSIHandle:
+    existVolumePv:
+    reclaimPolicy: Retain
+    storageClass: 
+    size: 2Gi
+
+locale: 
+
+
+resources:
+  limits:
+    cpu: 100m
+    memory: 128Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+###############################################################
+#  BEGIN parameter value definitions for D2 configuration files
+###############################################################
+
+# directory in chart holding any .properties config file "coda" files.
+# These files are appended to the corresponding default .properties config
+# file in the resulting config map definition.  This provides a convenient
+# way for solutions built on top of D2 to override settings in D2FS.properties,
+# settings.properties etc.
+configFileOverrideFilesDir: configFileOverrideFiles
+
+# parameters used to compose d2classic-shiro-ini config map
+shiro:
+   # Set this to false if no SSO will be used
+   enable: 
+   # SSOType may be OTDS or SAML:  provide required values in the relevant section below accordingly
+   SSOType: OTDS
+   OTDS:
+      clientId: 
+      apiSvc: 
+      # The Ingress URL for the OTDS Authentication service 
+      authSvc: 
+      appName: OpenText™ Documentum™ Content Management CE 25.4
+            
+   SAML:
+      idpUrl: SPECIFY_ME_shiro.SAML.idpUrl
+      assertionConsumerServiceUrl: SPECIFY_ME_shiro.SAML.assertionConsumerServiceUrl
+      logoutResponseEndpointUrl: SPECIFY_ME_shiro.SAML.logoutResponseEndpointUrl
+      issuer: SPECIFY_ME_shiro.SAML.issuer
+      idpTokenSigningCertificate: SPECIFY_ME_shiro.SAML.idpTokenSigningCertificate
+      jksLocation: SPECIFY_ME_shiro.SAML.jksLocation
+      serviceProviderIdentifier: SPECIFY_ME_shiro.SAML.serviceProviderIdentifier
+   #Additional attribures related to shiro shall be added below
+   shiro_ini: |-
+   
+# parameters used to compose d2classic-D2FS-properties config map
+#D2FS:
+#   propertyPageConstraintValidation: true
+#   loadBalancedContentServer: false
+
+# parameters used to compose d2classic-settings-properties config map
+settings:   
+   # "connection.remote.url" setting in "settings.properties"
+   # When using Ingress to expose webapp service inside the cluster to the outside user, 
+   # the ingress is behaving like the reverse proxy. The connectionRemoteUrl should be the 
+   # set to the URL of the Ingress resource that the outside user uses to access the 
+   # webapp inside the cluster.
+   connectionRemoteUrlProtocol: 
+   connectionRemoteUrl: 
+   browserPluginMode: thin
+   allowedFrameOrigins: 
+   
+   settings_properties: |-
+
+# parameters used to compose d2classic-ESAPI-properties config map 
+esapi:  
+    forcedSecureCookies: 
+
+# parameters used to compose d2classic-ctfconfig-json config map
+#ctfConfig:
+#   version: 20.2.0000.092
+
+# parameters used to compose d2classic-logback-xml config map
+logback:
+   file: 
+   - /opt/tomcat/logs/
+   - D2
+   - /D2.log
+   fileNamePattern: 
+   - /opt/tomcat/logs/
+   - D2
+   - /D2-%d{yyyy-MM-dd}.log.zip
+   logLevel: info
+   
+   logback_xml: |-
+
+# parameters used to compose d2classic-log4j-properties config map
+log4j:
+   file: 
+   - /opt/tomcat/logs/
+   - D2
+   - /
+   logLevel: WARN
+   
+   log4j2_properties: |-
+
+#############################################################
+#  END parameter value definitions for D2 configuration files
+#############################################################
+
+### New Relic Configuration ###
+
+newrelic:
+  enable: 
+  app_name: DOCUMENTUM_D2CLIENT-PROD-OT2_CFCR_BP2-ECD
+  proxy_host: 
+  proxy_port: 
+
+smtp:
+  hostname:
+  port: 25
+  from:
+  auth: false
+  starttls:
+    enable: false
+  socketFactory:
+    port:
+    class: javax.net.ssl.SSLSocketFactory
+    fallback: false
+    
+  smtp_c6_properties: |-  
+
+D2FS:
+  LoadOnStartup:    
+  
+  D2FS_properties: |-
+
+bravatls:
+  enable: false
+  certName:
+configMap:
+  vault_configmap_name: dctm-vault-configmap
+
+dms:
+  dmsServiceName: 
+  dmsHttpPort: 
+ 
+vault:
+  enable: 
+  vault_configmap: dctm-vault-configmap
+  createPVC: false
+  PVCName: dsis-binary-pvc
+  pvcAccessModes: ReadWriteMany
+  size: 100Mi
+  storageClass: trident-nfs
+  existVolumePv:  
+  statusCheckRetryCount: 20
+  statusCheckTimeInterval: 1
+  
+MIPTrusted: 
+  enable: false
+  
+adminMessages_properties: |-
+
+brava_parameters_properties: |-
+
+dfc_properties: |-
+
+ESAPI_properties: |-
+
+validation_properties: |-
+
+d2_cache_xml: |-
+
+web_xml: |-

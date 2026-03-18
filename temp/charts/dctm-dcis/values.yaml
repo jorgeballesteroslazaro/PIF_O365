@@ -1,0 +1,107 @@
+newrelicLicense: &newrelic_license_key <newrelic_license_key>
+
+
+service:
+  name: dcis-service
+
+replicaCount: 1
+
+image:
+  repository:
+  name: ot-dctm-dcis
+  tag: 25.2 # <latest_version_number>
+  pullPolicy:
+  pullSecrets:
+
+configurationFiles:
+  - dfc.properties
+  
+docbaseName:
+docbaseUser:     
+# this should be referring the installOwnerpassword
+docbasePassword:
+
+serviceAccount:
+  serviceAccountName:
+  createServiceAccount: false    
+
+#cs secrets p for dfc.properties file
+cs:
+  useCSSecrets: false
+  secretName:
+  acsServiceName: # <sname>-pg-jms-service
+  acsServicePort: 9080
+
+dfc:
+  dataDir: /home/dmadmin/dcis
+  docbroker: dbr #In production,better to use the FQDN of service
+  port: 1489
+  connectionMode: native
+  cryptoRepository: 
+  globalRegistryRepository: 
+  globalRegistryUsername: 
+  globalRegistryPassword: 
+  additionalProperties: 
+
+activemq:
+  #Typically activemq broker URL will be as follows:
+  # tcp://<activemq_servicename>.<namespace>.skubevc.cluster.local:<port>
+  broker_url: #tcp://<activemq_broker_host>:61616
+  user_name: 
+  password: 
+  queue_name: dm_document_queue
+  folder_queue_name: dm_folder_queue
+csai:
+  embedding_svc_url: # CSAI Embedding Service URL
+  chat_svc_url: # CSAI Chat Service URL
+saasproxy:
+  websocketEndpoint:  #wss://<url>:<port> <SaaS Proxy Service Websocket Endpoint>
+  websocketAuth:  #<Username>:<password> <SaaS Proxy Serice Websocket Auth credentials>
+  websocketConnections: 5
+  callbacksAuthEndpoint:  # http://<OTDS Service Name>/otdsws/oauth2/jwks <OTDS Authentication JWT Token validation endpoint>
+  callbacksPermsEndpoint:  # <URL of D2 REST Permission Check Endpoint>
+  callbacksDctmAuthEndpoint:   # <URL of D2 REST Authentication Endpoint>
+
+proxy:
+  #proxy details to connect to embedding service, if dcis is behind VPN
+  enable: false
+  host: 
+  port: 
+  noproxy: #bypass list of host and domains eg:localhost|127.0.0.1|*.google.com|10.194.*" 
+  
+otds:
+  enabled: true
+  oauth_client_id: #<oauth_client_id>
+  oauth_client_secret: #<oauth_client_secret>
+  oauth_token_url: #<oauth_token_url>
+  
+resources:
+  requests:
+    cpu: 500m
+    memory: 256Mi
+  limits:
+    cpu: 1000m
+    memory: 512Mi
+
+actuatorHttpPort: 8080
+actuatorHttpsPort: 8443
+
+livenessProbe:
+  enabled: true
+  scheme: HTTP
+  probeUrl: /actuator/health
+  initialDelaySeconds: 40
+  periodSeconds: 5
+
+### newrelic agent configuration. ###
+newrelic:
+  enable: 
+  license_key: *newrelic_license_key
+  app_name: DCTM-DCIS
+  proxy_host: 
+  proxy_port: 
+  proxy_protocol:  
+
+vault:
+  enable:
+  vault_configmap: dctm-vault-configmap

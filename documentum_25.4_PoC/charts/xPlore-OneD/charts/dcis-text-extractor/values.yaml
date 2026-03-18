@@ -1,0 +1,87 @@
+parser:
+  enabled: true
+  image:
+    repository:
+    name: ot-dctm-search-parser
+    tag:
+    pullPolicy:
+  service:
+    name: ds-parser
+    port: 8400
+    targetPort: 8400
+  env:
+    CONTENT_INDEXING_JMS_CONCURRENCY: "16"
+  serviceAccount:
+    createserviceaccount: true
+    serviceAccountName:
+  newrelic:
+    enable:
+    app_name: DOCUMENTUM_SEARCH_APP
+  persistence:
+    pvcName: parser-pvc
+    storageClass:
+    existVolumePv:
+    awsEFS: false
+    awsEFSCSIDriver: efs.csi.aws.com
+    awsEFSCSIHandle: fs-07440be4bc6d8e2a6::fsap-0661fb732267344fc
+    awsEFSCSIClaimPolicy: Retain
+  secrets:
+    cs:
+      name:
+    amq:
+      name:
+  configMap:
+    amq:
+      name:
+  vault:
+    enable: false
+    vault_configmap: dctm-vault-configmap
+
+fetcher:
+  enabled: true
+  image:
+    repository: 
+    name: ot-dctm-content-fetcher
+    tag:
+    pullPolicy:
+  service:
+    name: ds-fetcher
+    port: 8900
+    targetPort: 8900
+  globalregistry:
+    repository:
+    username:
+  docbase:
+    name:
+    user:
+  docbrokers:
+    - docbrokerHost:
+      docbrokerPort:
+  configMap:
+    cs:
+      name:
+  secrets:
+    cs:
+      name:
+      key:
+        docbasePassword: installOwnerPassword
+  serviceAccount:
+    createserviceaccount: true
+    serviceAccountName: 
+  newrelic:
+    enable:
+    app_name: DOCUMENTUM_SEARCH_APP
+  vault:
+    enable: 
+    vault_configmap: dctm-vault-configmap
+
+global:
+  extraDocbases:
+    - name:
+      user:
+  zkstatus_image:
+  searchContainerUsername: searchsvc
+  newrelic_proxy_host:
+  newrelic_proxy_port:
+  newrelic_proxy_protocol:
+  newrelic_license_key:

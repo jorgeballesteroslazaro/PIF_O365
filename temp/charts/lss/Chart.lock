@@ -1,0 +1,18 @@
+dependencies:
+- name: ls-print
+  repository: https://artifactory.otxlab.net/artifactory/cs-lss-helm-rel
+  version: 25.4.0
+- name: ls-generic
+  repository: https://artifactory.otxlab.net/artifactory/cs-lss-helm-rel
+  version: 25.4.0
+- name: ls-sftp
+  repository: https://artifactory.otxlab.net/artifactory/cs-lss-helm-rel
+  version: 25.4.0
+- name: ls-headless
+  repository: https://artifactory.otxlab.net/artifactory/cs-lss-helm-rel
+  version: 25.4.0
+- name: otom-os-service
+  repository: https://artifactory.otxlab.net/artifactory/cs-lss-helm-rel
+  version: 25.2.0
+digest: sha256:fb16dd33aac27ca6eb5b6104c78bd0d75b975b7e63cccfe1fdf2ef8fbd207541
+generated: "2025-11-27T17:42:27.034707515Z"

@@ -1,0 +1,23 @@
+{{- if .Values.persistentVolume.submissions.createPV }}
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: {{ .Values.persistentVolume.submissions.pvName }}
+spec:
+  capacity:
+    storage: {{ .Values.persistentVolume.submissions.size }}
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+{{ if eq .Values.platform "aws" }}
+  storageClassName: {{ .Values.persistentVolume.submissions.storageClass | default .Values.global.rwmStorage }}-sftp
+{{ else }}
+  storageClassName: {{ .Values.persistentVolume.submissions.storageClass | default .Values.global.rwmStorage }}
+{{ end }}
+{{ if .Values.persistentVolume.submissions.awsEFSCSIHandle }}
+  csi:
+    driver: {{ .Values.persistentVolume.awsEFSCSIDriver }}
+    volumeHandle: {{ .Values.persistentVolume.submissions.awsEFSCSIHandle }}
+{{ end }}
+{{- end }}

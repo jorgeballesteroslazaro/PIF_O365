@@ -1,0 +1,19 @@
+#Vault PVC
+{{- if (empty (.Values.vault.enable | quote) | ternary .Values.global.isVaultEnabled .Values.vault.enable)}}
+{{- if .Values.vault.createPVC }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ .Values.vault.PVCName }}
+spec:
+  accessModes:
+    - {{ .Values.vault.pvcAccessModes }}
+  storageClassName: {{ .Values.vault.storageClass | default .Values.global.rwmStorage}}
+{{ if .Values.vault.existVolumePv }}
+  volumeName: {{ .Values.vault.existVolumePv }}
+{{ end }}
+  resources:
+    requests:
+      storage: {{ .Values.vault.size }}
+{{- end }}
+{{- end }}

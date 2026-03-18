@@ -1,0 +1,14 @@
+{{- if (eq (empty (.Values.graylog.enable) | ternary .Values.global.grayLogEnable .Values.graylog.enable) false) }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ .Values.graylog.pvcName  }}
+  namespace: {{ .Values.namespace  | default .Release.Namespace }}
+spec:
+  accessModes:
+    - {{ .Values.graylog.PVCAccessMode }}
+  storageClassName: {{ .Values.graylog.PVCStorageClass  |  default .Values.global.rwmStorage }}
+  resources:
+    requests:
+      storage: {{ .Values.graylog.PVCSize }}
+{{- end }}

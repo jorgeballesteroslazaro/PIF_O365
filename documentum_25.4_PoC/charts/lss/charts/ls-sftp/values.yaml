@@ -1,0 +1,139 @@
+# Default values for ls-sftp.chart.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+###User Name/ID
+userName: sftp
+adminUserName:
+adminPasswordKey:
+sftpUserGroup:
+nameSpace: <namespace>
+webAppName: sftp-users-management
+
+
+ingressClass: nginx  
+timeoutSec: 180
+drainingTimeoutSec: 600
+
+### Docker Images ###
+
+image:
+  repository: 
+  name: dctm-ls-sftp
+  tag: 25.4.0
+  pullPolicy: 
+  pullSecrets:
+
+extraInitContainers: []
+
+fsGroup: 
+
+serviceAnnotations: {}
+
+serviceType:
+servicePort:
+### SFTP ###
+sftp:
+  replicaCount: 1
+  installerUI : silent
+  
+secret:
+  cs:
+    name: 
+  ls:
+    name:  
+
+### Ports ###
+### By default sftp-ssh-svc would create with avaiable nodeport
+### if you need on specific port mention the "nodePort" with value
+ports:
+  sftpPort: 22
+  nodePort:
+
+###  Persistent Volume Details   ###  
+persistentVolume:
+  awsEFSCSIDriver: efs.csi.aws.com
+  submissions:
+    createPVC:
+    createPV: false
+    pvcName: submissions-pvc
+    pvName: 
+    accessModes: ReadWriteMany
+    size: 3Gi
+    storageClass: 
+    awsEFSCSIHandle:
+  users:
+    createPVC:
+    createPV: false
+    pvcName: users-pvc
+    pvName: 
+    accessModes: ReadWriteMany
+    size: 1Gi
+    storageClass: 
+    awsEFSCSIHandle:
+webapps:
+  log4j2:
+    rootLogLevel: INFO
+    path: /opt/tomcat/logs/ls-sftp.log
+    
+###Enabled by default to mount logs on PVC ###
+persistLogsOnPvc:
+  enable:
+  volumeClaimTemplate:
+    logVctAccessModes: ReadWriteOnce
+    logVctSize: 2Gi
+    logVctStorageClass: 
+  
+resources:
+  limits:
+    cpu: 500m
+    memory: 2Gi
+  requests:
+    cpu: 100m
+    memory: 256Mi
+
+### New Relic Configuration ###
+
+newrelic:
+  enable: false
+  #Key Name of Newrelic License Key in CS Secrets. This value is referenced from yaml file of CS Secrets, needs to be changed accordingly.
+  licenseKeyName:
+  app_name: LIFESCIENCES_SFTP-<ENV>-OT2_CFCR_BP2-ECD
+  proxy_host: 
+  proxy_port: 
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+logrotate:
+  enable:
+  configmap: |-
+  
+vault:
+  enable:
+  vault_configmap: dctm-vault-configmap
+  vault_config_mount_path: /opt/dctm_docker/vault_config
+  PVCName: dsis-binary-pvc
+  binary_volume_mount_path: /opt/dctm_docker/dsis_binary_volume
+  statusCheckRetryCount: 20
+  # seconds
+  statusCheckTimeInterval: 1  
+
+tomcat:
+  connectionTimeoutInMilliseconds: 
+  maxHttpHeaderSize:
+  maxThreads:
+  keepAliveTimeout:
+  acceptCount:
+  
+certificate:
+  use_certificate: 
+  dbrserviceName: 
+  
+dbrpersistentVolume:
+  dbrdataPVCName: 
+
+web_xml: |-

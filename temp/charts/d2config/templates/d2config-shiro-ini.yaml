@@ -1,0 +1,48 @@
+{{- if .Values.global.dctmclientinstaller.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: d2config-shiro-ini
+  {{- template "configMap.labels" . }}
+data:
+  shiro.ini: |-
+    {{- if eq .Values.shiro.SSOType "OTDS" }}
+    [main]
+    D2Config-OTDS=com.emc.d2.web.filters.auth.OTDSAuthenticationFilter
+    D2Config-OTDS.defaultRepository={{ .Values.docbase.name | default .Values.global.docbase }}
+    {{- if eq .Values.global.internalTlsEnable true }}
+    D2Config-OTDS.apiSvc={{ include "documentum.vpnOtdsSvcUrl" . }}
+    {{- else }}
+    D2Config-OTDS.apiSvc={{ .Values.shiro.OTDS.apiSvc }}
+    {{- end }}
+    D2Config-OTDS.authSvc={{ .Values.shiro.OTDS.authSvc | default (include "documentum.vpnOtdsSvcUrl" .) }}
+    D2Config-OTDS.clientId={{ .Values.shiro.OTDS.clientId | default .Values.global.oauthClient }}
+    {{- if .Values.env.subscriptionName }}
+    D2Config-OTDS.subscriptionName={{ .Values.env.subscriptionName }}
+    {{- end }}
+    D2Config-OTDS.appName={{ .Values.shiro.OTDS.appName }}
+    D2Config-OTDS.userLoginNameMapping=oTExternalID3
+    #D2Config-OTDS.forceLogOutFromOtds
+    #D2Config-OTDS.resourceId
+    #D2Config-OTDS.defaultDMTicketTimeout
+    D2Config-OTDS.m_connectionRemoteUrl={{include "documentum.vpnIngress" .}}/{{ .Values.env.webappName | default .Values.global.d2configWebappName }}
+    [urls]
+    /**/servlet/GetResource/** = anon
+    /**/servlet/GetDefaultLanguage = anon
+    /**/servlet/favicon = anon
+    /**/servlet/GetLabels = anon
+    /**/ws = anon
+    /**/ws/* = anon
+    /d2config_otds.html = anon
+    /D2ConfigLogoutResponse.html = anon
+    /ready = anon
+    /live = anon
+    /errors/css/** = anon
+    /errors/image/** = anon
+    /resources/** = anon
+    /** = D2Config-OTDS
+    {{- if $configFileAppendsValues := .Values.shiro.shiro_ini }}
+    {{ $configFileAppendsValues }}
+    {{- end }}
+    {{- end }}
+    {{- end }}

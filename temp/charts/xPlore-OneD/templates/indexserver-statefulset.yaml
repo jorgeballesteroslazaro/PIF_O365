@@ -1,0 +1,167 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ .Values.service.indexserver.name }}
+spec:
+  serviceName: {{ .Values.service.indexserver.name }}
+  #only support 1 replica here
+  replicas: 1
+  selector:
+    matchLabels:
+      xplore/app: {{ .Values.service.indexserver.name }}
+      xplore/name: {{ .Chart.Name }}
+      xplore/release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        xplore/app: {{ .Values.service.indexserver.name }}
+        xplore/name: {{ .Chart.Name }}
+        xplore/release: {{ .Release.Name }}
+    spec:
+      serviceAccountName: {{ .Values.serviceAccount.serviceAccountName | default .Values.global.documentumserviceaccount }}
+      {{ if (empty (.Values.image.pullSecrets | quote) | ternary .Values.global.pullSecretName .Values.image.pullSecrets) }}
+      imagePullSecrets:
+        - name: {{ .Values.image.pullSecrets | default .Values.global.pullSecretName }}
+      {{ end }}    
+      containers:
+        - name: xplore-indexserver
+          image: "{{ .Values.image.repository | default .Values.global.repository }}/{{ .Values.image.indexserver.name }}:{{ .Values.image.indexserver.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy | default .Values.global.pullPolicyType }}
+          env:
+            - name: SERVICE_NAME
+              value: {{ .Values.service.indexserver.name }}
+            - name: PERSIST_LOGS            
+              value: {{ .Values.indexserver.persistLogs | default .Values.global.persistLogs | quote }}
+            {{- if (.Values.indexserver.extConfPath)}}
+            - name: EXT_CONF_PATH
+              value: {{ .Values.indexserver.extConfPath }}
+            {{- end }}
+            - name: CONFIG_NEW_RELIC
+              value: {{ .Values.newRelic.enable | default .Values.global.newrelic | quote }}
+            {{- if (.Values.newRelic.appNameSuffix) }}
+            - name: NEW_RELIC_APP_NAME_SUFFIX
+              value: {{ .Values.newRelic.appNameSuffix | quote }}
+            {{- end }}
+            {{- if (.Values.newRelic.rootPath) }}
+            - name: NEW_RELIC_ROOT
+              value: {{ .Values.newRelic.rootPath | quote }}
+            {{- end }}
+            {{- range $key, $value := .Values.indexserver.extraEnv }}
+            - name: {{ $key }}
+              value: {{ $value | quote }}
+            {{- end }}
+            {{- if (empty (.Values.vault.enable | quote) | ternary .Values.global.isVaultEnabled .Values.vault.enable) }}
+            - name: VAULT_ENABLED
+              value: {{ .Values.vault.enable | default .Values.global.isVaultEnabled | quote }}
+            - name: DFC_DSIS_ENABLED
+              value: {{ .Values.vault.enable | default .Values.global.isVaultEnabled | quote }}
+            - name: DSIS_VOLUME_DIR
+              value: {{ .Values.vault.binaryVolumeMountPath | quote }}
+            - name: VAULT_CONFIG_DIR
+              value: {{ .Values.vault.vaultConfigMountPath | quote }}              
+            {{- end }}            
+            {{- if .Values.XDBbackup.enable }}
+            - name: XDB_BACKUP_ENABLED
+              value: {{ .Values.XDBbackup.enable | quote }}
+            - name: MAX_INCREMENTAL_BACKUPS_COUNT
+              value: {{ .Values.XDBbackup.maxIncrementalBackupsCount | quote }}
+            - name: SCHEDULE_CRON_JOB
+              value: {{ .Values.XDBbackup.scheduleCronJob | quote }}
+            {{- end }}
+
+          ports:
+            - name: is-port
+              containerPort: {{ .Values.service.indexserver.targetPort }}
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /dsearch/health/liveness
+              port: {{ .Values.service.indexserver.targetPort }}
+            initialDelaySeconds: {{ .Values.indexserver.livenessProbe.initialDelay }}
+            timeoutSeconds: {{ .Values.indexserver.livenessProbe.timeout }}
+            periodSeconds: {{ .Values.indexserver.livenessProbe.period }}
+            failureThreshold: {{ .Values.indexserver.livenessProbe.failure }}
+          readinessProbe:
+            httpGet:
+              path: /dsearch/health/readiness
+              port: {{ .Values.service.indexserver.targetPort }}
+            initialDelaySeconds: {{ .Values.indexserver.readinessProbe.initialDelay }}
+            timeoutSeconds: {{ .Values.indexserver.readinessProbe.timeout }}
+            periodSeconds: {{ .Values.indexserver.readinessProbe.period }}
+            failureThreshold: {{ .Values.indexserver.readinessProbe.failure }}
+          resources:
+            requests:
+              memory: {{ .Values.resources.indexserver.requests.memory | quote }}
+              cpu: {{ .Values.resources.indexserver.requests.cpu | quote }}
+            limits:
+              memory: {{ .Values.resources.indexserver.limits.memory | quote }}
+              cpu: {{ .Values.resources.indexserver.limits.cpu | quote }}
+          volumeMounts:
+            - name: xplore-data
+              mountPath: /root/xPlore/rtdata
+              subPath: {{ .Values.volumeMounts.subPath }}
+            {{- if (empty (.Values.newRelic.enable | quote) | ternary .Values.global.newrelic .Values.newRelic.enable) }}
+            - name: new-relic-config-map
+              {{- if (.Values.indexserver.extConfPath)}}
+              mountPath: {{ .Values.indexserver.extConfPath }}/newrelic.yml
+              {{- else }}
+              mountPath: /root/xPlore/external-configurations/newrelic.yml
+              {{- end }}
+              subPath: newrelic.yml
+            {{- end }}
+            {{- if (empty (.Values.indexserver.persistLogs | quote) | ternary .Values.global.persistLogs .Values.indexserver.persistLogs) }}
+            - name: xplore-logs
+              mountPath: /root/xPlore/logs/    
+            {{- end }}
+            {{- if and (.Values.customVolume.customMountPath) (.Values.customVolume.customClaimName)}}
+            - name: custom-files
+              mountPath: {{ .Values.customVolume.customMountPath }}
+            {{- end }}               
+            {{- if (empty (.Values.vault.enable | quote) | ternary .Values.global.isVaultEnabled .Values.vault.enable) }}
+            - name: vault-volume
+              mountPath: {{ .Values.vault.vaultConfigMountPath }}
+            - name: dsis-binary-volume
+              mountPath: {{ .Values.vault.binaryVolumeMountPath }} 
+            {{- end }}            
+            {{- if .Values.XDBbackup.enable }}
+            - name: xdbbackup
+              mountPath: /root/xPlore/rtdata/backup
+            {{- end }}            
+
+      volumes:
+        - name: xplore-data
+          persistentVolumeClaim:
+            claimName: {{ .Values.persistentVolume.claimName }}
+        {{- if (empty (.Values.newRelic.enable | quote) | ternary .Values.global.newrelic .Values.newRelic.enable) }}
+        - name: new-relic-config-map
+          configMap:
+            name: {{ .Values.newRelic.configMap.name }}
+            items:
+              - key: {{ .Values.newRelic.configMap.key.newRelicConfigKey }}
+                path: newrelic.yml
+        {{- end }}
+        {{- if (empty (.Values.indexserver.persistLogs | quote) | ternary .Values.global.persistLogs .Values.indexserver.persistLogs) }}
+        - name: xplore-logs
+          emptyDir: {}
+        {{- end }}
+        {{- if and (.Values.customVolume.customMountPath) (.Values.customVolume.customClaimName)}}
+        - name: custom-files
+          persistentVolumeClaim:
+            claimName: {{ .Values.customVolume.customClaimName }}
+        {{- end }}
+        {{- if (empty (.Values.vault.enable | quote) | ternary .Values.global.isVaultEnabled .Values.vault.enable) }}
+        - name: dsis-binary-volume
+          persistentVolumeClaim:
+            claimName: {{ .Values.vault.PVCName }}
+        - name: vault-volume
+          configMap:
+            name: {{ .Values.vault.vaultConfigmap }}
+            items:
+              - key: vault
+                path: application.properties
+        {{- end }}
+        {{- if .Values.XDBbackup.enable }}
+        - name: xdbbackup
+          persistentVolumeClaim:
+            claimName: {{ .Values.XDBbackup.PVCClaimName }}
+        {{- end }}

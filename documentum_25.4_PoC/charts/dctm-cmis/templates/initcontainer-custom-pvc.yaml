@@ -1,0 +1,16 @@
+{{- if not (empty (.Values.cmis.useCommonPVC | quote) | ternary .Values.global.tomcatbase_usecommonpvc .Values.cmis.useCommonPVC) }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ .Values.cmis.pvcName }}
+spec:
+  accessModes:
+    - {{ .Values.cmis.pvcAccessModes }}
+  storageClassName: {{ .Values.cmis.storageClass | default .Values.global.rwmStorage }}
+{{ if .Values.cmis.existVolumePv }}
+  volumeName: {{ .Values.cmis.existVolumePv }}
+{{ end }}
+  resources:
+    requests:
+      storage: {{ .Values.cmis.pvcSize }}
+{{- end }}

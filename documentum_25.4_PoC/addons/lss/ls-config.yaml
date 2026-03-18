@@ -1,0 +1,998 @@
+## This is Additional parameter file for covering Lifescience Customisation of Platform components##
+## To be Used with LSS deployment only with right-most preceedence with helm upgrade/install ###
+
+global:
+  # Description: Indicates if logs are stored in the PVC.
+  persistLogs: true
+
+  # Description: Release version of Life sciences deployment.
+  lsVersion: &lsVersion 25.4.0
+
+  # Description: Name of the repository.
+  docbase: &docbase_name <DOCBASE_NAME>
+
+  # Description: Indicates to create LSS sftp component specific SubmissionPVC and UserPVC, default set to true.
+  createLSSPVC: true
+
+  #Description: List of service names that should bypass the proxy and be included in the noproxy configuration.
+  noproxy:
+    services: indexserver,indexagent,otdsws,ds-coresearch,ds-search-agent,<DC4SP_SERVER_IP>
+
+# Description: Default login user of sftp user management application.
+sftpAdminUserName: &sftp_admin_userName admin
+
+# Description: SMTP host name or IP address accessible to the Documentum CM Server pod and client pod.
+smtpServer: &smtp_server <SMTP_SERVER>
+
+# Description: SMTP port accessible to the Documentum CM Server pod and client pod.
+smtpPort: &smtp_port <SMTP_PORT>
+
+# Description: Email address of the installation owner.
+emailAddress: &email_address <EMAIL_ADDRESS>
+
+# Description: Indicates if SMTP authentication is enabled. The default value is false. If you set the value to true, provide the value for email.smtpUser and 
+# email.smtpPass in cs-secrets.
+smtpAuth: &smtp_auth false
+
+# Description: Indicates if SMTP SSL communication is enabled. The default value is false. If you set the value to true, 
+# provide the value for email.smtpSSLCertificate in cs-secrets.
+smtpSSL: &smtp_ssl_enabled false
+
+# Description: Indicates the application name that is displayed in the OTDS login screen if OTDS authentication is enabled.
+appname: &appname OpenText™ Documentum™ Content Management for Life Sciences CE 25.4
+
+# Description: When OpenText Content Connect is enabled, set allowedFrameOrigins to the following value: frameancestors https://*.sharepoint.com https://outlook.office.com 
+# https://*.officeapps.live.com/https://outlook.office365.com https://inc-word-edit.officeappsappsforoffice.microsoft.com <ingressURL>
+allowedFrameOrigins: &allowedFrameOrigins frame-ancestors https://*.sharepoint.com https://*.officeapps.live.com https://outlook.office.com outlook.office365.com https://inc-word-edit.officeapps appsforoffice.microsoft.com https://<PUBLIC_URL_SHORT_NAME>.<PUBLIC_DOMAIN_NAME>
+
+# Description: Indicates the application name that
+filesystem_id: &filesystem_id <AWS_EFS_ID>
+
+# Description: Indicates to create storage class for AWS Deployment.   
+createSC: &createSC false
+
+# Description: Indicates to enable sharepoint integration.
+enable_sharepoint: &enable_sharepoint true
+
+# Description: IP address of DC4SP VM.
+dc4spserverIP: &dc4spserverIP <DC4SP_SERVER_IP>
+
+# Description: Indicates type of the LMS Type (Internal or External), the default value is Internal
+lms_type: &lms_type Internal
+
+# Description: Password of the LMS_API.
+# The actual password must be set, even when Vault is enabled, as this is a client password.
+lms_api_password: &lms_api_password 
+
+# Description: Indicates whether to import the OTOS self-signed certificate on Print and D2SmartView. Disable this setting when using a valid CA certificate..
+is_otoscertificate_enabled: &is_otoscertificate_enabled false
+
+# Description: Indicates whether to import the IV self-signed certificate on D2SmartView. Disable this setting when using a valid CA certificate..
+is_ivcertificate_enabled: &is_ivcertificate_enabled false
+
+# Description: Enabling this flag helps automate certain post-deployment steps and is not recommended for production environments.
+RUN_AS_DEV_PROFILE: &run_as_dev_profile false
+
+content-server:
+  contentserver:
+    #Description: Memory setting of JMS. The default value is -Xms2048m -Xmx4096m -Xss256k -XX:+DisableExplicitGC for LSS deployment.
+    jmsMemSetting: "-Xms2048m -Xmx4096m -Xss256k -XX:+DisableExplicitGC"
+
+  ### email configurations ###
+  email:
+    # Description: Indicates if email server configuration is enabled. The default value is true for LSS deployment. This allows to externalize the setting of email server in dm_server_config
+    # in the Documentum CM Server pod.
+    configure: true
+
+    # Description: SMTP host name or IP address accessible to the Documentum CM Server pod.
+    smtpServer: *smtp_server
+
+    # Description: SMTP port accessible to the Documentum CM Server pod.
+    smtpPort: *smtp_port
+
+    # Description: Indicates if SMTP authentication is enabled. The default value is false. If you set the value to true, provide the value for email.smtpUser and 
+    # email.smtpPass in cs-secrets.
+    smtpAuth: *smtp_auth
+
+    # Description: Indicates if SMTP SSL communication is enabled. The default value is false. If you set the value to true, 
+    # provide the value for email.smtpSSLCertificate in cs-secrets.
+    smtpSSL: *smtp_ssl_enabled
+
+    # Description: Email address of the installation owner.
+    emailAddress: *email_address
+
+  otds:
+    # Description: Expertise level of the user, the default value set to 2 for LSS deployment
+    clientCapability: 2
+
+    # Description: Privileges assigned to the user, the default value set to 2 for LSS deployment
+    userPrivileges: 2
+
+    # Description: Extended privileges assigned to the user, the default value set to 32 for LSS deployment
+    userXPrivileges: 32
+
+    # Description: User name of dm_user is updated during OTDS synchronization, the default value set to T for LSS deployment
+    userRenameEnabled: T
+
+    # Description: Indicates to unlock all the objects checked out by the user to be renamed, the default value set to T for LSS deployment
+    userRenameUnlockLockedObject: T
+
+    # Description: Indicates if the group name of dm_group can be updated during OTDS synchronization, the default value set to T for LSS deployment
+    groupRenameEnabled: T
+
+    # Description: Indicates to update the OTDS certificate details on a restart, the default value set to true for LSS deployment
+    updateOTDScertonrestart: true
+
+    # Description: Indicates the configName, the default value set to HOSTNAME, for upgrade retain the same value from the previous the deployment 
+    configNameOption: HOSTNAME
+
+  ##LSS ExtraEnv ###
+  # Description: Additional environment variables. You can use this section and its variables based on your requirement.
+  extraEnv:
+    - name: LOG4J_FORMAT_MSG_NO_LOOKUPS
+      value: "true"
+    - name: CERTIFICATE_1
+      value: ""
+    - name: <DOCBASE_NAME>_resource_id
+      value: ""
+    - name: <DOCBASE_NAME>_secretKey
+      value: ""
+    - name: INACTIVE_DELETED_USER
+      value: "T"
+    - name: INACTIVE_UNSUBSCRIBED_USER
+      value: "F"
+    - name: ACTIVATE_POSTMEMBER_ENABLED
+      value: "T"
+    - name: MIGRATE_LDAP_USERS
+      value: "F"
+    - name: MIGRATE_LDAP_DOCBASES
+      value: "<DOCBASE_NAME>"
+    - name: LDAP_CONFIGS_TOKENIZER
+      value: ","
+    - name: <DOCBASE_NAME>_MIGRATE_LDAP_CONFIGS
+      value: ""
+    - name: CUSTOM_JOB_ENABLED
+      value: "F"
+    - name: CUSTOM_USER_RENAMEJOB
+      value: ""
+    - name: CUSTOM_USER_RENAME_METHOD
+      value: ""
+    # Description: Update this value to true when the custom DAR files are updated and not the Documentum CM server/Documentum CM client upgrade  
+    - name: CUSTOM_DAR_INSTALL_ON_RESTART
+      value: "false"
+    - name: DOCUMENTUM_SERVER_VERSION
+      value: "25.4"
+    - name: LIFESCIENCES_SOLUTION
+      value: "LSSuite"
+    - name: LSCONFIG_IMPORT_MODE
+      value: "1"
+    - name: SKIP_CONFIG_EXPORT
+      value: "true"
+    - name: APPSERVER_URL
+      value: "https://<PUBLIC_URL_SHORT_NAME>.<PUBLIC_DOMAIN_NAME>"
+    - name: D2APP_NAME
+      value: "D2"
+    - name: CONTROLLEDPRINT_URL
+      value: "https://<PUBLIC_URL_SHORT_NAME>.<PUBLIC_DOMAIN_NAME>"
+    - name: PDF_DOC_INFO
+      value: "subject"
+    - name: PDF_DOC_DELIMITER
+      value: "#"
+    - name: NUMBEROFSUBMISSIONS
+      value: "1"
+    - name: SUBMISSION_FILESTORE_LOCATION
+      value: "Submission-Filestore"
+    - name: SUBMISSION_ALIAS_VALUE
+      value: "/opt/eSubmissions"
+    - name: BASIC_PERIODIC_REVIEW_DURATION
+      value: "3"
+    - name: XMLVIEWER_URL
+      value: "https://<PUBLIC_URL_SHORT_NAME>.<PUBLIC_DOMAIN_NAME>/XMLViewer"
+    - name: LS_DOCKER_INSTALL
+      value: "true"
+    - name: LS_KUBERNETES_INSTALL
+      value: "true"
+    - name: IHUBHOST
+      value: "<PUBLIC_URL_SHORT_NAME>.<PUBLIC_DOMAIN_NAME>"
+    - name: IHUBPORT
+      value: "443"
+    - name: IHUBCONTEXT
+      value: "iportal"
+    - name: IHUBSERVICEUSER
+      value: "<IHUB_SERVICE_USER>"
+    - name: IHUB_SERVICE_PASSWORD_KEY
+      valueFrom:
+        configMapKeyRef:
+          name: lscs-extra-env-configmap
+          key: ihubServicePasswordKey
+    - name: INSTALL_OWNER_PASSWORD_KEY
+      valueFrom:
+        configMapKeyRef:
+          name: lscs-extra-env-configmap
+          key: installOwnerPasswordKey
+    - name: IHUBIPORTAL_REFRESH_INTERVAL
+      value: "0"
+    - name: IHUB_REST_API_URL
+      value: "http://mbir-ihub.<NAMESPACE>.svc.cluster.local:8000/api/v2"
+    - name: CONFIGNAME
+      value: "iHub - OpenText Life Sciences Solution Suite.zip"
+    - name: CONCURRENT_SESSIONS
+      value: "1000"
+    - name: AUTHURL_PROTOCOL
+      value: "https"
+    - name: OUTPUT_SERVER_MESSAGE_QUEUE_PROTOCOL
+      value: https
+    - name: OUTPUT_SERVER_URL
+      value: https://<OTOS_SERVER_IP>:8000
+    - name: OUTPUT_SERVER_USERNAME
+      value: "<OTOS_ADMIN_USER>"
+    - name: EXPORTFOLDER_SERVER_PATH
+      value: "/opt/eSubmissions/exportfolder/"
+    - name: DC4SP_API_URL
+      value: "http://<DC4SP_SERVER_IP>:444/sdfonline_api"
+    - name: SHAREPOINT_SUB_SITE_THRESHOLD
+      value: "400"
+    - name: CREATE_DOCUMENT_LIBRARY
+      value: "true"
+    - name: SHAREPOINT_DOCUMENT_LIBRARY
+      value: "Shared Documents"
+    - name: SHAREPOINT_SITE_TEMPLATE
+      value: "Collaboration started by $USER on $now for $value(object_name)"
+    - name: SHAREPOINT_SITE_URL_DELIMITER
+      value: ","
+    - name: SHAREPOINT_SITE_URL
+      value: "https://classiclss.sharepoint.com/sites/site02"
+    - name: D2_CONFIG_URL
+      value: "https://<VPN_URL_SHORT_NAME>.<VPN_DOMAIN_NAME>/D2-Config"
+    - name: D2_REST_URL
+      value: "https://<PUBLIC_URL_SHORT_NAME>.<PUBLIC_DOMAIN_NAME>/d2-rest"
+    - name: SHAREPOINT_D2_INBOX_URL
+      value: "https://<PUBLIC_URL_SHORT_NAME>.<PUBLIC_DOMAIN_NAME>/sdfn/collaboration/public/index.html?id=$WORKFLOW_ID"
+    - name: LSS_CC_ENABLED
+      value: "F"
+    - name: TOKENTIMEOUT
+      value: "30"
+    - name: DA_PRIVILEGE_ENABLED
+      value: "F"
+    - name: LS_REL_VERSION
+      valueFrom:
+        configMapKeyRef:
+          name: lscs-extra-env-configmap
+          key: lsVersion
+    - name: LS_HFX_DIR
+      value: "ls-hfx"
+    - name: isCORSAllowed
+      value: "false"
+    - name: DM_CRYPTO_MIN_PASSWORD_LENGTH
+      value: "8"
+    - name: LSS_EXTEND_AUTHORS_255
+      value: "T"
+    - name: LSS_IMPORT_BRAVA_ENTERPRISE_D2CONFIG
+      value: "false"
+    - name: addWebServerPort
+      value: "true"
+    - name: LOGIN_TICKET_TIMEOUT
+      value: "60"
+    - name: http_proxy
+      valueFrom:
+        configMapKeyRef:
+          name: lscs-extra-env-configmap
+          key: HTTP_PROXY
+    - name: HTTP_PROXY
+      valueFrom:
+        configMapKeyRef:
+          name: lscs-extra-env-configmap
+          key: HTTP_PROXY
+    - name: https_proxy
+      valueFrom:
+        configMapKeyRef:
+          name: lscs-extra-env-configmap
+          key: HTTPS_PROXY
+    - name: HTTPS_PROXY
+      valueFrom:
+        configMapKeyRef:
+          name: lscs-extra-env-configmap
+          key: HTTPS_PROXY
+    - name: no_proxy
+      valueFrom:
+        configMapKeyRef:
+          name: lscs-extra-env-configmap
+          key: NO_PROXY
+    - name: NO_PROXY
+      valueFrom:
+        configMapKeyRef:
+          name: lscs-extra-env-configmap
+          key: NO_PROXY
+    - name: JAVA_OPTS
+      valueFrom:
+        configMapKeyRef:
+          name: lscs-extra-env-configmap
+          key: JAVA_OPTS
+    ## Proxy setting can be skipped for dev/qe environments & otds containter authentication
+    ## Apart from adding the above proxy details, add the same detail in JAVA_OPTS for JMS to connect with OTDS OCP Authentication
+    - name: UPGRADE_VERSION_PATH
+      value: ""
+    ## DBA_SESSION_LOG_CUT_OFF_DAYS older dba session logs will be deleted 
+    - name: DBA_SESSION_LOG_CUT_OFF_DAYS
+      value: "2"
+    - name: DOCBASE_OWNER_PASSWORD_KEY
+      valueFrom:
+        configMapKeyRef:
+          name: lscs-extra-env-configmap
+          key: docbaseOwnerPasswordKey
+    - name: DM_ALLOW_NULLDATE_IN_QUERY
+      value: "T"
+    - name: SHAREPOINT_ENABLE
+      valueFrom:
+        configMapKeyRef:
+          name: lscs-extra-env-configmap
+          key: SHAREPOINT_ENABLE
+    - name: D2_CLIENT_URL
+      valueFrom:
+        configMapKeyRef:
+          name: lscs-extra-env-configmap
+          key: D2_CLIENT_URL
+    - name: LMS_IMPLEMENTATION
+      valueFrom:
+        configMapKeyRef:
+          name: lscs-extra-env-configmap
+          key: LMS_IMPLEMENTATION
+    - name: HYPERSCALER_NAME
+      value: <HYPERSCALER_NAME>
+    - name: DM_UPDATE_VDM_HIGH_LINK_COUNT
+      value: "1"
+    - name: UPDATE_D2CONFIG_OBJECTS
+      value: "true"
+    ##Document Viewer URL's, This is used only with smartview
+    - name: OTIV_HIGHLIGHT_SERVICE_URL
+      value: "https://otiv-highlight-<NAMESPACE>.<PUBLIC_DOMAIN_NAME>"
+    - name: OTIV_MARKUP_SERVICE_URL
+      value: "https://otiv-markup-<NAMESPACE>.<PUBLIC_DOMAIN_NAME>"
+    - name: OTIV_PUBLICATION_SERVICE_URL
+      value: "https://otiv-publication-<NAMESPACE>.<PUBLIC_DOMAIN_NAME>"
+    - name: OTIV_VIEWER_SERVICE_URL
+      value: "https://otiv-viewer-<NAMESPACE>.<PUBLIC_DOMAIN_NAME>"
+    - name: OTDS_SERVICE_URL
+      value: "https://<PUBLIC_URL_SHORT_NAME>.<PUBLIC_DOMAIN_NAME>"
+    - name: OTDS_CLIENT_ID
+      value: "<OTDS_CLIENT_ID>"
+
+  ### extra Volumes ###
+  #Submissions file store is mounted with Documentum CM Server to support import submissions feature.
+  extraVolumes:
+    - name: submissions-pvc
+      persistentVolumeClaim:
+        # Description : Name of the PV.
+        claimName: submissions-pvc
+    ### extra Volume Mounts ###
+  extraVolumeMounts:
+    # Description : Path of the volume mount for the init container. 
+    - mountPath: /opt/eSubmissions
+      # Description : Name of the additional volume mount.   
+      name: submissions-pvc
+
+d2config:
+  # Description: Additional environment variables. You can use this section and its variables based on your requirement.
+  extraEnv:
+    - name: OTDS_CLIENT_SECRET_KEY
+      valueFrom:
+        configMapKeyRef:
+          name: lscs-extra-env-configmap
+          key: otdsClientSecretKey
+    - name: DOCUMENTUM_REPOSITORY_OWNER_PASSWORD_KEY
+      valueFrom:
+        configMapKeyRef:
+          name: lscs-extra-env-configmap
+          key: docbaseOwnerPasswordKey
+    - name: INSTALL_OWNER_PASSWORD_KEY
+      valueFrom:
+        configMapKeyRef:
+          name: lscs-extra-env-configmap
+          key: installOwnerPasswordKey
+    - name: IHUB_SERVICE_PASSWORD_KEY
+      valueFrom:
+        configMapKeyRef:
+          name: lscs-extra-env-configmap
+          key: ihubServicePasswordKey
+    - name: LMS_API_PASSWORD_KEY
+      valueFrom:
+        configMapKeyRef:
+          name: lscs-extra-env-configmap
+          key: lmsApiPasswordKey
+    - name: LS_VERSION
+      valueFrom:
+        configMapKeyRef:
+          name: lscs-extra-env-configmap
+          key: lsVersion
+    - name: LMS_IMPLEMENTATION
+      valueFrom:
+        configMapKeyRef:
+          name: lscs-extra-env-configmap
+          key: LMS_IMPLEMENTATION
+
+  ### Custom Configuration ###
+  customConfigurations:
+    # Description: Enable or disable customizations for client configuration.
+    custom: true
+
+    # Description: Enable or disable hook approach for client configuration.
+    hook_approach: true
+
+    # Description: Indicates the creation of a common extension PVC for customization.
+    createPVC: true
+
+    # Description: You must pass the plug-ins as an array and the word "Plugin" must be part of the file name.
+    # Example:
+    # 1. # - Array for Customer to pass more than one plugin
+    # 2. # - plugin1
+    # 3. # - plugin2
+    plugins:
+      - dctm-api-lssv-Plugin-25.4.0.jar
+      - CDF-D2-Config-Plugin-25.4.0.jar
+      - ControlledPrintConfig-Plugin-25.4.0.jar
+
+  shiro:
+    OTDS:
+      # Description: Indicates the application name that is displayed in the OTDS login screen if OTDS authentication is enabled.
+      appName: *appname
+
+d2classic:
+  customConfigurations:
+    # Description: Enable or disable customizations for classic view.
+    custom: true
+
+    # Description: Enable or disable hook approach for classic view.
+    hook_approach: true
+
+  startupProbe:
+    # Description: Time in seconds after the classic pod has started before performing the first probe.
+    initialDelaySeconds: 600
+
+  shiro:
+    OTDS:
+      # Description: Indicates the application name that is displayed in the OTDS login screen if OTDS authentication is enabled.
+      appName: *appname
+
+  # Description: SMTP configurations.
+  smtp:
+    # Description: SMTP host name or IP address accessible from the pod
+    hostname: *smtp_server
+
+    # Description: SMTP port accessible to the pod.
+    port: *smtp_port
+
+    # Description: Email address to use as the sender.
+    from: *email_address
+
+    # Description: Enables or disables SMTP authentication.
+    auth: *smtp_auth
+
+    starttls:
+      # Description: Enables or disables starttls encryption for the SMTP connection.
+      enable: *smtp_ssl_enabled
+
+  D2FS:
+    # Description: Indicates the ConfigMap to append the Life sciences specific configuration into the D2FS_properties file.
+    D2FS_properties: |-
+      
+      allowLifeCycleMassProcessing=true
+
+      #List the valid LC transitions for Mass processing
+
+      validLifeCycleMassStates=RD-SSV Cat 2 Controlled Document Lifecycle~Effective~(Update Labeling Status);Med Device Cat 3 Controlled Document Lifecycle~Reviewed~Withdrawn;Med Device Cat 3 Controlled Document Lifecycle~Effective~Withdrawn;Med Device Cat 3 Controlled Document Lifecycle~Suspended~Withdrawn;Medical Device RD-SSV Cat 2 Controlled Document Lifecycle~Draft~Withdrawn;Medical Device RD-SSV Cat 2 Controlled Document Lifecycle~Effective~Withdrawn;Medical Device RD-SSV Cat 2 Controlled Document Lifecycle~Release Pending~Withdrawn;Medical Device RD-SSV Cat 2 Controlled Document Lifecycle~Suspended~Withdrawn;QM Cat 2 Controlled Document Lifecycle~Effective~Withdrawn;QM Cat 2 Controlled Document Lifecycle~Suspended~Withdrawn;QM Cat 3 Controlled Document Lifecycle~Reviewed~Withdrawn;QM Cat 3 Controlled Document Lifecycle~Effective~Withdrawn;QM Cat 3 Controlled Document Lifecycle~Suspended~Withdrawn;RD-SSV Cat 2 Controlled Document Lifecycle~Draft~Withdrawn;RD-SSV Cat 2 Controlled Document Lifecycle~Suspended~Withdrawn;RD-SSV Cat 2 Controlled Document Lifecycle~Effective~Withdrawn;TMF Cat 2 Controlled Document Lifecycle Model~Draft~Withdrawn;TMF Cat 2 Controlled Document Lifecycle Model~Effective~Withdrawn;TMF Cat 2 Controlled Document Lifecycle Model~Suspended~Withdrawn;TMF Cat 3 Controlled Document Lifecycle Model~Draft~Withdrawn;TMF Cat 3 Controlled Document Lifecycle Model~Reviewed~Withdrawn;TMF Cat 3 Controlled Document Lifecycle Model~Effective~Withdrawn;TMF Cat 3 Controlled Document Lifecycle Model~Suspended~Withdrawn;Med Device Cat 3 Controlled Document Lifecycle~Effective~Suspended;Medical Device RD-SSV Cat 2 Controlled Document Lifecycle~Effective~Suspended;QM Cat 1 Controlled Document Lifecycle~Effective~Suspended;QM Cat 2 Controlled Document Lifecycle~Effective~Suspended;QM Cat 3 Controlled Document Lifecycle~Effective~Suspended;RD-SSV Cat 2 Controlled Document Lifecycle~Effective~Suspended;TMF Cat 2 Controlled Document Lifecycle Model~Effective~Suspended;TMF Cat 3 Controlled Document Lifecycle Model~Effective~Suspended;Med Device Cat 3 Controlled Document Lifecycle~Suspended~(Reinstate as effective);Medical Device RD-SSV Cat 2 Controlled Document Lifecycle~Suspended~(Reinstate as effective);QM Cat 1 Controlled Document Lifecycle~Suspended~(Reinstate as effective);QM Cat 2 Controlled Document Lifecycle~Suspended~(Reinstate as effective);QM Cat 3 Controlled Document Lifecycle~Suspended~(Reinstate as effective);RD-SSV Cat 2 Controlled Document Lifecycle~Suspended~(Reinstate as effective);TMF Cat 2 Controlled Document Lifecycle Model~Suspended~(Reinstate as effective);Medical Device RD-SSV Cat 2 Controlled Document Lifecycle~Draft~(Change Security Model);Medical Device RD-SSV Cat 2 Controlled Document Lifecycle~Effective~(Change Security Model);RD-SSV Cat 2 Controlled Document Lifecycle~Draft~(Change Security Model);RD-SSV Cat 2 Controlled Document Lifecycle~Effective~(Change Security Model);TMF Cat 2 Controlled Document Lifecycle Model~Draft~(Change Security Model);TMF Cat 2 Controlled Document Lifecycle Model~Effective~(Change Security Model);TMF Cat 3 Controlled Document Lifecycle Model~Draft~(Change Security Model);TMF Cat 3 Controlled Document Lifecycle Model~Effective~(Change Security Model);Medical Device RD-SSV Cat 2 Controlled Document Lifecycle~Draft~(reset security);Medical Device RD-SSV Cat 2 Controlled Document Lifecycle~Effective~(reset security);RD-SSV Cat 2 Controlled Document Lifecycle~Draft~(reset security);RD-SSV Cat 2 Controlled Document Lifecycle~Effective~(reset security);TMF Cat 2 Controlled Document Lifecycle Model~Draft~(reset security);TMF Cat 2 Controlled Document Lifecycle Model~Effective~(reset security);TMF Cat 3 Controlled Document Lifecycle Model~Draft~(reset security);TMF Cat 3 Controlled Document Lifecycle Model~Effective~(reset security);Med Device Cat 3 Controlled Document Lifecycle~Draft~Effective;QM Cat 3 Controlled Document Lifecycle~Draft~Effective;RD-SSV Cat 2 Controlled Document Lifecycle~Draft~(Effective Via LC);TMF Cat 3 Controlled Document Lifecycle Model~Draft~Effective;TMF Cat 3 Controlled Document Lifecycle Model~Reviewed~Effective;Med Device Cat 3 Controlled Document Lifecycle~Effective~(update planned withdrawal date);QM Cat 1 Controlled Document Lifecycle~Effective~(update planned withdrawal date);QM Cat 2 Controlled Document Lifecycle~Effective~(update planned withdrawal date);QM Cat 3 Controlled Document Lifecycle~Effective~(update planned withdrawal date);Change Request Lifecycle Model~Draft~(Update Applicable Sites);Change Request Lifecycle Model~Closed~(Update Applicable Sites);Change Request Lifecycle Model~CIP~(Update Applicable Sites);QM Cat 1 Controlled Document Lifecycle~Draft~(Update Applicable Sites);QM Cat 1 Controlled Document Lifecycle~Release Pending~(Update Applicable Sites);QM Cat 1 Controlled Document Lifecycle~Suspended~(Update Applicable Sites);QM Cat 1 Controlled Document Lifecycle~Withdrawn~(Update Applicable Sites);QM Cat 1 Controlled Document Lifecycle~Effective~(Update Applicable Sites);QM Cat 2 Controlled Document Lifecycle~Draft~(Update Applicable Sites);QM Cat 2 Controlled Document Lifecycle~Suspended~(Update Applicable Sites);QM Cat 2 Controlled Document Lifecycle~Withdrawn~(Update Applicable Sites);QM Cat 2 Controlled Document Lifecycle~Effective~(Update Applicable Sites);QM Cat 3 Controlled Document Lifecycle~Draft~(Update Applicable Sites);QM Cat 3 Controlled Document Lifecycle~Reviewed~(Update Applicable Sites);QM Cat 3 Controlled Document Lifecycle~Suspended~(Update Applicable Sites);QM Cat 3 Controlled Document Lifecycle~Withdrawn~(Update Applicable Sites);Med Device Cat 3 Controlled Document Lifecycle~Draft~(Update Applicable Sites);Med Device Cat 3 Controlled Document Lifecycle~Reviewed~(Update Applicable Sites);Med Device Cat 3 Controlled Document Lifecycle~Effective~(Update Applicable Sites);Med Device Cat 3 Controlled Document Lifecycle~Suspended~(Update Applicable Sites);QM Cat 3 Controlled Document Lifecycle~Effective~(Update Applicable Sites);TMF Cat 2 Controlled Document Lifecycle Model~Draft~(Cross-linking);TMF Cat 2 Controlled Document Lifecycle Model~For Review~(Cross-linking);TMF Cat 2 Controlled Document Lifecycle Model~For Approval~(Cross-linking);TMF Cat 2 Controlled Document Lifecycle Model~Effective~(Cross-linking);TMF Cat 3 Controlled Document Lifecycle Model~Draft~(Cross-linking);TMF Cat 3 Controlled Document Lifecycle Model~For Review~(Cross-linking);TMF Cat 3 Controlled Document Lifecycle Model~Reviewed~(Cross-linking);TMF Cat 3 Controlled Document Lifecycle Model~Effective~(Cross-linking);TMF Cat 2 Controlled Document Lifecycle Model~Draft~(Assign to Study);TMF Cat 2 Controlled Document Lifecycle Model~Effective~(Assign to Study);TMF Cat 3 Controlled Document Lifecycle Model~Draft~(Assign to Study);TMF Cat 3 Controlled Document Lifecycle Model~Effective~(Assign to Study);Medical Device RD-SSV Cat 2 Controlled Document Lifecycle~Draft~(update security roles);Medical Device RD-SSV Cat 2 Controlled Document Lifecycle~Effective~(update security roles);RD-SSV Cat 2 Controlled Document Lifecycle~Draft~(update security roles);RD-SSV Cat 2 Controlled Document Lifecycle~Effective~(update security roles);TMF Cat 2 Controlled Document Lifecycle Model~Draft~(update security roles);TMF Cat 2 Controlled Document Lifecycle Model~Effective~(update security roles);TMF Cat 3 Controlled Document Lifecycle Model~Draft~(update security roles);TMF Cat 3 Controlled Document Lifecycle Model~Effective~(update security roles);RD-SSV Cat 2 Controlled Document Lifecycle~Draft~(update email notification list);RD-SSV Cat 2 Controlled Document Lifecycle~Suspended~(update email notification list);RD-SSV Cat 2 Controlled Document Lifecycle~Withdrawn~(update email notification list);RD-SSV Cat 2 Controlled Document Lifecycle~Effective~(update email notification list);QM Cat 1 Controlled Document Lifecycle~Draft~(update email notification list);QM Cat 1 Controlled Document Lifecycle~Release Pending~(update email notification list);QM Cat 1 Controlled Document Lifecycle~Suspended~(update email notification list);QM Cat 1 Controlled Document Lifecycle~Withdrawn~(update email notification list);QM Cat 1 Controlled Document Lifecycle~Effective~(update email notification list);QM Cat 2 Controlled Document Lifecycle~Draft~(update email notification list);QM Cat 2 Controlled Document Lifecycle~Effective~(update email notification list);QM Cat 2 Controlled Document Lifecycle~Suspended~(update email notification list);QM Cat 2 Controlled Document Lifecycle~Withdrawn~(update email notification list);QM Cat 3 Controlled Document Lifecycle~Draft~(update email notification list);QM Cat 3 Controlled Document Lifecycle~Reviewed~(update email notification list);QM Cat 3 Controlled Document Lifecycle~Effective~(update email notification list);QM Cat 3 Controlled Document Lifecycle~Suspended~(update email notification list);Med Device Cat 3 Controlled Document Lifecycle~Reviewed~(update email notification list);Med Device Cat 3 Controlled Document Lifecycle~Effective~(update email notification list);Med Device Cat 3 Controlled Document Lifecycle~Suspended~(update email notification list);Med Device Cat 3 Controlled Document Lifecycle~Superseded~(update email notification list);Medical Device RD~SSV Cat 2 Controlled Document Lifecycle~Draft~(update email notification list);Medical Device RD~SSV Cat 2 Controlled Document Lifecycle~(Reinstate as Effective)~(update email notification list);Medical Device RD-SSV Cat 2 Controlled Document Lifecycle~Effective~(update email notification list);TMF Cat 2 Controlled Document Lifecycle Model~Draft~(update email notification list);TMF Cat 2 Controlled Document Lifecycle Model~Effective~(update email notification list);TMF Cat 2 Controlled Document Lifecycle Model~Suspended~(update email notification list);TMF Cat 2 Controlled Document Lifecycle Model~Withdrawn~(update email notification list);TMF Cat 3 Controlled Document Lifecycle Model~Draft~(update email notification list);TMF Cat 3 Controlled Document Lifecycle Model~For Review~(update email notification list);TMF Cat 3 Controlled Document Lifecycle Model~Effective~(update email notification list);TMF Cat 3 Controlled Document Lifecycle Model~Suspended~(update email notification list);TMF Cat 3 Controlled Document Lifecycle Model~Withdrawn~(update email notification list);QM Cat 3 Controlled Document Lifecycle~Withdrawn~(update email notification list);RD-SSV Cat 2 Controlled Document Lifecycle~Draft~(BPU);RD-SSV Cat 2 Controlled Document Lifecycle~Effective~(BPU);RD-SSV Cat 2 Controlled Document Lifecycle~Superseded~(BPU);RD-SSV Cat 2 Controlled Document Lifecycle~Suspended~(BPU);RD-SSV Cat 2 Controlled Document Lifecycle~Withdrawn~(BPU);QM Cat 1 Controlled Document Lifecycle~Effective~(Set Review / Expiry Dates);QM Cat 1 Controlled Document Lifecycle~Suspended~(Set Review / Expiry Dates);
+
+      #Hide LifeCycle dialog immediately
+      hideMassLifeCycle=true
+
+      pretestJMSForMethods=com.emc.c2.webfs.services.download.D2DownloadServicePlugin.checkinAndLifeCycle,com.emc.d2fs.dctm.web.services.property.D2PropertyService.saveProperties
+
+      #Enable C2 Override
+      enableC2Override=true
+
+      enableClientTimeZoneAwareness=true
+
+  log4j:
+    # Description: Indicates the ConfigMap to append the Life sciences specific configuration into the log4j2.properties file.
+    log4j2_properties: |-
+      #------------------XMLViewer iHub log------------
+      logger.XMLVIEWER_IHUB_LOG.name=ihub
+      logger.XMLVIEWER_IHUB_LOG.level=INFO
+      logger.XMLVIEWER_IHUB_LOG.appenderRefs=XMLVIEWER_IHUB_LOG,XMLVIEWER_STDOUT
+      logger.XMLVIEWER_IHUB_LOG.additivity=false
+      logger.XMLVIEWER_IHUB_LOG.appenderRef.XMLVIEWER_IHUB_LOG.ref=iHubLog
+      logger.XMLVIEWER_IHUB_LOG.appenderRef.XMLVIEWER_STDOUT.ref=STDOUT
+
+      appender.XMLVIEWER_STDOUT.type=Console
+      appender.XMLVIEWER_STDOUT.name=STDOUT
+      appender.XMLVIEWER_STDOUT.layout.type=PatternLayout
+      appender.XMLVIEWER_STDOUT.layout.pattern=%d{yyyy-MM-dd HH:mm:ss.SSS} [%-5p] [%t] %c: %m%n
+      appender.XMLVIEWER_STDOUT.filter.threshold.type=ThresholdFilter
+      appender.XMLVIEWER_STDOUT.filter.threshold.level=INFO
+
+      appender.XMLVIEWER_IHUB_LOG.type=RollingFile
+      appender.XMLVIEWER_IHUB_LOG.name=iHubLog
+      appender.XMLVIEWER_IHUB_LOG.fileName=/opt/tomcat/logs/ihub.log
+      appender.XMLVIEWER_IHUB_LOG.filePattern=${filename}.%d{yyyy-MM-dd}
+      appender.XMLVIEWER_IHUB_LOG.layout.type=PatternLayout
+      appender.XMLVIEWER_IHUB_LOG.layout.pattern=%d{ABSOLUTE} %5p [%t] %c - %m%n
+      appender.XMLVIEWER_IHUB_LOG.policies.type=Policies
+      appender.XMLVIEWER_IHUB_LOG.policies.time.type=TimeBasedTriggeringPolicy
+      appender.XMLVIEWER_IHUB_LOG.policies.time.interval=1
+      appender.XMLVIEWER_IHUB_LOG.policies.time.modulate=true
+      appender.XMLVIEWER_IHUB_LOG.policies.size.type=SizeBasedTriggeringPolicy
+      appender.XMLVIEWER_IHUB_LOG.policies.size.size=100MB
+      appender.XMLVIEWER_IHUB_LOG.strategy.type=DefaultRolloverStrategy
+
+      #------------------D2LS log------------
+      logger.D2LSFile.name=d2ls
+      logger.D2LSFile.level=INFO
+      logger.D2LSFile.appenderRefs=D2LSFile,D2LSFile_STDOUT
+      logger.D2LSFile.additivity=false
+      logger.D2LSFile.appenderRefs=D2LSFile
+      logger.D2LSFile.appenderRef.D2LSFile.ref=D2LSLog
+      logger.D2LSFile.appenderRef.D2LSFile_STDOUT.ref=STDOUT
+
+      appender.D2LSFile_STDOUT.type=Console
+      appender.D2LSFile_STDOUT.name=STDOUT
+      appender.D2LSFile_STDOUT.layout.type=PatternLayout
+      appender.D2LSFile_STDOUT.layout.pattern=%d{yyyy-MM-dd HH:mm:ss.SSS} [%-5p] [%t] %c: %m%n
+      appender.D2LSFile_STDOUT.filter.threshold.type=ThresholdFilter
+      appender.D2LSFile_STDOUT.filter.threshold.level=INFO
+
+      appender.D2LSFile.type=RollingFile
+      appender.D2LSFile.name=D2LSLog
+      appender.D2LSFile.fileName=/opt/tomcat/logs/d2ls.log
+      appender.D2LSFile.filePattern=${filename}.%d{yyyy-MM-dd}
+      appender.D2LSFile.layout.type=PatternLayout
+      appender.D2LSFile.layout.pattern=%d{ABSOLUTE} %5p [%t] %c - %m%n
+      appender.D2LSFile.policies.type=Policies
+      appender.D2LSFile.policies.time.type=TimeBasedTriggeringPolicy
+      appender.D2LSFile.policies.time.interval=1
+      appender.D2LSFile.policies.time.modulate=true
+      appender.D2LSFile.policies.size.type=SizeBasedTriggeringPolicy
+      appender.D2LSFile.policies.size.size=100MB
+      appender.D2LSFile.strategy.type=DefaultRolloverStrategy
+
+  # Description: Indicates the ConfigMap to append the Life sciences specific configuration into the ESAPI_properties file.
+  ESAPI_properties: |-
+    Validator.HTTPPermissiveHeaderValue=^[a-zA-Z0-9\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF()\\\-=\\*\\.\\?;!%@'\",+\\/:()&_ ]*$
+
+  # Description: Indicates the ConfigMap to append the Life sciences specific configuration into the d2_cache_xml file.
+  d2_cache_xml: |-
+    <cache name="user_group-cache" maxElementsInMemory="100000" eternal="false" overflowToDisk="false" timeToIdleSeconds="30" timeToLiveSeconds="30" memoryStoreEvictionPolicy="LFU" />
+    <cache name="document_set_switch-cache" maxElementsInMemory="10000" eternal="false" timeToIdleSeconds="30" timeToLiveSeconds="30" overflowToDisk="false" />
+
+  settings:
+    # Description: When OpenText Content Connect is enabled, set allowedFrameOrigins to the following value: frameancestors https://*.sharepoint.com https://outlook.office.com 
+    allowedFrameOrigins: *allowedFrameOrigins
+
+  # Description: Additional environment variables. You can use this section and its variables based on your requirement.
+  extraEnv:
+    - name: BRAVASERVERNAME
+      value: "https://<PUBLIC_URL_SHORT_NAME>.<PUBLIC_DOMAIN_NAME>"
+    - name: D2URL
+      value: "https://<PUBLIC_URL_SHORT_NAME>.<PUBLIC_DOMAIN_NAME>/D2"
+    - name: LS_KUBERNETES_INSTALLER
+      value: "true"
+    - name: TZ
+      value: "Etc/UTC"
+    - name: CATALINA_OPTS
+      valueFrom:
+        configMapKeyRef:
+          name: lscs-extra-env-configmap
+          key: CATALINA_OPTS
+
+d2smartview:
+  customConfigurations:
+    # Description: Enable or disable customizations for smartview.
+    custom: true
+
+    # Description: Enable or disable hook approach for smartview.
+    hook_approach: true
+
+  startupProbe:
+    # Description: Number of seconds after the OpenText smartview client pod has started before the liveness probe is initiated.
+    initialDelaySeconds: 360
+
+  restApiRuntime:
+    OTDS:
+      # Description: Indicates the application name that is displayed in the OTDS login screen if OTDS authentication is enabled.
+      appName: *appname
+
+    ContentConnect:
+      # Description: Indicates whether to use Smart View for OpenText Content Connect.
+      enable: true
+
+      # Description: Provide the response headers that controls whether the web page can load client into a frame or iframe.
+      #If there is a need for more urls under allowedFrameOrigins, then update the urls with space-separated format
+      restAllowedOrigins: *allowedFrameOrigins
+
+    # Description: Indicates the ConfigMap to append the Life sciences specific configuration into the rest_api_runtime_properties file.
+    rest_api_runtime_properties: |-
+      rest.context.config.location=com.emc.d2.rest.context.jc,com.opentext.d2.rest.context.jc,com.documentum.ls.spring.context
+  D2FS:
+    LoadOnStartup: *docbase_name
+  # Description: Additional environment variables. You can use this section and its variables based on your requirement.
+  extraEnv:
+    - name: OTOS_CERTIFICATE_ENABLED
+      valueFrom:
+        configMapKeyRef:
+          name: lscs-extra-env-configmap
+          key: OTOS_CERTIFICATE_ENABLED
+    - name: OTOS_SSL_CERTIFICATE
+      valueFrom:
+        configMapKeyRef:
+          name: lscs-extra-env-configmap
+          key: OTOSCertificate
+    - name: IV_CERTIFICATE_ENABLED
+      valueFrom:
+        configMapKeyRef:
+          name: lscs-extra-env-configmap
+          key: IV_CERTIFICATE_ENABLED
+    - name: IV_SSL_CERTIFICATE
+      valueFrom:
+        configMapKeyRef:
+          name: lscs-extra-env-configmap
+          key: IVCertificate
+    - name: KEYSTORE_PASSWORD
+      valueFrom:
+        configMapKeyRef:
+          name: lscs-extra-env-configmap
+          key: keyStorePassword
+  log4j:
+    log4j2_properties: |-
+      # Documentum ls logger
+      logger.ls.name = com.documentum.ls
+      logger.ls.level = INFO
+      logger.ls.appenderRef.R.ref = File
+      logger.ls.appenderRef.A1.ref = STDOUT
+      logger.ls.additivity=false
+      # Documentum utils logger
+      logger.lsutils.name = com.documentum.utils
+      logger.lsutils.level = INFO
+      logger.lsutils.appenderRef.R.ref = File
+      logger.lsutils.appenderRef.A1.ref = STDOUT
+      logger.lsutils.additivity=false
+      # Documentum services logger
+      logger.lsprint.name = com.documentum.services
+      logger.lsprint.level = INFO
+      logger.lsprint.appenderRef.R.ref = File
+      logger.lsprint.appenderRef.A1.ref = STDOUT
+      logger.lsprint.additivity=false
+      # Documentum PrintFileDownloader logger
+      logger.lsprintfiles.name = com.documentum.services.print.PrintFileDownloader.DoNotDeleteTempFiles
+      logger.lsprintfiles.level = INFO
+      logger.lsprintfiles.appenderRef.R.ref = File
+      logger.lsprintfiles.appenderRef.A1.ref = STDOUT
+      logger.lsprintfiles.additivity=false
+
+d2rest:
+  customConfigurations:
+    # Description: Enable or disable customizations for rest.
+    custom: true
+
+    # Description: Enable or disable hook approach for rest.
+    hook_approach: true
+
+  startupProbe:
+    # Description: Number of seconds after the d2 rest pod has started before the liveness probe is initiated.
+    initialDelaySeconds: 360
+
+  restApiRuntime:
+    OTDS:
+      # Description: Indicates the application name that is displayed in the OTDS login screen if OTDS authentication is enabled.
+      appName: *appname
+
+    # Description: Indicates the ConfigMap append the Life sciences specific configuration into the rest_api_runtime_properties file.
+    rest_api_runtime_properties: |-
+      rest.context.config.location=com.emc.d2.rest.context.jc,com.opentext.d2.rest.context.jc,com.opentext.documentum.ls.rest.context.jc,com.emc.leap.security.oauth2.config
+      rest.use.relative.url=false
+      rest.extension.message.packages=rest-extension.messages
+      rest.ext.error.code.mapping.packages=rest-extension.messages
+      rest.api.unauthorized.response.scheme.suffix=d2-rest
+      rest.search.facet.property.validation=false
+      rest.security.spring.httpfirewall.disable=true
+      rest.security.sso.fallback.auth.mode=basic
+      #To be updated to match the enabled locales.
+      rest.error.message.supported.locales=en
+      rest.security.client.token.cookie.samesite=None; Secure; Partitioned
+      rest.cors.allowed.headers=DOCUMENTUM-CUSTOM-UNAUTH-SCHEME,OT-DCTM-PRODUCT-CODE,Authorization,Content-Type,Accept,X-CLIENT-LOCATION,X-CLIENT-APPLICATION-NAME,Documentum-No-Saml2-Redirect,x-no-redirection
+      rest.cors.allowed.origins=https://<PUBLIC_URL_SHORT_NAME>.<PUBLIC_DOMAIN_NAME>,https://<DC4SP_URL_SHORT_NAME>.<PUBLIC_DOMAIN_NAME>
+      #To allow the download of document, this should be set to true.
+      rest.allow.download=false
+      #Brava Edition - It can have either "CSR" or "Enterprise" as Value
+      rest.brava.edition=CSR
+  D2FS:
+    # Description: Indicates that ConfigMap exposed through the documentum/config/configuration.yml file to update the D2FS_properties file.
+    D2FS_properties: |-
+      pluginsOrder=D2-BOCS,C2,O2
+      compressedExtensions=doc,docx,xls,xlsx,ppt,pptx,pdf,txt
+      isSetPrincipalSupport=false
+      showD2TasksOnly=false
+      checkForMissingDocInWorkflow=false
+      allowDetailedError=true
+      propertyPageConstraintValidation=true
+
+records:
+  otds:
+    # Description: Specifies the OTDSWS URL used for records configuration in the LSS deployment.
+    ## By default, this should be the VPN OTDSWS URL, as the /records service is exposed via the VPN ingress.
+    ## Ideally, the OTDSWS URL should align with the location where the /records service is exposed. 
+    url: https://<VPN_URL_SHORT_NAME>.<VPN_DOMAIN_NAME>/otdsws
+
+###INGRESS##
+# Description : Indicates if ingress services are enabled. 
+dctm-ingress:
+  # Description: Indicates the ingress prefix name, default set to "internal" for LSS deployment
+  ingressPrefix: internal
+
+  # Description: Specifies whether to enable or disable the DC4SP service endpoint in dctm-ingress. The default value is set to false.
+  dc4spService:
+    enable: false
+
+  # Description: Specifies whether to enable or disable the dmotds rest service endpoint in dctm-ingress. The default value is set to false.  
+  dmotdsrestService:
+    enable: false
+
+  # Description: Specifies whether to enable or disable the Documentum Search service endpoint in dctm-ingress. The default value is set to false.  
+  documentumSearchService:
+    enable: false
+
+  # Description: Specifies whether to enable or disable the Content Connect service endpoint in dctm-ingress. The default value is set to false.  
+  ccService:
+    enable: false
+
+  # Description: Specifies whether to enable or disable the Content Connect admin service endpoint in dctm-ingress. The default value is set to false.  
+  ccadminService:
+    enable: false
+
+  ## Keep otds-admin and otdsws enabled even when multiIngress set to true##
+  # Description: Specifies whether to enable or disable the OTDS admin service endpoint in dctm-ingress. The default value is set to true.  
+  otdsadmin:
+    enable: true
+
+  # Description: Specifies whether to enable or disable the OTDS WS service endpoint in dctm-ingress. The default value is set to true.  
+  otdsws:
+    enable: true
+
+  ##Enable Below services only if multiIngress set to true##
+  # Description: Specifies whether to enable or disable the Documentum Search admin service endpoint in dctm-ingress. The default value is set to true. 
+  dsearchadminService:
+    enable: true
+
+  # Description: Specifies whether to enable or disable the JMS service endpoint in dctm-ingress. The default value is set to true. 
+  jmsService:
+    enable: true
+
+  # Description: Specifies whether to enable or disable the Index Agent service endpoint in dctm-ingress. The default value is set to true. 
+  indexagentService:
+    enable: true
+# Description : Indicates if VPN ingress services are enabled. 
+vpningress:
+  # Description: Specifies whether to enable or disable the Documentum Search service endpoint in vpn-ingress. The default value is set to true.  
+  documentumSearchService:
+    enable: true
+
+  # Description: Specifies whether to enable or disable the DCC service endpoint in vpn-ingress. The default value is set to false.  
+  dcc:
+    enable: false
+    syncagent:
+      enabled: false
+
+  # Description: Specifies whether to enable or disable the CMIS service endpoint in vpn-ingress. The default value is set to false.  
+  cmisService:
+    enable: false
+
+d2publicingress:
+  dc4spService:
+    # Description: Specifies whether to enable or disable the DC4SP service endpoint in public-ingress. This will use the value specified for enable_sharepoint in the common variables.
+    enable: *enable_sharepoint
+
+    # Description: Specifies the DC4SP ingress url host short name
+    host: <DC4SP_URL_SHORT_NAME>
+
+  # Description: Specifies whether to enable or disable the core rest service endpoint in public-ingress. The default value is set to false.  
+  dctmrestservice:
+    enable: false
+
+  # Description: Specifies whether to enable or disable the DCC service endpoint in public-ingress. The default value is set to false.  
+  dcc:
+    syncnshareManual:
+      enabled: false
+
+  # Description: Specifies whether to enable or disable the DMOTDS Rest service endpoint in public-ingress. The default value is set to true.
+  dmotdsrestService:
+    enable: true
+
+  # Description: Specifies whether to enable or disable the Record service endpoint in public-ingress. The default value is set to false.  
+  recordsService:
+    enable: false
+
+xPlore-OneD:
+  indexserver:
+    # Description: Additional environment variables. You can use this section and its variables based on your requirement.
+    extraEnv:
+      NEWRELIC_HOME: /root/xPlore/newrelic
+      # Description: Xplore customization script location
+      SCRIPT_DIR: "/root/xPlore/rtdata"
+      # Description: Name of the Xplore customization script that needs to be executed.
+      SCRIPT_BEFORE_START: "ls-xplore-custom.sh"
+lss:
+  global:
+    # IMPORTANT: Do not set dfosEnable to true, as it is not currently supported.
+    # Enabling this will cause LSS installation to fail. This will be revisited in a future release.
+    dfosEnable: false
+
+    # Description: LMS api password  
+    lmsApiPasswordKey: *lms_api_password
+
+    # The default keystore password is used for OTOS and IV certificate import.
+    # It is only required when using a self-signed certificate and is primarily intended for development and QE environments.
+    keyStorePassword: changeit
+
+    ##This is applicable for AWS deployment##
+    #Enabling this flag to create Custom Storage class for RWX 
+    # Description: Indicates to create storage class for AWS Deployment.   
+    createSC: *createSC
+
+    # Description: Indicates to create SFTP specific storage class for AWS Deployment.   
+    createSftpSC: *createSC
+
+    # This section only applicable for createSC flag ON
+    # Description: List of params to create storage class.
+    sc:
+      # Description : Name of the custom storage class.  
+      name: efs-lss-sc
+      # Description : External storage provisioner (Amazon Elastic File System Container Storage Interface(CSI) Driver).
+      provisioner: efs.csi.aws.com
+      # Description : The protocol for the volume mount.
+      mountoptions: tls
+      parameters:
+        # Description : The mode used for provisioning.
+        provisioningMode: efs-ap
+        # Description : The ID value of the file system.
+        fileSystemId: *filesystem_id
+        # Description : The directory permissions of the root directory created by the access point. 
+        directoryPerms: "777"
+        # Description : The path of the provisioner.
+        basePath: "/lss_dynamic_provisioning"
+        # Description : Numerical user ID for a user.
+        uid: "1000"
+      # Description : Numerical primary group ID for the user.  
+      gid: "1000"
+      # Description : Numerical primary group ID for the SFTP user.
+      sftp_gid: "1001"
+
+  ls-headless:
+    dc4spHeadless:
+      addresses:
+        # Description: IP address of DC4SP VM.
+        - ip: *dc4spserverIP
+
+  ls-generic:
+    ###lscs-extra-env-configmap
+    contentserver:
+      extraEnv:
+        # Description: Enabling this flag helps automate certain post-deployment steps and is recommended only for development and QE environments. 
+        RUN_AS_DEV_PROFILE: *run_as_dev_profile
+        # Description: SMTP host name or IP address accessible from the pod
+        SMTP_SERVER: *smtp_server
+        # Description: SMTP port accessible to the pod.
+        SMTP_PORT: *smtp_port
+        # Description: Email address to use as the sender.
+        EMAIL_ADDRESS: *email_address
+        # Description: Indicates to enable sharepoint integration.
+        SHAREPOINT_ENABLE: *enable_sharepoint
+        # Description: Indicates type of the LMS Type
+        LMS_IMPLEMENTATION: *lms_type
+        # Description: Indicate to enable or disable CTS ADTS thumbnail renditions part of deployment
+        ENABLE_CTS_THUMBNAIL_RENDITIONS: false
+        # Description: Indicates whether to import the OTOS self-signed certificate on Print and D2SmartView. Disable this setting when using a valid CA certificate.
+        OTOS_CERTIFICATE_ENABLED: *is_otoscertificate_enabled
+        # Description: Indicates whether to import the IV self-signed certificate on D2SmartView. Disable this setting when using a valid CA certificate.
+        IV_CERTIFICATE_ENABLED: *is_ivcertificate_enabled
+
+  ls-sftp:
+    # Description: SFTP default admin user name.       
+    adminUserName: *sftp_admin_userName
+
+    # Description: SFTP user group name, by default set to sftp_users
+    sftpUserGroup: sftp_users
+
+    ### Ports ###
+    ### By default sftp-ssh-svc would create nodeport from the available nodeport
+    ### if we need to expose sftp-ssh-svc on specific port mention the value
+    ports:
+      # Description: Node port value of sftp-ssh-svc service.
+      nodePort:
+    pesistentVolume:
+      # Description: External storage provisioner (Amazon EFS CSI Driver).
+      awsEFSCSIDriver: efs.csi.aws.com
+
+      # Description: SFTP submission pvc details
+      submissions:
+        # Description: Indicates to create PV 
+        createPV: false
+
+        # Description: Name of the Submission PV, if configured
+        pvName:
+
+        # Description: Name of the Submission PVC.
+        pvcName: submissions-pvc
+
+        # Description: Volume ID of the EFS volume. The format is EFS file system ID::EFS access point ID. 
+        awsEFSCSIHandle: # Description: SFTP user pvc details
+      users:
+        # Description: Indicates to create PV 
+        createPV: false
+
+        # Description: Name of the users PV, if configured
+        pvName:
+
+        # Description: Name of the users PVC.
+        pvcName: users-pvc
+
+        # Description: Volume ID of the EFS volume. The format is EFS file system ID::EFS access point ID. 
+        awsEFSCSIHandle: ##New Relic Configuration ###
+    newrelic:
+      # Description: Newrelic App name of SFTP pod.
+      app_name: DCTM-LSS-SFTP
+
+    # Description: Log rotate configuration.
+    logrotate:
+      configmap: |-
+        /opt/tomcat/logs/*.log <openbrace>
+        copytruncate
+        dateext dateformat -%Y-%m-%d-%s
+        rotate 7
+        compress
+        missingok
+        size 5M
+        <closebrace>
+        /opt/tomcat/logs/localhost_access_log*.txt <openbrace>
+        copytruncate
+        dateext dateformat -%Y-%m-%d-%s
+        rotate 7
+        compress
+        missingok
+        size 5M
+        <closebrace>
+    # Description: Make sure that all entries added under web_xml are branches of the web-app root tag.
+    web_xml: |-
+
+  ls-print:
+    log4j2:
+      #Log Levels for ServerApps application. Valid values are DEBUG, INFO, WARN, ERROR, FATAL
+      # Description: Root log level for the output server packages.
+      rootLogLevel: INFO
+
+      # Description: Print server level for the output server packages.
+      printServerLogLevel: INFO
+
+    ##New Relic Configuration ###
+    newrelic:
+      # Description: Newrelic App name of LSPrint pod.
+      app_name: DCTM-LSS-LSPRINT
+
+    # Description: Log rotate configuration.
+    logrotate:
+      configmap: |-
+        /opt/tomcat/logs/*.log <openbrace>
+        copytruncate
+        dateext dateformat -%Y-%m-%d-%s
+        rotate 7
+        compress
+        missingok
+        size 5M
+        <closebrace>
+        /opt/tomcat/logs/localhost_access_log*.txt <openbrace>
+        copytruncate
+        dateext dateformat -%Y-%m-%d-%s
+        rotate 7
+        compress
+        missingok
+        size 5M
+        <closebrace>
+    # Description: Make sure that all entries added under web_xml are branches of the web-app root tag.
+    web_xml: |-
+

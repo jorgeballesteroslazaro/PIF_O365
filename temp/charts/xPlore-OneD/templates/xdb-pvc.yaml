@@ -1,0 +1,18 @@
+{{- if eq .Values.XDBbackup.enable true }}
+{{- if eq .Values.XDBbackup.PVCisExist false }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ .Values.XDBbackup.PVCClaimName }}
+spec:
+  accessModes:
+    - {{ .Values.persistentVolume.accessModes }}
+  storageClassName: {{ .Values.persistentVolume.storageClass | default .Values.global.rwmStorage}}
+{{ if .Values.persistentVolume.awsEFSCSIPvName }}
+  volumeName: {{ .Values.persistentVolume.awsEFSCSIPvName }}
+{{ end }}
+  resources:
+    requests:
+      storage:  {{ .Values.XDBbackup.PVSize }}
+{{- end }}
+{{- end }}

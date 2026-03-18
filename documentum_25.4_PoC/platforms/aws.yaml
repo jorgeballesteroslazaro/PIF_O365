@@ -1,0 +1,426 @@
+################################################################################################
+#                                                                                              #
+#                                   This is a YAML-formatted file.                             #
+#                          Provide the values for variables to be passed to the templates.     #
+################################################################################################
+
+# Important: These are specific configuration values passed for Amazon Web Services Application Load Balancer (ALB). 
+# Other values for dctm-ingress still need to be configured in the documentum/values.yaml file.
+
+content-server:
+  # Description: Retain the default value.
+  platform: aws
+
+  # Description: Define the service annotations.
+  # You can retain the default value or modify as per your requirement.
+  serviceAnnotations:
+    alb.ingress.kubernetes.io/healthcheck-path: /ACS/servlet/ACS
+    alb.ingress.kubernetes.io/healthcheck-interval-seconds: '300'
+    alb.ingress.kubernetes.io/healthcheck-timeout-seconds: '60'
+
+ijms:
+  # Description: Define the service annotations.
+  # You can retain the default value or modify as per your requirement.
+  serviceAnnotations:
+    alb.ingress.kubernetes.io/healthcheck-path: /ACS/servlet/ACS
+    alb.ingress.kubernetes.io/healthcheck-interval-seconds: '300'
+    alb.ingress.kubernetes.io/healthcheck-timeout-seconds: '60'
+
+docbroker:
+  # Description: Retain the default value.
+  platform: aws
+
+dctm-ingress:
+  # Description: Retain the default value.
+  platform: aws
+  # Description: Retain the default value.
+  ingress:
+    class: alb
+    # Description: Note that the following annotation are basic annotations.
+    # For more secured and customized setup, you must use the AWS ALB annotation documentation to provide the appropriate configuration.
+    # Note: If the value of global.internalTlsEnable is set to true, make sure you change the value of 
+    # dctm-ingress.ingress.annotations.alb.ingress.kubernetes.io/backend-protocol to HTTPS. 
+    annotations:
+      # Description: Defines whether the ALB is internet-facing or internal.
+      alb.ingress.kubernetes.io/scheme: internet-facing
+      alb.ingress.kubernetes.io/subnets: subnet-0c4a1017a4ffb7962, subnet-0bbd3ec1319a30772, subnet-0a6ab032a5e03be49
+      alb.ingress.kubernetes.io/target-type: 'ip'
+      alb.ingress.kubernetes.io/target-group-attributes: stickiness.enabled=true,stickiness.lb_cookie.duration_seconds=1200
+      alb.ingress.kubernetes.io/load-balancer-attributes: idle_timeout.timeout_seconds=600,client_keep_alive.seconds=3600
+      # Description: group.name annotation must be unique between deployments and namespaces.
+      alb.ingress.kubernetes.io/group.name: dctm-internal-group
+      alb.ingress.kubernetes.io/backend-protocol: HTTP
+      alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80},{"HTTPS":443}]'
+      # Description: Defines whether the ALB uses IPv4, IPv6, or both.
+      # Allowed values:
+      #   - ipv4: ALB uses only IPv4 addresses.
+      #   - dualstack: ALB uses both IPv4 and IPv6 addresses (subnets must have IPv6 CIDRs assigned).
+      #   - dualstack-without-public-ipv4: Only applicable for internet-facing ALBs in public subnets.
+      alb.ingress.kubernetes.io/ip-address-type: ipv4
+      # Description: If Content Connect ingress is enabled in dctm-ingress, then uncomment the ssl-redirect annotation.
+      # Also, if LSS is enabled, then uncomment the ssl-redirect annotation.
+      #alb.ingress.kubernetes.io/ssl-redirect: '443'
+      # Description: For secure connection, uncomment the following annotation.          
+      #alb.ingress.kubernetes.io/certificate-arn: arn:aws:iam::820400221816:server-certificate/albselfsigned           
+
+      # Separate annotations for IJMS ingress
+    ijmsAnnotations:
+      alb.ingress.kubernetes.io/scheme: internet-facing
+      alb.ingress.kubernetes.io/subnets: subnet-02ae170d59c797580,subnet-0bf63da6b5e702c0e
+      alb.ingress.kubernetes.io/target-type: 'ip'
+      alb.ingress.kubernetes.io/target-group-attributes: stickiness.enabled=true,stickiness.lb_cookie.duration_seconds=1200
+      alb.ingress.kubernetes.io/load-balancer-attributes: idle_timeout.timeout_seconds=600,client_keep_alive.seconds=3600
+      alb.ingress.kubernetes.io/backend-protocol: HTTP
+      alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80},{"HTTPS":443}]'
+      # Description: group.name annotation must be unique between deployments and namespaces.
+      alb.ingress.kubernetes.io/group.name: dctm-ijms-group
+
+contentconnect:
+  # Description: Retain the default value.
+  platform: aws
+
+  # Description: Retain the default value.
+  ingress:
+    class: alb
+
+    # Description: Note that the following annotation are basic annotations.
+    # For more secured and customized setup, you must use the AWS ALB annotation documentation to provide the appropriate configuration.
+    annotations:
+      # Description: Defines whether the ALB is internet-facing or internal.
+      alb.ingress.kubernetes.io/scheme: internet-facing
+      alb.ingress.kubernetes.io/subnets: subnet-0c4a1017a4ffb7962, subnet-0bbd3ec1319a30772, subnet-0a6ab032a5e03be49
+      alb.ingress.kubernetes.io/target-type: 'ip'
+      alb.ingress.kubernetes.io/target-group-attributes: stickiness.enabled=true,stickiness.lb_cookie.duration_seconds=1200
+      alb.ingress.kubernetes.io/load-balancer-attributes: idle_timeout.timeout_seconds=600
+      # Description: group.name annotation must be unique between deployments and namespaces.
+      alb.ingress.kubernetes.io/group.name: cc-group
+      alb.ingress.kubernetes.io/backend-protocol: HTTP
+      alb.ingress.kubernetes.io/ssl-redirect: '443'
+      alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80}]'
+      # Description: For secure connection, comment the previous two annotations and uncomment the following annotations.
+      #alb.ingress.kubernetes.io/listen-ports: '[{"HTTPS":443}]'    
+      #alb.ingress.kubernetes.io/certificate-arn: arn:aws:iam::820400221816:server-certificate/albselfsigned
+
+      # Description: Define the service annotations.
+      # You can retain the default value or modify as per your requirement.
+  serviceAnnotations:
+    alb.ingress.kubernetes.io/healthcheck-path: /cc/service/health-check
+    alb.ingress.kubernetes.io/healthcheck-interval-seconds: '300'
+    alb.ingress.kubernetes.io/healthcheck-timeout-seconds: '60'
+d2classic:
+  # Description: Define the service annotations.
+  # You can retain the default value or modify as per your requirement.
+  serviceAnnotations:
+    alb.ingress.kubernetes.io/healthcheck-path: /D2/ready
+    alb.ingress.kubernetes.io/healthcheck-interval-seconds: '300'
+    alb.ingress.kubernetes.io/healthcheck-timeout-seconds: '60'
+d2config:
+  # Description: Define the service annotations.
+  # You can retain the default value or modify as per your requirement.
+  serviceAnnotations:
+    alb.ingress.kubernetes.io/healthcheck-path: /D2-Config/ready
+    alb.ingress.kubernetes.io/healthcheck-interval-seconds: '300'
+    alb.ingress.kubernetes.io/healthcheck-timeout-seconds: '60'
+d2smartview:
+  # Description: Define the service annotations.
+  # You can retain the default value or modify as per your requirement.
+  serviceAnnotations:
+    alb.ingress.kubernetes.io/healthcheck-path: /D2-Smartview/services
+    alb.ingress.kubernetes.io/healthcheck-interval-seconds: '300'
+    alb.ingress.kubernetes.io/healthcheck-timeout-seconds: '60'
+d2rest:
+  # Description: Define the service annotations.
+  # You can retain the default value or modify as per your requirement.
+  serviceAnnotations:
+    alb.ingress.kubernetes.io/healthcheck-path: /d2-rest/services
+    alb.ingress.kubernetes.io/healthcheck-interval-seconds: '300'
+    alb.ingress.kubernetes.io/healthcheck-timeout-seconds: '60'
+adminconsole:
+  ## serviceAnnotations define custom annotations that need to be assigned to adminconsole service.
+  serviceAnnotations:
+    alb.ingress.kubernetes.io/healthcheck-path: /AdminConsole/services
+    alb.ingress.kubernetes.io/healthcheck-interval-seconds: '300'
+    alb.ingress.kubernetes.io/healthcheck-timeout-seconds: '60'
+
+smartviewm365:
+  # Description: Define the service annotations.
+  # You can retain the default value or modify as per your requirement.
+  serviceAnnotations:
+    alb.ingress.kubernetes.io/healthcheck-path: /SmartViewM365
+    alb.ingress.kubernetes.io/healthcheck-interval-seconds: '300'
+    alb.ingress.kubernetes.io/healthcheck-timeout-seconds: '60'
+oesconnector:
+  # Description: Define the service annotations.
+  # You can retain the default value or modify as per your requirement.
+  serviceAnnotations:
+    alb.ingress.kubernetes.io/healthcheck-path: /oes-connector
+    alb.ingress.kubernetes.io/healthcheck-interval-seconds: '300'
+    alb.ingress.kubernetes.io/healthcheck-timeout-seconds: '60'
+records:
+  service:
+    # Description: Define the service annotations.
+    # You can retain the default value or modify as per your requirement.
+    serviceAnnotations:
+      alb.ingress.kubernetes.io/healthcheck-path: /records/health
+      alb.ingress.kubernetes.io/healthcheck-interval-seconds: '300'
+      alb.ingress.kubernetes.io/healthcheck-timeout-seconds: '60'
+
+da:
+  service:
+    # Description: Define the service annotations.
+    # You can retain the default value or modify as per your requirement.
+    serviceAnnotations:
+      alb.ingress.kubernetes.io/healthcheck-path: /da/health
+      alb.ingress.kubernetes.io/healthcheck-interval-seconds: '300'
+      alb.ingress.kubernetes.io/healthcheck-timeout-seconds: '60'
+dfs:
+  # Description: Define the service annotations.
+  # You can retain the default value or modify as per your requirement.
+  serviceAnnotations:
+    alb.ingress.kubernetes.io/healthcheck-path: /dfs/services/core/QueryService?wsdl
+    alb.ingress.kubernetes.io/healthcheck-interval-seconds: '300'
+    alb.ingress.kubernetes.io/healthcheck-timeout-seconds: '60'
+
+dctm-cmis:
+  # Description: Define the service annotations.
+  # You can retain the default value or modify as per your requirement.
+  serviceAnnotations:
+    alb.ingress.kubernetes.io/healthcheck-path: /dctm-cmis/main
+    alb.ingress.kubernetes.io/healthcheck-interval-seconds: '300'
+    alb.ingress.kubernetes.io/healthcheck-timeout-seconds: '60'
+vpningress:
+  # Description: Retain the default value.
+  cloudPlatform: aws
+
+  # Description: Retain the default value.
+  ingress:
+    # Description: Retain the default value.
+    class: alb
+
+    # Description: Note that the following annotation are basic annotations.
+    # For more secured and customized setup, you must use the AWS ALB annotation documentation to provide the appropriate configuration.
+    # Note: If the value of global.internalTlsEnable is set to true, make sure you change the value of 
+    # vpningress.ingress.annotations.alb.ingress.kubernetes.io/backend-protocol to HTTPS. 
+    annotations:
+      # Description: Defines whether the ALB is internet-facing or internal.
+      alb.ingress.kubernetes.io/scheme: internal
+      alb.ingress.kubernetes.io/subnets: subnet-0c4a1017a4ffb7962, subnet-0bbd3ec1319a30772, subnet-0a6ab032a5e03be49
+      alb.ingress.kubernetes.io/target-type: "ip"
+      alb.ingress.kubernetes.io/target-group-attributes: stickiness.enabled=true,stickiness.lb_cookie.duration_seconds=1200
+      alb.ingress.kubernetes.io/load-balancer-attributes: idle_timeout.timeout_seconds=600
+      # Description: group.name annotation must be unique between deployments and namespaces.
+      alb.ingress.kubernetes.io/group.name: vpn-group
+      alb.ingress.kubernetes.io/backend-protocol: HTTP
+      alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80}]'
+      # Description: Defines whether the ALB uses IPv4, IPv6, or both.
+      # Allowed values:
+      #   - ipv4: ALB uses only IPv4 addresses.
+      #   - dualstack: ALB uses both IPv4 and IPv6 addresses (subnets must have IPv6 CIDRs assigned).
+      #   - dualstack-without-public-ipv4: Only applicable for internet-facing ALBs in public subnets.
+      alb.ingress.kubernetes.io/ip-address-type: ipv4
+      # Description: If LSS is enabled, then uncomment the ssl-redirect annotation.
+      #alb.ingress.kubernetes.io/ssl-redirect: '443'
+      # Description: For secure connection, comment the previous annotation and uncomment the following annotations.
+      # alb.ingress.kubernetes.io/listen-ports: '[{"HTTPS":443}]'
+      # alb.ingress.kubernetes.io/certificate-arn: arn:aws:iam::820400221816:server-certificate/albselfsigned
+    pathType: ImplementationSpecific
+
+d2publicingress:
+  # Description: Retain the default value.
+  cloudPlatform: aws
+  # Description: Retain the default value.
+  ingress:
+    class: alb
+    # Description: Note that the following annotation are basic annotations.
+    # For more secured and customized setup, you must use the AWS ALB annotation documentation to provide the appropriate configuration.
+    # Note: If the value of global.internalTlsEnable is set to true, make sure you change the value of 
+    # d2publicingress.ingress.annotations.alb.ingress.kubernetes.io/backend-protocol to HTTPS.
+    annotations:
+      # Description: Defines whether the ALB is internet-facing or internal.
+      alb.ingress.kubernetes.io/scheme: internet-facing
+      alb.ingress.kubernetes.io/subnets: subnet-0c4a1017a4ffb7962, subnet-0bbd3ec1319a30772, subnet-0a6ab032a5e03be49
+      alb.ingress.kubernetes.io/target-type: "ip"
+      alb.ingress.kubernetes.io/target-group-attributes: stickiness.enabled=true,stickiness.lb_cookie.duration_seconds=1200
+      alb.ingress.kubernetes.io/load-balancer-attributes: idle_timeout.timeout_seconds=600
+      # Description: group.name annotation must be unique between deployments and namespaces.
+      alb.ingress.kubernetes.io/group.name: public-group
+      alb.ingress.kubernetes.io/backend-protocol: HTTP
+      alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80}]'
+      # Description: Defines whether the ALB uses IPv4, IPv6, or both.
+      # Allowed values:
+      #   - ipv4: ALB uses only IPv4 addresses.
+      #   - dualstack: ALB uses both IPv4 and IPv6 addresses (subnets must have IPv6 CIDRs assigned).
+      #   - dualstack-without-public-ipv4: Only applicable for internet-facing ALBs in public subnets.
+      alb.ingress.kubernetes.io/ip-address-type: ipv4
+      # Description: If LSS is enabled, then uncomment the ssl-redirect annotation.
+      #alb.ingress.kubernetes.io/ssl-redirect: '443'
+      # Description: For secure connection, comment the previous annotation and uncomment the following annotations.
+      # alb.ingress.kubernetes.io/listen-ports: '[{"HTTPS":443}]'
+      # alb.ingress.kubernetes.io/certificate-arn: arn:aws:iam::820400221816:server-certificate/albselfsigned
+
+    pathType: ImplementationSpecific
+
+appworks-gateway:
+  # Description: Define the service annotations.
+  # You can retain the default value or modify as per your requirement.
+  ingress:
+    ingressClassName: alb
+    annotations:
+      # Description: Defines whether the ALB is internet-facing or internal.
+      alb.ingress.kubernetes.io/scheme: internet-facing
+      alb.ingress.kubernetes.io/subnets: subnet-0c4a1017a4ffb7962, subnet-0bbd3ec1319a30772, subnet-0a6ab032a5e03be49
+      alb.ingress.kubernetes.io/target-type: 'ip'
+      # Description: group.name annotation must be unique between deployments and namespaces.
+      alb.ingress.kubernetes.io/group.name: awg-group
+      # Description: Defines whether the ALB uses IPv4, IPv6, or both.
+      # Allowed values:
+      #   - ipv4: ALB uses only IPv4 addresses.
+      #   - dualstack: ALB uses both IPv4 and IPv6 addresses (subnets must have IPv6 CIDRs assigned).
+      #   - dualstack-without-public-ipv4: Only applicable for internet-facing ALBs in public subnets.
+      alb.ingress.kubernetes.io/ip-address-type: ipv4
+      # Description: For secure connection, uncomment the following annotation.
+      #alb.ingress.kubernetes.io/listen-ports: '[{"HTTPS":443}]'
+      #alb.ingress.kubernetes.io/certificate-arn: arn:aws:iam::820400221816:server-certificate/albselfsigned 
+
+  service:
+    annotations:
+      alb.ingress.kubernetes.io/healthcheck-path: /v3/admin/status/ready
+      alb.ingress.kubernetes.io/healthcheck-interval-seconds: '300'
+      alb.ingress.kubernetes.io/healthcheck-timeout-seconds: '60'
+
+otiv:
+  # Description: Define the service annotations.
+  # You can retain the default value or modify as per your requirement.
+  global:
+    ingressClass: alb
+    ingressAnnotations:
+      # Description: Defines whether the ALB is internet-facing or internal.
+      alb.ingress.kubernetes.io/scheme: internet-facing
+      alb.ingress.kubernetes.io/subnets: subnet-0c4a1017a4ffb7962, subnet-0bbd3ec1319a30772, subnet-0a6ab032a5e03be49
+      alb.ingress.kubernetes.io/target-type: 'ip'
+      # Description: group.name annotation must be unique between deployments and namespaces.
+      alb.ingress.kubernetes.io/group.name: otiv-group
+      alb.ingress.kubernetes.io/load-balancer-attributes: idle_timeout.timeout_seconds=1800
+      # Description: Defines whether the ALB uses IPv4, IPv6, or both.
+      # Allowed values:
+      #   - ipv4: ALB uses only IPv4 addresses.
+      #   - dualstack: ALB uses both IPv4 and IPv6 addresses (subnets must have IPv6 CIDRs assigned).
+      #   - dualstack-without-public-ipv4: Only applicable for internet-facing ALBs in public subnets.
+      alb.ingress.kubernetes.io/ip-address-type: ipv4
+      # Description: For secure connection, uncomment the following annotation.
+      #alb.ingress.kubernetes.io/certificate-arn: arn:aws:iam::820400221816:server-certificate/albselfsigned
+
+documentum-search:
+  admin:
+    # Description: Define the service annotations.
+    # You can retain the default value or modify as per your requirement.
+    serviceAnnotations:
+      alb.ingress.kubernetes.io/healthcheck-path: /admin/actuator/health
+      alb.ingress.kubernetes.io/healthcheck-interval-seconds: '300'
+      alb.ingress.kubernetes.io/healthcheck-timeout-seconds: '60'
+
+dctm-rest:
+  # Description: Define the service annotations.
+  # You can retain the default value or modify as per your requirement.
+  serviceAnnotations:
+    alb.ingress.kubernetes.io/healthcheck-path: /dctm-rest/repositories
+    alb.ingress.kubernetes.io/healthcheck-interval-seconds: '300'
+    alb.ingress.kubernetes.io/healthcheck-timeout-seconds: '60'
+
+xPlore-OneD:
+  indexServerServiceAnnotations:
+    alb.ingress.kubernetes.io/healthcheck-path: /dsearch/health/liveness
+    alb.ingress.kubernetes.io/healthcheck-interval-seconds: '120'
+  indexAgentServiceAnnotations:
+    alb.ingress.kubernetes.io/healthcheck-path: /IndexAgent/health/liveness
+    alb.ingress.kubernetes.io/healthcheck-interval-seconds: '300'
+    alb.ingress.kubernetes.io/healthcheck-timeout-seconds: '60'
+dtrbase:
+  service:
+    # Description: Define the service annotations.
+    # You can retain the default value or modify as per your requirement.
+    serviceAnnotations:
+      alb.ingress.kubernetes.io/healthcheck-path: /dtr/TestServletConnection
+      alb.ingress.kubernetes.io/healthcheck-interval-seconds: '300'
+      alb.ingress.kubernetes.io/healthcheck-timeout-seconds: '60'
+xda:
+  # Description: Define the service annotations.
+  # You can retain the default value or modify as per your requirement.
+  serviceAnnotations:
+    alb.ingress.kubernetes.io/healthcheck-path: /xda
+    alb.ingress.kubernetes.io/healthcheck-interval-seconds: '300'
+    alb.ingress.kubernetes.io/healthcheck-timeout-seconds: '60'
+
+bps:
+  # Description: Define the service annotations.
+  # You can retain the default value or modify as per your requirement.
+  serviceAnnotations:
+    alb.ingress.kubernetes.io/healthcheck-path: /bps/lsnrs.jsp
+    alb.ingress.kubernetes.io/healthcheck-interval-seconds: '300'
+    alb.ingress.kubernetes.io/healthcheck-timeout-seconds: '60'
+
+dctm-workflow-designer:
+  # Description: Define the service annotations.
+  # You can retain the default value or modify as per your requirement.
+  serviceAnnotations:
+    alb.ingress.kubernetes.io/healthcheck-path: /DocumentumWorkflowDesigner
+    alb.ingress.kubernetes.io/healthcheck-interval-seconds: '300'
+    alb.ingress.kubernetes.io/healthcheck-timeout-seconds: '60'
+
+dctm-dcc:
+  # Description: Define the service annotations.
+  # You can retain the default value or modify as per your requirement.
+  serviceAnnotationsSyncagent:
+    alb.ingress.kubernetes.io/healthcheck-path: /syncagent/health
+    alb.ingress.kubernetes.io/healthcheck-interval-seconds: '300'
+    alb.ingress.kubernetes.io/healthcheck-timeout-seconds: '60'
+
+  # Description: Define the service annotations.
+  # You can retain the default value or modify as per your requirement.
+  serviceAnnotationsConsul:
+    alb.ingress.kubernetes.io/healthcheck-path: /ui
+    alb.ingress.kubernetes.io/healthcheck-interval-seconds: '300'
+    alb.ingress.kubernetes.io/healthcheck-timeout-seconds: '60'
+
+lss:
+  ls-print:
+    serviceAnnotations:
+      alb.ingress.kubernetes.io/healthcheck-path: /ControlledPrint/live
+      alb.ingress.kubernetes.io/healthcheck-interval-seconds: '300'
+      alb.ingress.kubernetes.io/healthcheck-timeout-seconds: '60'
+
+  ls-sftp:
+    platform: aws
+    serviceAnnotations:
+      alb.ingress.kubernetes.io/healthcheck-path: /sftp-users-management/servercheck
+      alb.ingress.kubernetes.io/healthcheck-interval-seconds: '300'
+      alb.ingress.kubernetes.io/healthcheck-timeout-seconds: '60'
+
+dctm-dms:
+  # Description: Define the service annotations.
+  # You can retain the default value or modify as per your requirement.
+  serviceAnnotations:
+    alb.ingress.kubernetes.io/healthcheck-path: /dms-ws
+    alb.ingress.kubernetes.io/healthcheck-interval-seconds: '300'
+    alb.ingress.kubernetes.io/healthcheck-timeout-seconds: '60'
+
+dctm-assap:
+  service:
+    serviceAnnotations:
+      alb.ingress.kubernetes.io/healthcheck-path: /assap
+      alb.ingress.kubernetes.io/healthcheck-interval-seconds: '300'
+      alb.ingress.kubernetes.io/healthcheck-timeout-seconds: '60'
+
+dctm-assap-ilm:
+  service:
+    serviceAnnotations:
+      alb.ingress.kubernetes.io/healthcheck-path: /dmwebdav
+      alb.ingress.kubernetes.io/healthcheck-interval-seconds: '300'
+      alb.ingress.kubernetes.io/healthcheck-timeout-seconds: '60'
+
+dctm-cssap:
+  service:
+    serviceAnnotations:
+      alb.ingress.kubernetes.io/healthcheck-path: /HvpWorker/hvpCommand
+      alb.ingress.kubernetes.io/healthcheck-interval-seconds: '300'
+      alb.ingress.kubernetes.io/healthcheck-timeout-seconds: '60'

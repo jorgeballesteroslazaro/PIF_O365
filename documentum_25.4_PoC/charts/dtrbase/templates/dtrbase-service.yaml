@@ -1,0 +1,29 @@
+#Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.service.name }}
+{{- with .Values.service.serviceAnnotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+{{- end }}
+spec:
+  type: {{ .Values.service.type}}
+  ports:
+    - port: {{ .Values.service.dtrBasePort }}
+      name: dtrbaseport
+      targetPort: 8080
+      {{- if (eq .Values.global.internalTlsEnable true) }}      
+    - port: {{ .Values.service.dtrBasePorthttps }}
+      name: dtrbaseporthttps
+      targetPort: 8443
+    - port: {{ .Values.service.dtrCorePorthttps }}
+      name: dtrcoreporthttps
+      targetPort: 5002
+      {{- end }}      
+    - port: {{ .Values.service.dtrCoreport }}
+      name: dtrcoreport
+      targetPort: 5001
+  selector:
+    app: {{ .Values.deployment.appName }}
+

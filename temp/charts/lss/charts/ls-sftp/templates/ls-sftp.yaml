@@ -1,0 +1,226 @@
+#StatefulSet
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+   name: {{ .Values.userName }}
+spec:
+  serviceName: {{ .Values.userName }}
+  replicas: {{ .Values.sftp.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Values.userName }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.userName }}
+    spec:
+      securityContext:
+        fsGroup: {{ .Values.fsGroup | default .Values.global.fsGroup }}
+{{ if (empty (.Values.image.pullSecrets | quote) | ternary .Values.global.pullSecretName .Values.image.pullSecrets) }}
+      imagePullSecrets:
+      - name: {{ .Values.image.pullSecrets | default .Values.global.pullSecretName }}
+{{ end }}
+{{- if .Values.extraInitContainers }}
+      initContainers:
+{{ include "resolveInitContainers" (dict "initContainerLists" .Values.extraInitContainers "global" .Values.global "nindent" 6) }}
+{{- end }}
+{{- if (empty (.Values.serviceAccount | quote) | ternary .Values.global.documentumserviceaccount .Values.serviceAccount) }}
+      serviceAccountName: {{ .Values.serviceAccount | default .Values.global.documentumserviceaccount }}
+{{- end }} 
+      containers:
+      - name: {{ .Values.userName }}
+        image: {{ .Values.image.repository | default .Values.global.repository }}/{{ .Values.image.name }}:{{ .Values.image.tag }}
+        command: ['/bin/sh', '-c', '. /opt/scripts/configure_sftp.sh']
+        imagePullPolicy: {{ .Values.image.pullPolicy | default .Values.global.pullPolicyType }}
+        env:
+        - name: INGRESS_KEYSTORE_PASSWORD_KEY
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.secret.cs.name | default .Values.global.csSecrets }}
+              key: ingress.keystorepassword         
+        - name: INTERNAL_TLS_ENABLED
+          value: {{ (.Values.global.internalTlsEnable | default false) | quote }}                
+{{- if (empty (.Values.newrelic.enable | quote) | ternary .Values.global.newrelic .Values.newrelic.enable) }}
+        - name: NEWRELIC_ENABLE          
+          value: {{ (empty (.Values.newrelic.enable | quote) | ternary .Values.global.newrelic .Values.newrelic.enable) | quote }}
+        - name: NEWRELIC_APP_NAME
+          value: {{ .Values.newrelic.app_name }}.{{ .Release.Namespace }}
+        - name: NEWRELIC_PROXY_HOST
+          value: {{ .Values.newrelic.proxy_host | default .Values.global.newrelicProxyHost }}
+        - name: NEWRELIC_PROXY_PORT
+          value: {{ (.Values.newrelic.proxy_port | default .Values.global.newrelicProxyPort) | quote  }}
+        - name: NEWRELIC_LICENSE_KEY
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.secret.cs.name | default .Values.global.csSecrets }}
+              key: {{ .Values.newrelic.licenseKeyName | default .Values.global.licenseKeyName }}
+{{- end }}    
+        - name: WEB_APP_NAME
+          value: {{ .Values.webAppName | quote }}
+        - name: SFTP_DEFAULT_USER
+          value: {{ .Values.adminUserName  }}            
+        - name: ADMIN_PASSWORD_KEY
+          value: {{ .Values.adminPasswordKey  }}
+        - name: DOCBASE_NAME
+          value: {{ .Values.global.docbase }}  
+        - name: SFTP_USER_GROUP
+          value: {{ .Values.sftpUserGroup  }}
+        - name: INSTALL_OWNER
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.secret.cs.name | default .Values.global.csSecrets }}
+              key: installOwner
+        - name: LOG_ROTATE_ENABLE          
+          value: {{ (empty (.Values.logrotate.enable | quote) | ternary .Values.global.logrotate_enable .Values.logrotate.enable) | quote }}
+        - name: LOG_ROTATE_INTERVAL
+          value: {{ (.Values.logrotate.interval | default .Values.global.logrotate_interval) | quote }}  
+      {{- if (empty (.Values.vault.enable | quote) | ternary .Values.global.isVaultEnabled .Values.vault.enable) }}
+        - name: DSIS_STATUS_CHECK_RETRY_COUNT
+          value: "{{ .Values.vault.statusCheckRetryCount }}"
+        - name: DSIS_STATUS_CHECK_TIME_INTERVAL
+          value: "{{ .Values.vault.statusCheckTimeInterval }}"          
+        - name: DFC_DSIS_ENABLED
+          value: {{ (empty (.Values.vault.enable | quote) | ternary .Values.global.isVaultEnabled .Values.vault.enable) | quote }}
+        - name: DFC_DSIS_DAEMON_TOKEN
+          value: {{ .Values.vault.daemontoken | quote }}
+        - name: DFC_DSIS_DAEMON_URL
+          value: {{ .Values.vault.daemonurl | default "http://localhost:8200/dsis" | quote }}          
+      {{- end }}
+        ports:
+        - containerPort: {{ .Values.ports.sftpPort }}
+          name: sftpport
+        volumeMounts:
+{{ if (empty (.Values.certificate.use_certificate | quote) | ternary .Values.global.useCertificate .Values.certificate.use_certificate) }}
+        - mountPath: /opt/dctm/certificate
+          name: {{ .Values.dbrpersistentVolume.dbrdataPVCName | default .Values.global.dbrdataPVCName }}
+          subPath: certificate/{{ .Values.dbrpersistentVolume.dbrdataPVCName | default .Values.global.dbrdataPVCName }}
+{{ end }}
+{{- if (empty (.Values.vault.enable | quote) | ternary .Values.global.isVaultEnabled .Values.vault.enable) }}
+        - mountPath: {{ .Values.vault.vault_config_mount_path }}
+          name: vault-volume
+        - mountPath: {{ .Values.vault.binary_volume_mount_path }}
+          name: dsis-binary-volume
+          subPath: dsis-binary
+{{- end }}
+        - name: submissions-shared-pvc
+          mountPath: /data/sftp/shared
+          readOnly: false
+        - name: sftp-users
+          mountPath: /opt/userslist
+          readOnly: false
+        - name: shared-data  
+          mountPath: /opt/tomcat/logs/sftp/
+          subPath: logs/sftp
+        - name: shared-logs
+          mountPath: /opt/tomcat/logs/
+          subPath: ls-sftp/logs           
+        - name: {{ .Values.userName }}-conf-files
+          mountPath: /opt/tomcat/CustomConf
+        - mountPath: /opt/tomcat/conf/server_configmap.xml
+          name: {{ .Values.userName }}-appserver-server-xml
+          subPath: server.xml
+        - mountPath: /opt/tomcat/webapps/{{ .Values.webAppName }}/WEB-INF/web.xml
+          name: {{ .Values.userName }}-appserver-web-xml
+          subPath: web.xml
+{{- if (empty (.Values.logrotate.enable | quote) | ternary .Values.global.logrotate_enable .Values.logrotate.enable) }}
+        - mountPath: /opt/logrotate
+          name: logrotate-volume
+{{- end }}
+        readinessProbe:
+          httpGet:
+            path: /sftp-users-management/servercheck
+            port: 8080
+          initialDelaySeconds: 60
+          periodSeconds: 60
+          timeoutSeconds: 60
+          successThreshold: 1
+          failureThreshold: 3
+        livenessProbe:
+          httpGet:
+            path: /sftp-users-management/servercheck
+            port: 8080
+          initialDelaySeconds: 60
+          periodSeconds: 1
+          timeoutSeconds: 60
+          successThreshold: 1
+          failureThreshold: 3
+        startupProbe:
+          httpGet:
+            path: /sftp-users-management/servercheck
+            port: 8080
+          initialDelaySeconds: 120
+          periodSeconds: 60
+          timeoutSeconds: 60
+          successThreshold: 1
+          failureThreshold: 5
+        lifecycle:
+          preStop:
+            exec:
+              command: ['/bin/sh', '-c', '/opt/scripts/create_user_backup.sh']
+        resources:
+          requests:
+            memory: {{ .Values.resources.requests.memory | quote  }}
+            cpu: {{ .Values.resources.requests.cpu | quote  }}
+          limits:
+            memory: {{ .Values.resources.limits.memory | quote  }}
+            cpu: {{ .Values.resources.limits.cpu | quote  }}
+      volumes:
+{{ if (empty (.Values.certificate.use_certificate | quote) | ternary .Values.global.useCertificate .Values.certificate.use_certificate) }}
+        - name: {{ .Values.dbrpersistentVolume.dbrdataPVCName | default .Values.global.dbrdataPVCName }}
+          persistentVolumeClaim:
+            claimName: {{ .Values.certificate.dbrserviceName | default .Values.global.dbrServiceName }}-pvc
+{{- end }}     
+        - name: submissions-shared-pvc
+          persistentVolumeClaim:
+            claimName: {{ .Values.persistentVolume.submissions.pvcName }}
+        - name: sftp-users
+          persistentVolumeClaim:
+            claimName: {{ .Values.persistentVolume.users.pvcName }}
+        - name: shared-data
+          emptyDir: {}
+{{- if eq (empty (.Values.persistLogsOnPvc.enable | quote) | ternary .Values.global.persistLogs .Values.persistLogsOnPvc.enable) false }}          
+        - name: shared-logs
+          emptyDir: {}
+{{ end }}
+        - name: {{ .Values.userName }}-conf-files
+          projected:
+            sources:
+            - configMap:
+                name: ls-sftp-log4j2-properties
+            - configMap:
+                name: ls-sftp-config-properties
+        - name: {{ .Values.userName }}-appserver-server-xml
+          projected:
+            sources:
+            - configMap:
+                name: {{ .Values.userName }}-server-xml
+        - name: {{ .Values.userName }}-appserver-web-xml
+          projected:
+            sources:
+            - configMap:
+                name: {{ .Values.userName }}-web-xml
+{{- if (empty (.Values.logrotate.enable | quote) | ternary .Values.global.logrotate_enable .Values.logrotate.enable) }}
+        - name: logrotate-volume
+          configMap: 
+            name: {{ .Values.userName }}-logrotate-configmap
+{{- end }} 
+{{- if (empty (.Values.vault.enable | quote) | ternary .Values.global.isVaultEnabled .Values.vault.enable) }}
+        - name: vault-volume
+          configMap:
+            name: {{ .Values.vault.vault_configmap }}
+        - name: dsis-binary-volume
+          persistentVolumeClaim:
+            claimName: {{ .Values.vault.PVCName }}
+{{- end }} 
+{{- if eq (empty (.Values.persistLogsOnPvc.enable | quote) | ternary .Values.global.persistLogs .Values.persistLogsOnPvc.enable) true }}
+  volumeClaimTemplates:      
+  - metadata:
+      name: shared-logs
+    spec:
+      accessModes:
+        - {{ .Values.persistLogsOnPvc.volumeClaimTemplate.logVctAccessModes }}
+      resources:
+        requests:
+          storage: {{ .Values.persistLogsOnPvc.volumeClaimTemplate.logVctSize }}
+      storageClassName: {{ .Values.persistLogsOnPvc.volumeClaimTemplate.logVctStorageClass | default .Values.global.rwoStorage }}
+{{ end }}              
