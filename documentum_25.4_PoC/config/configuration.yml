@@ -27,7 +27,7 @@ otds:
     secret:
 
     # Description: Ingress class used for annotations on different cloud platforms.
-    class:
+    class: alb
 
     # Description: Cloud platform-specific annotations of the ingress object.
     # exposeIndividualEndpoints enables to expose the following five endpoints:
@@ -175,7 +175,7 @@ otds:
     # Description: FQDN or IP address of OTDS Kubernetes service. If the value is empty (""), then the host name is dynamically determined using the Kubernetes API.
     # Use the following format for host name: 
     # <value specified for ingress.hostShortName in ingress Helm chart's values.yaml>.<value specified for ingress.hostDomainName in ingress Helm chart's value.yaml>
-    publicHostname: postgres
+    publicHostname: lab-dokumentu-kudeaketarako.batera.euskadi.eus
 
     # Description: Time zone of the Linux operating system within the container.
     timeZone: Etc/UTC
