@@ -122,7 +122,7 @@ global:
   tomcatbase_commonpvcname: d2-extension-pvc
 
   # Description: Provide the Ingress URL used for client, Smart View and Client REST API.
-  ingressUrl: dctm-pif.jblnet.local
+  ingressUrl: lab-dokumentu-kudeaketarako
 
   # Description: Path where Application Encryption Key (AEK) is available.
   # Note: If Vault is enabled, the value must be Remote_Vault. If Vault is not enabled, use the default value, Local.
@@ -142,10 +142,10 @@ global:
   ingressProtocol: &ingress_protocol http
 
   # Description: Short name of the ingress for Single / Internal Ingress (in case Multi-ingress is enabled).
-  hostShortName: dctm-pif
+  hostShortName: lab-dokumentu-kudeaketarako
 
   # Description: Domain of Single / Internal Ingress Controller in the cluster.
-  ingressDomain: &ingress_domain d2.cfcr-lab.bp-paas.otxlab.net
+  ingressDomain: &ingress_domain batera.euskadi.eus
 
   # Description: Indicates if multiple ingresses are enabled. By default, the value is false. Set the value to true to enable multiple ingress. 
   # Note: When the value is set to true, it enables d2publicingress, vpningress, and dctm-ingress.
@@ -155,13 +155,13 @@ global:
   publicHostShortName: public-ingress
 
   # Description: Domain of Public Ingress Controller in the cluster.
-  publicIngressDomain: d2.cfcr-lab.bp-paas.otxlab.net
+  publicIngressDomain: batera.euskadi.eus
 
   # Description: Short name of the ingress for VPN Ingress.
   vpnHostShortName: vpn-ingress
 
   # Description: Domain of VPN Ingress Controller in the cluster.
-  vpnIngressDomain: d2.cfcr-lab.bp-paas.otxlab.net
+  vpnIngressDomain: batera.euskadi.eus
 
   # Description: Service type of the web application.
   webappServiceType: &webapp_service_type ClusterIP
