@@ -43,7 +43,7 @@ dctm-ingress:
     annotations:
       # Description: Defines whether the ALB is internet-facing or internal.
       alb.ingress.kubernetes.io/scheme: internal
-      alb.ingress.kubernetes.io/subnets: subnet-028cf43e259bdebfc
+      alb.ingress.kubernetes.io/subnets: subnet-028cf43e259bdebfc, subnet-0dfa20cdc4783f6c
       alb.ingress.kubernetes.io/target-type: 'ip'
       alb.ingress.kubernetes.io/target-group-attributes: stickiness.enabled=true,stickiness.lb_cookie.duration_seconds=1200
       alb.ingress.kubernetes.io/load-balancer-attributes: idle_timeout.timeout_seconds=600,client_keep_alive.seconds=3600
@@ -88,7 +88,7 @@ contentconnect:
     annotations:
       # Description: Defines whether the ALB is internet-facing or internal.
       alb.ingress.kubernetes.io/scheme: internet-facing
-      alb.ingress.kubernetes.io/subnets: subnet-0c4a1017a4ffb7962, subnet-0bbd3ec1319a30772, subnet-0a6ab032a5e03be49
+      alb.ingress.kubernetes.io/subnets: subnet-028cf43e259bdebfc, subnet-0dfa20cdc4783f6c
       alb.ingress.kubernetes.io/target-type: 'ip'
       alb.ingress.kubernetes.io/target-group-attributes: stickiness.enabled=true,stickiness.lb_cookie.duration_seconds=1200
       alb.ingress.kubernetes.io/load-balancer-attributes: idle_timeout.timeout_seconds=600
@@ -204,7 +204,7 @@ vpningress:
     annotations:
       # Description: Defines whether the ALB is internet-facing or internal.
       alb.ingress.kubernetes.io/scheme: internal
-      alb.ingress.kubernetes.io/subnets: subnet-028cf43e259bdebfc
+      alb.ingress.kubernetes.io/subnets: subnet-028cf43e259bdebfc, subnet-0dfa20cdc4783f6c
       alb.ingress.kubernetes.io/target-type: "ip"
       alb.ingress.kubernetes.io/target-group-attributes: stickiness.enabled=true,stickiness.lb_cookie.duration_seconds=1200
       alb.ingress.kubernetes.io/load-balancer-attributes: idle_timeout.timeout_seconds=600
@@ -238,7 +238,7 @@ d2publicingress:
     annotations:
       # Description: Defines whether the ALB is internet-facing or internal.
       alb.ingress.kubernetes.io/scheme: internet-facing
-      alb.ingress.kubernetes.io/subnets: subnet-0c4a1017a4ffb7962, subnet-0bbd3ec1319a30772, subnet-0a6ab032a5e03be49
+      alb.ingress.kubernetes.io/subnets: subnet-028cf43e259bdebfc, subnet-0dfa20cdc4783f6c
       alb.ingress.kubernetes.io/target-type: "ip"
       alb.ingress.kubernetes.io/target-group-attributes: stickiness.enabled=true,stickiness.lb_cookie.duration_seconds=1200
       alb.ingress.kubernetes.io/load-balancer-attributes: idle_timeout.timeout_seconds=600
@@ -268,7 +268,7 @@ appworks-gateway:
     annotations:
       # Description: Defines whether the ALB is internet-facing or internal.
       alb.ingress.kubernetes.io/scheme: internet-facing
-      alb.ingress.kubernetes.io/subnets: subnet-0c4a1017a4ffb7962, subnet-0bbd3ec1319a30772, subnet-0a6ab032a5e03be49
+      alb.ingress.kubernetes.io/subnets: subnet-028cf43e259bdebfc, subnet-0dfa20cdc4783f6c
       alb.ingress.kubernetes.io/target-type: 'ip'
       # Description: group.name annotation must be unique between deployments and namespaces.
       alb.ingress.kubernetes.io/group.name: awg-group
@@ -296,7 +296,7 @@ otiv:
     ingressAnnotations:
       # Description: Defines whether the ALB is internet-facing or internal.
       alb.ingress.kubernetes.io/scheme: internet-facing
-      alb.ingress.kubernetes.io/subnets: subnet-0c4a1017a4ffb7962, subnet-0bbd3ec1319a30772, subnet-0a6ab032a5e03be49
+      alb.ingress.kubernetes.io/subnets: subnet-028cf43e259bdebfc, subnet-0dfa20cdc4783f6c
       alb.ingress.kubernetes.io/target-type: 'ip'
       # Description: group.name annotation must be unique between deployments and namespaces.
       alb.ingress.kubernetes.io/group.name: otiv-group
