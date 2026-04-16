@@ -52,7 +52,7 @@ global:
 ingress:
   enabled: &otds_ingress_enabled true
   secret:
-  class: 
+  class: alb
   annotations: {}
   ## exposeIndividualEndpoints enables to expose the list of 5 endpoints
   ## "/otds-admin/", "/otdstenant/", "/otdsws/", "/ot-authws/", "/otds-v2/"
