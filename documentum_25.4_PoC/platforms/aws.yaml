@@ -30,6 +30,10 @@ docbroker:
   # Description: Retain the default value.
   platform: aws
 
+
+#######################################################################################################
+####   Este es el que aplica en AWS para PIF
+#######################################################################################################
 dctm-ingress:
   # Description: Retain the default value.
   platform: aws
@@ -43,7 +47,7 @@ dctm-ingress:
     annotations:
       # Description: Defines whether the ALB is internet-facing or internal.
       alb.ingress.kubernetes.io/scheme: internal
-      alb.ingress.kubernetes.io/subnets: subnet-028cf43e259bdebfc, subnet-0dfa20cdc4783f6c
+      alb.ingress.kubernetes.io/subnets: subnet-028cf43e259bdebfc, subnet-04fa20cbc47830f86
       alb.ingress.kubernetes.io/target-type: 'ip'
       alb.ingress.kubernetes.io/target-group-attributes: stickiness.enabled=true,stickiness.lb_cookie.duration_seconds=1200
       alb.ingress.kubernetes.io/load-balancer-attributes: idle_timeout.timeout_seconds=600,client_keep_alive.seconds=3600
