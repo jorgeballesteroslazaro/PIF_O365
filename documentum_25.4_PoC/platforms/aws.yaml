@@ -50,7 +50,8 @@ dctm-ingress:
       # Description: group.name annotation must be unique between deployments and namespaces.
       alb.ingress.kubernetes.io/group.name: dctm-internal-group
       alb.ingress.kubernetes.io/backend-protocol: HTTP
-      alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80},{"HTTPS":443}]'
+      #alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80},{"HTTPS":443}]'
+      alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80}]'
       # Description: Defines whether the ALB uses IPv4, IPv6, or both.
       # Allowed values:
       #   - ipv4: ALB uses only IPv4 addresses.
