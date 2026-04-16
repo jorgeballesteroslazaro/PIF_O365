@@ -47,7 +47,7 @@ dctm-ingress:
     annotations:
       # Description: Defines whether the ALB is internet-facing or internal.
       alb.ingress.kubernetes.io/scheme: internal
-      alb.ingress.kubernetes.io/subnets: subnet-028cf43e259bdebfc
+      alb.ingress.kubernetes.io/subnets: subnet-028cf43e259bdebfc, subnet-04fa20cbc47830f86
       # subnet-028cf43e259bdebfc subnet-04fa20cbc47830f86 
       alb.ingress.kubernetes.io/target-type: 'ip'
       alb.ingress.kubernetes.io/target-group-attributes: stickiness.enabled=true,stickiness.lb_cookie.duration_seconds=1200
