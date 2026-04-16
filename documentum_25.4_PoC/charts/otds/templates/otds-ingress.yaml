@@ -20,9 +20,6 @@ metadata:
   namespace: {{ .Values.global.namespace }}
 {{- end }}
   annotations:
-{{- if not (.Capabilities.APIVersions.Has "networking.k8s.io/v1/Ingress") }}
-{{- if .Values.ingress.class }}
-    kubernetes.io/ingress.class: {{ .Values.ingress.class }}
     # Description: Defines whether the ALB is internet-facing or internal.
     alb.ingress.kubernetes.io/scheme: internal
     alb.ingress.kubernetes.io/subnets: subnet-028cf43e259bdebfc, subnet-04fa20cbc47830f86
@@ -46,6 +43,9 @@ metadata:
     #alb.ingress.kubernetes.io/ssl-redirect: '443'
     # Description: For secure connection, uncomment the following annotation.          
     #alb.ingress.kubernetes.io/certificate-arn: arn:aws:iam::820400221816:server-certificate/albselfsigned  
+{{- if not (.Capabilities.APIVersions.Has "networking.k8s.io/v1/Ingress") }}
+{{- if .Values.ingress.class }}
+    kubernetes.io/ingress.class: {{ .Values.ingress.class }}
 {{- end }}
 {{- end }}
 {{- range $key, $value := .Values.ingress.annotations }}
