@@ -431,3 +431,13 @@ dctm-cssap:
       alb.ingress.kubernetes.io/healthcheck-path: /HvpWorker/hvpCommand
       alb.ingress.kubernetes.io/healthcheck-interval-seconds: '300'
       alb.ingress.kubernetes.io/healthcheck-timeout-seconds: '60'
+
+      
+
+platforms:
+  aws:
+    nlbHealth:
+      enabled: true
+      path: /nlb-health
+      groupName: dctm-internal-group
+      
