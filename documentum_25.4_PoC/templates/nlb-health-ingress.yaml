@@ -7,6 +7,29 @@ metadata:
   annotations:
     alb.ingress.kubernetes.io/group.name: {{ .Values.platforms.aws.nlbHealth.groupName }}
     alb.ingress.kubernetes.io/backend-protocol: HTTP
+    # Description: Defines whether the ALB is internet-facing or internal.
+    alb.ingress.kubernetes.io/scheme: internal
+    alb.ingress.kubernetes.io/subnets: subnet-028cf43e259bdebfc, subnet-04fa20cbc47830f86
+    # subnet-028cf43e259bdebfc subnet-04fa20cbc47830f86 
+    alb.ingress.kubernetes.io/target-type: 'ip'
+    alb.ingress.kubernetes.io/target-group-attributes: stickiness.enabled=true,stickiness.lb_cookie.duration_seconds=1200
+    alb.ingress.kubernetes.io/load-balancer-attributes: idle_timeout.timeout_seconds=600,client_keep_alive.seconds=3600
+    # Description: group.name annotation must be unique between deployments and namespaces.
+    alb.ingress.kubernetes.io/group.name: dctm-internal-group
+    alb.ingress.kubernetes.io/backend-protocol: HTTP
+    #alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80},{"HTTPS":443}]'
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80}]'
+    # Description: Defines whether the ALB uses IPv4, IPv6, or both.
+    # Allowed values:
+    #   - ipv4: ALB uses only IPv4 addresses.
+    #   - dualstack: ALB uses both IPv4 and IPv6 addresses (subnets must have IPv6 CIDRs assigned).
+    #   - dualstack-without-public-ipv4: Only applicable for internet-facing ALBs in public subnets.
+    alb.ingress.kubernetes.io/ip-address-type: ipv4
+    # Description: If Content Connect ingress is enabled in dctm-ingress, then uncomment the ssl-redirect annotation.
+    # Also, if LSS is enabled, then uncomment the ssl-redirect annotation.
+    #alb.ingress.kubernetes.io/ssl-redirect: '443'
+    # Description: For secure connection, uncomment the following annotation.          
+    #alb.ingress.kubernetes.io/certificate-arn: arn:aws:iam::820400221816:server-certificate/albselfsigned      
 spec:
   ingressClassName: alb
   rules:
