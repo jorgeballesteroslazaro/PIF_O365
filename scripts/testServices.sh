@@ -41,7 +41,7 @@ for path in "${paths[@]}"; do
     else
         current_host=$HOST_HEADER_ALB
     fi
-
+	echo "Host: $current_host" "$ALB_URL$path"
     status=$(curl -o /dev/null -s -w "%{http_code}" -H "Host: $current_host" "$ALB_URL$path")
 
     if [ "$status" == "200" ] || [ "$status" == "302" ] || [ "$status" == "401" ]; then
