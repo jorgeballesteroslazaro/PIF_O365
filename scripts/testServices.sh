@@ -45,9 +45,9 @@ for path in "${paths[@]}"; do
     status=$(curl -o /dev/null -s -w "%{http_code}" -H "Host: $current_host" "$ALB_URL$path")
 
     if [ "$status" == "200" ] || [ "$status" == "302" ] || [ "$status" == "401" ]; then
-        echo -e "[OK]  $status - $path"
+        echo -e "[OK]  $status - $current_host$path"
     else
-        echo -e "[ERR] $status - $path"
+        echo -e "[ERR] $status - $current_host$path"
     fi
 done
 
