@@ -19,6 +19,7 @@ spec:
         image: hashicorp/http-echo
         args:
           - "-text=OK"
+          - "-listen=:8080"  # <--- CORRECCIÓN: Fuerza a la app a escuchar en el 8080
         ports:
           - containerPort: 8080
 ---
