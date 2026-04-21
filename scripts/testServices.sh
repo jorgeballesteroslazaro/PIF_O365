@@ -1,8 +1,10 @@
 #!/bin/bash
 
 # Configuración
-ALB_URL="http://amazonaws.com"
-HOST_HEADER="lab-dokumentu-kudeaketarako.batera.euskadi.eus"
+ALB_URL="http://internal-k8s-dctminternalgroup-525511e572-234219210.eu-south-2.elb.amazonaws.com"
+#HOST_HEADER="lab-dokumentu-kudeaketarako.batera.euskadi.eus"
+HOST_HEADER_ALB="internal-k8s-dctminternalgroup-525511e572-234219210.eu-south-2.elb.amazonaws.com"
+HOST_HEADER_NLB="aws-spa-nlb-pocdocumentum-02-802fb54c3c14ad5c.elb.eu-south-2.amazonaws.com"
 
 # Lista de rutas extraídas de tu Ingress
 paths=(
@@ -37,7 +39,7 @@ for path in "${paths[@]}"; do
     if [ "$path" == "/nlb-health" ]; then
         current_host="*"
     else
-        current_host=$HOST_HEADER
+        current_host=$HOST_HEADER_ALB
     fi
 
     status=$(curl -o /dev/null -s -w "%{http_code}" -H "Host: $current_host" "$ALB_URL$path")
