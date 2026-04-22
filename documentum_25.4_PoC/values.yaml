@@ -139,7 +139,7 @@ global:
 
   # Description: Type of the communication mode.
   # Note: Make sure that the value is retained as https if global.internalTlsEnable is set to true. 
-  ingressProtocol: &ingress_protocol http
+  ingressProtocol: &ingress_protocol https
 
   # Description: Short name of the ingress for Single / Internal Ingress (in case Multi-ingress is enabled).
   hostShortName: lab-dokumentu-kudeaketarako
