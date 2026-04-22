@@ -5194,7 +5194,7 @@ notificationservice:
       # 4. For SSL PostgreSQL: jdbc:postgresql://<db_hostname>:<db_port>/<db_name>?ssl=true&sslmode=verify-ca
       # For Oracle driverClassName: oracle.jdbc.driver.OracleDriver
       # For Postgresql driverClassName: org.postgresql.Driver
-      url: jdbc:postgresql://<db_hostname>:<db_port>/svns?escapeSyntaxCallMode=callIfNoReturn
+      url: jdbc:postgresql://db-pg:5432/svns?escapeSyntaxCallMode=callIfNoReturn
 
       # Description: Database name when Oracle non-SSL is used and net service name when Oracle SSL database server is used.
       db_servicename: <oracle_tls_servicename>

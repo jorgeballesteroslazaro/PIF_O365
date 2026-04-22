@@ -17,8 +17,8 @@ metadata:
     # Description: group.name annotation must be unique between deployments and namespaces.
     alb.ingress.kubernetes.io/group.name: dctm-internal-group
     alb.ingress.kubernetes.io/backend-protocol: HTTP
-    #alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80},{"HTTPS":443}]'
-    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80}]'
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80},{"HTTPS":443}]'
+    #alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80}]'
     # Description: Defines whether the ALB uses IPv4, IPv6, or both.
     # Allowed values:
     #   - ipv4: ALB uses only IPv4 addresses.
@@ -29,7 +29,7 @@ metadata:
     # Also, if LSS is enabled, then uncomment the ssl-redirect annotation.
     #alb.ingress.kubernetes.io/ssl-redirect: '443'
     # Description: For secure connection, uncomment the following annotation.          
-    #alb.ingress.kubernetes.io/certificate-arn: arn:aws:iam::820400221816:server-certificate/albselfsigned      
+    alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:eu-south-2:594171188460:certificate/a0b0f521-80be-4fe1-aa82-e58826fc5d53      
 spec:
   ingressClassName: alb
   rules:
