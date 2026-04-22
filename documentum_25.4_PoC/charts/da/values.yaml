@@ -223,7 +223,6 @@ env:
   domain:
 
 vault:
-  enable:
   vault_configmap: dctm-vault-configmap
   createPVC: false
   PVCName: dsis-binary-pvc
