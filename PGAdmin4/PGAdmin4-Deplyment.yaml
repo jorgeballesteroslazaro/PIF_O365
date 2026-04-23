@@ -23,7 +23,7 @@ spec:
               name: pgadmin-secret
         env:
           - name: SCRIPT_NAME
-            value: /PGAdmin4
+            value: /pgadmin
           - name: PGADMIN_CONFIG_PROXY_X_SCRIPT_NAME
             value: "True"
           - name: PGADMIN_CONFIG_PROXY_X_FORWARDED_HOST
