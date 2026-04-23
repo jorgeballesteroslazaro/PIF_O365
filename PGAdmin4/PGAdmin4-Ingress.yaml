@@ -6,7 +6,7 @@ metadata:
   annotations:
     kubernetes.io/ingress.class: alb
     alb.ingress.kubernetes.io/group.name: dctm-internal-group
-    alb.ingress.kubernetes.io/group.order: '10'
+    alb.ingress.kubernetes.io/group.order: '1'
     alb.ingress.kubernetes.io/backend-protocol: HTTP
     # Description: Defines whether the ALB is internet-facing or internal.
     alb.ingress.kubernetes.io/scheme: internal
