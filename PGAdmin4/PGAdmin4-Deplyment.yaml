@@ -17,11 +17,19 @@ spec:
       - name: pgadmin
         image: dpage/pgadmin4:latest
         ports:
-          - containerPort: 80
+          - containerPort: 5050
         envFrom:
           - secretRef:
               name: pgadmin-secret
         env:
+          - name: SCRIPT_NAME
+            value: /PGAdmin4
+          - name: PGADMIN_CONFIG_PROXY_X_SCRIPT_NAME
+            value: "True"
+          - name: PGADMIN_CONFIG_PROXY_X_FORWARDED_HOST
+            value: "True"
+          - name: PGADMIN_CONFIG_PROXY_X_FORWARDED_PROTO
+            value: "True"
           - name: PGADMIN_CONFIG_SERVER_MODE
             value: "True"
         volumeMounts:
