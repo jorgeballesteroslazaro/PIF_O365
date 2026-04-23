@@ -30,7 +30,7 @@ metadata:
     #alb.ingress.kubernetes.io/ssl-redirect: '443'
     # Description: For secure connection, uncomment the following annotation.          
     alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:eu-south-2:594171188460:certificate/a0b0f521-80be-4fe1-aa82-e58826fc5d53
-    alb.ingress.kubernetes.io/healthcheck-path: /PGAdmin4/login
+    alb.ingress.kubernetes.io/healthcheck-path: /pgadmin/login
     alb.ingress.kubernetes.io/success-codes: "200-399"
         
 spec:
