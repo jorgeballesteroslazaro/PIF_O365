@@ -234,11 +234,13 @@ otds:
       # Description: Used to automatically create the specified database (in otdsdb.url) if it does not exist.
       # This is optional. Typically, the database is pre-created by IAC or otherwise by a system administrator.
       # This feature is only supported with PostgreSQL.
+      # OTDS_DB_ADMIN_PASSWORD: {{ required "A valid otdsws.otdsdb.automaticDatabaseCreation.dbAdminPassword is required!" .Values.otdsdb.automaticDatabaseCreation.dbAdminPassword | b64enc }}
       automaticDatabaseCreation:
         enabled: true
 
         # Description: Defines the admin account (for example, 'postgres').
-        dbAdmin:
+        dbAdmin: postgres
+        dbAdminPassword: Training_2026_25_4
 
         # Description: Defines the extensions to be created on the database.
         # The pg_trgm extension is required.
