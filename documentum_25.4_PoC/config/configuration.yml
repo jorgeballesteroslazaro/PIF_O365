@@ -235,7 +235,7 @@ otds:
       # This is optional. Typically, the database is pre-created by IAC or otherwise by a system administrator.
       # This feature is only supported with PostgreSQL.
       automaticDatabaseCreation:
-        enabled: false
+        enabled: true
 
         # Description: Defines the admin account (for example, 'postgres').
         dbAdmin:
