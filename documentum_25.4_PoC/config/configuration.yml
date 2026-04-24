@@ -224,7 +224,8 @@ otds:
       # The Helm chart will import root CA certificate into a user writable copy of default Java trust store
       # for the URL which includes sslDBRootCert (for example, postgres SSL connection). The location of sslrootcert is: /opt/config/certificates/dbRootCA.crt
       # jdbc:postgresql://postgres.domain.local:5432/otdsdb?ssl=true&sslmode=verify-ca&sslrootcert=/opt/config/certificates/dbRootCA.crt
-      url: jdbc:postgresql://db-pg:5432/postgres
+      #url: jdbc:postgresql://db-pg:5432/postgres
+      url: jdbc:postgresql://db-pg:5432/otdsdb
 
       # Description: By default, OTDS uses a database schema named otds. If you set this option to true, the default schema assigned to the database user account is used instead.
       # This is required on a shared Oracle database.
