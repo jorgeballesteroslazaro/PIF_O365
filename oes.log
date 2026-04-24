@@ -1,0 +1,670 @@
+Fri Apr 24 10:38:45 UTC 2026 extensionstartup.sh
+Fri Apr 24 10:38:45 UTC 2026 Setting variables
+dmadmin
+Fri Apr 24 10:38:45 UTC 2026 Renaming user dmadmin to oesadmin
+oesadmin ALL=NOPASSWD:    ALL
+chown: /opt/tomcat/webapps/oes-connector/WEB-INF/classes/log4j/..2026_04_16_14_06_14.2533546885: Read-only file system
+chown: /opt/tomcat/webapps/oes-connector/WEB-INF/classes/log4j: Read-only file system
+Fri Apr 24 10:38:46 UTC 2026 Renaming user dmadmin to oesadmin
+Fri Apr 24 10:38:46 UTC 2026 Creating directories
+chown: /opt/tomcat/webapps/oes-connector/WEB-INF/classes/log4j/..2026_04_16_14_06_14.2533546885: Read-only file system
+chown: /opt/tomcat/webapps/oes-connector/WEB-INF/classes/log4j: Read-only file system
+Fri Apr 24 10:38:46 UTC 2026 Unzipping the war file
+replace /opt/tomcat/webapps/oes-connector/WEB-INF/classes/config/database.properties? [y]es, [n]o, [A]ll, [N]one, [r]ename:  NULL
+(EOF or read error, treating as "[N]one" ...)
+Fri Apr 24 10:38:48 UTC 2026 Setting catalina.properties
+Fri Apr 24 10:38:48 UTC 2026 Remove the propeties files as they will be loaded from ConfigMaps
+Starting the appserver
+starting oesconnector server
+NOTE: Picked up JDK_JAVA_OPTIONS: --add-opens=java.base/java.net=ALL-UNNAMED --add-opens=java.base/java.lang.ref=ALL-UNNAMED --add-opens=java.naming/com.sun.jndi.toolkit.url=ALL-UNNAMED     --add-exports=java.base/sun.security.provider=ALL-UNNAMED --add-exports=java.base/sun.security.pkcs=ALL-UNNAMED --add-exports=java.base/sun.security.x509=ALL-UNNAMED     --add-exports=java.base/sun.security.util=ALL-UNNAMED --add-exports=java.base/sun.security.tools.keytool=ALL-UNNAMED --add-opens=java.base/java.lang=ALL-UNNAMED
+NOTE: Picked up JDK_JAVA_OPTIONS: --add-opens=java.base/java.net=ALL-UNNAMED --add-opens=java.base/java.lang.ref=ALL-UNNAMED --add-opens=java.naming/com.sun.jndi.toolkit.url=ALL-UNNAMED     --add-exports=java.base/sun.security.provider=ALL-UNNAMED --add-exports=java.base/sun.security.pkcs=ALL-UNNAMED --add-exports=java.base/sun.security.x509=ALL-UNNAMED     --add-exports=java.base/sun.security.util=ALL-UNNAMED --add-exports=java.base/sun.security.tools.keytool=ALL-UNNAMED --add-opens=java.base/java.lang=ALL-UNNAMED
+24-Apr-2026 10:38:48.655 WARNING [main] org.apache.catalina.startup.ClassLoaderFactory.validateFile Problem with directory [/opt/tomcat/CustomConf], exists: [false], isDirectory: [false], canRead: [false]
+24-Apr-2026 10:38:49.204 WARNING [main] org.apache.tomcat.util.digester.SetPropertiesRule.begin Match [Server/Service/Connector] failed to set property [connectionTimeout] to []
+24-Apr-2026 10:38:49.353 INFO [main] org.apache.catalina.startup.VersionLoggerListener.log Server version name:   Apache Tomcat Version X.X.X
+24-Apr-2026 10:38:49.353 INFO [main] org.apache.catalina.startup.VersionLoggerListener.log Server built:          unknown
+24-Apr-2026 10:38:49.353 INFO [main] org.apache.catalina.startup.VersionLoggerListener.log Server version number: 11.0.x
+24-Apr-2026 10:38:49.353 INFO [main] org.apache.catalina.startup.VersionLoggerListener.log OS Name:               Linux
+24-Apr-2026 10:38:49.353 INFO [main] org.apache.catalina.startup.VersionLoggerListener.log OS Version:            6.12.68-92.122.amzn2023.x86_64
+24-Apr-2026 10:38:49.353 INFO [main] org.apache.catalina.startup.VersionLoggerListener.log Architecture:          amd64
+24-Apr-2026 10:38:49.353 INFO [main] org.apache.catalina.startup.VersionLoggerListener.log Java Home:             /opt/jdk
+24-Apr-2026 10:38:49.354 INFO [main] org.apache.catalina.startup.VersionLoggerListener.log JVM Version:           21.0.9+10-LTS
+24-Apr-2026 10:38:49.354 INFO [main] org.apache.catalina.startup.VersionLoggerListener.log JVM Vendor:            Eclipse Adoptium
+24-Apr-2026 10:38:49.354 INFO [main] org.apache.catalina.startup.VersionLoggerListener.log CATALINA_BASE:         /opt/tomcat
+24-Apr-2026 10:38:49.354 INFO [main] org.apache.catalina.startup.VersionLoggerListener.log CATALINA_HOME:         /opt/tomcat
+24-Apr-2026 10:38:49.355 INFO [main] org.apache.catalina.startup.VersionLoggerListener.log Command line argument: --add-opens=java.base/java.net=ALL-UNNAMED
+24-Apr-2026 10:38:49.355 INFO [main] org.apache.catalina.startup.VersionLoggerListener.log Command line argument: --add-opens=java.base/java.lang.ref=ALL-UNNAMED
+24-Apr-2026 10:38:49.355 INFO [main] org.apache.catalina.startup.VersionLoggerListener.log Command line argument: --add-opens=java.naming/com.sun.jndi.toolkit.url=ALL-UNNAMED
+24-Apr-2026 10:38:49.355 INFO [main] org.apache.catalina.startup.VersionLoggerListener.log Command line argument: --add-exports=java.base/sun.security.provider=ALL-UNNAMED
+24-Apr-2026 10:38:49.356 INFO [main] org.apache.catalina.startup.VersionLoggerListener.log Command line argument: --add-exports=java.base/sun.security.pkcs=ALL-UNNAMED
+24-Apr-2026 10:38:49.356 INFO [main] org.apache.catalina.startup.VersionLoggerListener.log Command line argument: --add-exports=java.base/sun.security.x509=ALL-UNNAMED
+24-Apr-2026 10:38:49.356 INFO [main] org.apache.catalina.startup.VersionLoggerListener.log Command line argument: --add-exports=java.base/sun.security.util=ALL-UNNAMED
+24-Apr-2026 10:38:49.356 INFO [main] org.apache.catalina.startup.VersionLoggerListener.log Command line argument: --add-exports=java.base/sun.security.tools.keytool=ALL-UNNAMED
+24-Apr-2026 10:38:49.356 INFO [main] org.apache.catalina.startup.VersionLoggerListener.log Command line argument: --add-opens=java.base/java.lang=ALL-UNNAMED
+24-Apr-2026 10:38:49.356 INFO [main] org.apache.catalina.startup.VersionLoggerListener.log Command line argument: --add-opens=java.base/java.net=ALL-UNNAMED
+24-Apr-2026 10:38:49.356 INFO [main] org.apache.catalina.startup.VersionLoggerListener.log Command line argument: --add-opens=java.base/java.lang.ref=ALL-UNNAMED
+24-Apr-2026 10:38:49.356 INFO [main] org.apache.catalina.startup.VersionLoggerListener.log Command line argument: --add-opens=java.naming/com.sun.jndi.toolkit.url=ALL-UNNAMED
+24-Apr-2026 10:38:49.356 INFO [main] org.apache.catalina.startup.VersionLoggerListener.log Command line argument: --add-exports=java.base/sun.security.provider=ALL-UNNAMED
+24-Apr-2026 10:38:49.356 INFO [main] org.apache.catalina.startup.VersionLoggerListener.log Command line argument: --add-exports=java.base/sun.security.pkcs=ALL-UNNAMED
+24-Apr-2026 10:38:49.357 INFO [main] org.apache.catalina.startup.VersionLoggerListener.log Command line argument: --add-exports=java.base/sun.security.x509=ALL-UNNAMED
+24-Apr-2026 10:38:49.357 INFO [main] org.apache.catalina.startup.VersionLoggerListener.log Command line argument: --add-exports=java.base/sun.security.util=ALL-UNNAMED
+24-Apr-2026 10:38:49.357 INFO [main] org.apache.catalina.startup.VersionLoggerListener.log Command line argument: --add-exports=java.base/sun.security.tools.keytool=ALL-UNNAMED
+24-Apr-2026 10:38:49.357 INFO [main] org.apache.catalina.startup.VersionLoggerListener.log Command line argument: --add-opens=java.base/java.lang=ALL-UNNAMED
+24-Apr-2026 10:38:49.357 INFO [main] org.apache.catalina.startup.VersionLoggerListener.log Command line argument: -Djava.util.logging.config.file=/opt/tomcat/conf/logging.properties
+24-Apr-2026 10:38:49.357 INFO [main] org.apache.catalina.startup.VersionLoggerListener.log Command line argument: -Djava.util.logging.manager=org.apache.juli.ClassLoaderLogManager
+24-Apr-2026 10:38:49.357 INFO [main] org.apache.catalina.startup.VersionLoggerListener.log Command line argument: -Djava.locale.providers=COMPAT,SPI
+24-Apr-2026 10:38:49.357 INFO [main] org.apache.catalina.startup.VersionLoggerListener.log Command line argument: -Djava.security.egd=file:/dev/./urandom
+24-Apr-2026 10:38:49.357 INFO [main] org.apache.catalina.startup.VersionLoggerListener.log Command line argument: -Djdk.tls.ephemeralDHKeySize=2048
+24-Apr-2026 10:38:49.357 INFO [main] org.apache.catalina.startup.VersionLoggerListener.log Command line argument: -Dorg.apache.catalina.security.SecurityListener.UMASK=0027
+24-Apr-2026 10:38:49.357 INFO [main] org.apache.catalina.startup.VersionLoggerListener.log Command line argument: --add-opens=java.base/java.lang=ALL-UNNAMED
+24-Apr-2026 10:38:49.358 INFO [main] org.apache.catalina.startup.VersionLoggerListener.log Command line argument: --add-opens=java.base/java.lang.reflect=ALL-UNNAMED
+24-Apr-2026 10:38:49.358 INFO [main] org.apache.catalina.startup.VersionLoggerListener.log Command line argument: --add-opens=java.base/java.io=ALL-UNNAMED
+24-Apr-2026 10:38:49.358 INFO [main] org.apache.catalina.startup.VersionLoggerListener.log Command line argument: --add-opens=java.base/java.util=ALL-UNNAMED
+24-Apr-2026 10:38:49.358 INFO [main] org.apache.catalina.startup.VersionLoggerListener.log Command line argument: --add-opens=java.base/java.util.concurrent=ALL-UNNAMED
+24-Apr-2026 10:38:49.358 INFO [main] org.apache.catalina.startup.VersionLoggerListener.log Command line argument: --add-opens=java.rmi/sun.rmi.transport=ALL-UNNAMED
+24-Apr-2026 10:38:49.358 INFO [main] org.apache.catalina.startup.VersionLoggerListener.log Command line argument: --enable-native-access=ALL-UNNAMED
+24-Apr-2026 10:38:49.358 INFO [main] org.apache.catalina.startup.VersionLoggerListener.log Command line argument: -Dcatalina.base=/opt/tomcat
+24-Apr-2026 10:38:49.358 INFO [main] org.apache.catalina.startup.VersionLoggerListener.log Command line argument: -Dcatalina.home=/opt/tomcat
+24-Apr-2026 10:38:49.358 INFO [main] org.apache.catalina.startup.VersionLoggerListener.log Command line argument: -Djava.io.tmpdir=/opt/tomcat/temp
+24-Apr-2026 10:38:49.360 INFO [main] org.apache.catalina.core.AprLifecycleListener.lifecycleEvent The Apache Tomcat Native library which allows using OpenSSL was not found on the java.library.path: [/opt/jdk/lib/server:/opt/jdk/lib:/opt/jdk/../lib:/usr/java/packages/lib:/usr/lib64:/lib64:/lib:/usr/lib]
+24-Apr-2026 10:38:50.267 INFO [main] org.apache.coyote.AbstractProtocol.init Initializing ProtocolHandler ["http-nio-8080"]
+24-Apr-2026 10:38:50.371 INFO [main] org.apache.catalina.startup.Catalina.load Server initialization in [1542] milliseconds
+24-Apr-2026 10:38:50.477 INFO [main] org.apache.catalina.core.StandardService.startInternal Starting service [Catalina]
+24-Apr-2026 10:38:50.477 INFO [main] org.apache.catalina.core.StandardEngine.startInternal Starting Servlet engine: [Apache Tomcat Version X.X.X]
+24-Apr-2026 10:38:50.556 INFO [main] org.apache.catalina.startup.HostConfig.deployDirectory Deploying web application directory [/opt/tomcat/webapps/oes-connector]
+24-Apr-2026 10:38:51.568 SEVERE [main] org.apache.catalina.webresources.AbstractFileResourceSet.logIgnoredSymlink Resource for web application [/oes-connector] at path [/WEB-INF/classes/log4j/..data] was not loaded as the canonical path [/WEB-INF/classes/log4j/..2026_04_16_14_06_14.2533546885] did not match. Use of symlinks is one possible cause.
+24-Apr-2026 10:38:51.568 SEVERE [main] org.apache.catalina.webresources.AbstractFileResourceSet.logIgnoredSymlink Resource for web application [/oes-connector] at path [/WEB-INF/classes/log4j/log4j2.xml] was not loaded as the canonical path [/WEB-INF/classes/log4j/..2026_04_16_14_06_14.2533546885/log4j2.xml] did not match. Use of symlinks is one possible cause.
+24-Apr-2026 10:38:58.469 INFO [main] org.apache.jasper.servlet.TldScanner.scanJars At least one JAR was scanned for TLDs yet contained no TLDs. Enable debug logging for this logger for a complete list of JARs that were scanned but no TLDs were found in them. Skipping unneeded JARs during scanning can improve startup time and JSP compilation time.
+Standard Commons Logging discovery in action with spring-jcl: please remove commons-logging.jar from classpath in order to avoid potential conflicts
+2026-04-24T10:38:59.551496565Z main DEBUG Apache Log4j Core 2.25 initializing configuration XmlConfiguration[location=/opt/tomcat/webapps/oes-connector/WEB-INF/classes/log4j2.xml, lastModified=2026-01-09T13:10:58Z]
+2026-04-24T10:38:59.553549252Z main DEBUG PluginManager 'Core' found 134 plugins
+2026-04-24T10:38:59.553690084Z main DEBUG PluginManager 'Level' found 0 plugins
+2026-04-24T10:38:59.558967986Z main DEBUG PluginManager 'Lookup' found 16 plugins
+2026-04-24T10:38:59.560334247Z main DEBUG Building Plugin[name=layout, class=org.apache.logging.log4j.core.layout.PatternLayout].
+2026-04-24T10:38:59.576989166Z main DEBUG PluginManager 'TypeConverter' found 26 plugins
+2026-04-24T10:38:59.655825727Z main DEBUG PatternLayout$Builder(pattern="%-5p: [%t]: %c.%M - %d{dd MMM yyy HH:mm:ss,SSS} - %m%n", PatternSelector=null, Configuration(/opt/tomcat/webapps/oes-connector/WEB-INF/classes/log4j2.xml), Replace=null, charset="null", alwaysWriteExceptions="null", disableAnsi="null", noConsoleNoAnsi="null", header="null", footer="null")
+2026-04-24T10:38:59.657350695Z main DEBUG PluginManager 'Converter' found 45 plugins
+2026-04-24T10:38:59.755883056Z main DEBUG Building Plugin[name=appender, class=org.apache.logging.log4j.core.appender.ConsoleAppender].
+2026-04-24T10:38:59.763009992Z main DEBUG ConsoleAppender$Builder(target="SYSTEM_OUT", follow="null", direct="null", bufferedIo="null", bufferSize="null", immediateFlush="null", ignoreExceptions="null", PatternLayout(%-5p: [%t]: %c.%M - %d{dd MMM yyy HH:mm:ss,SSS} - %m%n), name="CONSOLE", Configuration(/opt/tomcat/webapps/oes-connector/WEB-INF/classes/log4j2.xml), Filter=null, ={})
+2026-04-24T10:38:59.764216995Z main DEBUG Starting OutputStreamManager SYSTEM_OUT.false.false
+2026-04-24T10:38:59.764371240Z main DEBUG Building Plugin[name=layout, class=org.apache.logging.log4j.core.layout.PatternLayout].
+2026-04-24T10:38:59.764640836Z main DEBUG PatternLayout$Builder(pattern="%-5p: [%t]: %c - %d{dd MMM yyy HH:mm:ss,SSS} - %m%n", PatternSelector=null, Configuration(/opt/tomcat/webapps/oes-connector/WEB-INF/classes/log4j2.xml), Replace=null, charset="null", alwaysWriteExceptions="null", disableAnsi="null", noConsoleNoAnsi="null", header="null", footer="null")
+2026-04-24T10:38:59.765528786Z main DEBUG Building Plugin[name=SizeBasedTriggeringPolicy, class=org.apache.logging.log4j.core.appender.rolling.SizeBasedTriggeringPolicy].
+2026-04-24T10:38:59.769987101Z main DEBUG createPolicy(size="10 MB")
+2026-04-24T10:38:59.771040020Z main DEBUG Building Plugin[name=Policies, class=org.apache.logging.log4j.core.appender.rolling.CompositeTriggeringPolicy].
+2026-04-24T10:38:59.771345140Z main DEBUG createPolicy(={SizeBasedTriggeringPolicy(size=10485760)})
+2026-04-24T10:38:59.771593080Z main DEBUG Building Plugin[name=DefaultRolloverStrategy, class=org.apache.logging.log4j.core.appender.rolling.DefaultRolloverStrategy].
+2026-04-24T10:38:59.774133064Z main DEBUG DefaultRolloverStrategy$Builder(max="5", min="null", fileIndex="null", compressionLevel="null", ={}, stopCustomActionsOnError="null", tempCompressedFilePattern="null", Configuration(/opt/tomcat/webapps/oes-connector/WEB-INF/classes/log4j2.xml))
+2026-04-24T10:38:59.774307722Z main DEBUG Building Plugin[name=appender, class=org.apache.logging.log4j.core.appender.RollingFileAppender].
+2026-04-24T10:38:59.776184356Z main DEBUG RollingFileAppender$Builder(fileName="oes-services-logs//oes-sync-service.log", filePattern="oes-services-logs//oes-sync-service%i.log", append="null", locking="null", Policies(CompositeTriggeringPolicy(policies=[SizeBasedTriggeringPolicy(size=10485760)])), DefaultRolloverStrategy(DefaultRolloverStrategy(min=1, max=5, useMax=true)), advertise="null", advertiseUri="null", createOnDemand="null", filePermissions="null", fileOwner="null", fileGroup="null", bufferedIo="null", bufferSize="null", immediateFlush="null", ignoreExceptions="null", PatternLayout(%-5p: [%t]: %c - %d{dd MMM yyy HH:mm:ss,SSS} - %m%n), name="RollingFile", Configuration(/opt/tomcat/webapps/oes-connector/WEB-INF/classes/log4j2.xml), Filter=null, ={})
+2026-04-24T10:38:59.779160371Z main ERROR Unable to create file oes-services-logs//oes-sync-service.log
+java.io.IOException: Could not create directory /oes-services-logs
+	at org.apache.logging.log4j.core.util.FileUtils.mkdir(FileUtils.java:129)
+	at org.apache.logging.log4j.core.util.FileUtils.makeParentDirs(FileUtils.java:143)
+	at org.apache.logging.log4j.core.appender.rolling.RollingFileManager$RollingFileManagerFactory.createManager(RollingFileManager.java:863)
+	at org.apache.logging.log4j.core.appender.rolling.RollingFileManager$RollingFileManagerFactory.createManager(RollingFileManager.java:844)
+	at org.apache.logging.log4j.core.appender.AbstractManager.getManager(AbstractManager.java:146)
+	at org.apache.logging.log4j.core.appender.OutputStreamManager.getManager(OutputStreamManager.java:112)
+	at org.apache.logging.log4j.core.appender.rolling.RollingFileManager.getFileManager(RollingFileManager.java:307)
+	at org.apache.logging.log4j.core.appender.RollingFileAppender$Builder.build(RollingFileAppender.java:144)
+	at org.apache.logging.log4j.core.appender.RollingFileAppender$Builder.build(RollingFileAppender.java:65)
+	at org.apache.logging.log4j.core.config.plugins.util.PluginBuilder.build(PluginBuilder.java:124)
+	at org.apache.logging.log4j.core.config.AbstractConfiguration.createPluginObject(AbstractConfiguration.java:1206)
+	at org.apache.logging.log4j.core.config.AbstractConfiguration.createConfiguration(AbstractConfiguration.java:1125)
+	at org.apache.logging.log4j.core.config.AbstractConfiguration.createConfiguration(AbstractConfiguration.java:1117)
+	at org.apache.logging.log4j.core.config.AbstractConfiguration.doConfigure(AbstractConfiguration.java:715)
+	at org.apache.logging.log4j.core.config.AbstractConfiguration.initialize(AbstractConfiguration.java:271)
+	at org.apache.logging.log4j.core.config.AbstractConfiguration.start(AbstractConfiguration.java:324)
+	at org.apache.logging.log4j.core.LoggerContext.setConfiguration(LoggerContext.java:697)
+	at org.apache.logging.log4j.core.LoggerContext.reconfigure(LoggerContext.java:786)
+	at org.apache.logging.log4j.core.LoggerContext.reconfigure(LoggerContext.java:808)
+	at org.apache.logging.log4j.core.LoggerContext.start(LoggerContext.java:311)
+	at org.apache.logging.log4j.core.impl.Log4jContextFactory.getContext(Log4jContextFactory.java:160)
+	at org.apache.logging.log4j.core.impl.Log4jContextFactory.getContext(Log4jContextFactory.java:48)
+	at org.apache.logging.log4j.LogManager.getContext(LogManager.java:139)
+	at org.apache.commons.logging.LogAdapter$Log4jLog.<clinit>(LogAdapter.java:146)
+	at org.apache.commons.logging.LogAdapter$Log4jAdapter.createLog(LogAdapter.java:113)
+	at org.apache.commons.logging.LogAdapter.createLog(LogAdapter.java:95)
+	at org.apache.commons.logging.LogFactoryService.getInstance(LogFactoryService.java:52)
+	at org.apache.commons.logging.LogFactoryService.getInstance(LogFactoryService.java:47)
+	at org.apache.commons.logging.LogFactory.getLog(LogFactory.java:920)
+	at org.springframework.web.context.ContextLoader.initWebApplicationContext(ContextLoader.java:253)
+	at org.springframework.web.context.ContextLoaderListener.contextInitialized(ContextLoaderListener.java:126)
+	at org.apache.catalina.core.StandardContext.listenerStart(StandardContext.java:4003)
+	at org.apache.catalina.core.StandardContext.startInternal(StandardContext.java:4426)
+	at org.apache.catalina.util.LifecycleBase.start(LifecycleBase.java:164)
+	at org.apache.catalina.core.ContainerBase.addChild(ContainerBase.java:564)
+	at org.apache.catalina.core.StandardHost.addChild(StandardHost.java:663)
+	at org.apache.catalina.startup.HostConfig.deployDirectory(HostConfig.java:1084)
+	at org.apache.catalina.startup.HostConfig$DeployDirectory.run(HostConfig.java:1850)
+	at java.base/java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:572)
+	at java.base/java.util.concurrent.FutureTask.run(FutureTask.java:317)
+	at org.apache.tomcat.util.threads.InlineExecutorService.execute(InlineExecutorService.java:81)
+	at java.base/java.util.concurrent.AbstractExecutorService.submit(AbstractExecutorService.java:123)
+	at org.apache.catalina.startup.HostConfig.deployDirectories(HostConfig.java:995)
+	at org.apache.catalina.startup.HostConfig.deployApps(HostConfig.java:380)
+	at org.apache.catalina.startup.HostConfig.start(HostConfig.java:1579)
+	at org.apache.catalina.startup.HostConfig.lifecycleEvent(HostConfig.java:262)
+	at org.apache.catalina.util.LifecycleBase.fireLifecycleEvent(LifecycleBase.java:109)
+	at org.apache.catalina.util.LifecycleBase.setStateInternal(LifecycleBase.java:389)
+	at org.apache.catalina.util.LifecycleBase.setState(LifecycleBase.java:336)
+	at org.apache.catalina.core.ContainerBase.startInternal(ContainerBase.java:741)
+	at org.apache.catalina.core.StandardHost.startInternal(StandardHost.java:780)
+	at org.apache.catalina.util.LifecycleBase.start(LifecycleBase.java:164)
+	at org.apache.catalina.core.ContainerBase$StartChild.call(ContainerBase.java:1162)
+	at org.apache.catalina.core.ContainerBase$StartChild.call(ContainerBase.java:1158)
+	at java.base/java.util.concurrent.FutureTask.run(FutureTask.java:317)
+	at org.apache.tomcat.util.threads.InlineExecutorService.execute(InlineExecutorService.java:81)
+	at java.base/java.util.concurrent.AbstractExecutorService.submit(AbstractExecutorService.java:145)
+	at org.apache.catalina.core.ContainerBase.startInternal(ContainerBase.java:714)
+	at org.apache.catalina.core.StandardEngine.startInternal(StandardEngine.java:201)
+	at org.apache.catalina.util.LifecycleBase.start(LifecycleBase.java:164)
+	at org.apache.catalina.core.StandardService.startInternal(StandardService.java:410)
+	at org.apache.catalina.util.LifecycleBase.start(LifecycleBase.java:164)
+	at org.apache.catalina.core.StandardServer.startInternal(StandardServer.java:864)
+	at org.apache.catalina.util.LifecycleBase.start(LifecycleBase.java:164)
+	at org.apache.catalina.startup.Catalina.start(Catalina.java:756)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at org.apache.catalina.startup.Bootstrap.start(Bootstrap.java:339)
+	at org.apache.catalina.startup.Bootstrap.main(Bootstrap.java:470)
+
+2026-04-24T10:38:59.780378241Z main ERROR Could not create plugin of type class org.apache.logging.log4j.core.appender.RollingFileAppender for element RollingFile: java.lang.IllegalStateException: ManagerFactory [org.apache.logging.log4j.core.appender.rolling.RollingFileManager$RollingFileManagerFactory@13bd90b4] unable to create manager for [oes-services-logs//oes-sync-service.log] with data [org.apache.logging.log4j.core.appender.rolling.RollingFileManager$FactoryData@1d5ba943[pattern=oes-services-logs//oes-sync-service%i.log, append=true, bufferedIO=true, bufferSize=8192, policy=CompositeTriggeringPolicy(policies=[SizeBasedTriggeringPolicy(size=10485760)]), strategy=DefaultRolloverStrategy(min=1, max=5, useMax=true), advertiseURI=null, layout=%-5p: [%t]: %c - %d{dd MMM yyy HH:mm:ss,SSS} - %m%n, filePermissions=null, fileOwner=null]]
+java.lang.IllegalStateException: ManagerFactory [org.apache.logging.log4j.core.appender.rolling.RollingFileManager$RollingFileManagerFactory@13bd90b4] unable to create manager for [oes-services-logs//oes-sync-service.log] with data [org.apache.logging.log4j.core.appender.rolling.RollingFileManager$FactoryData@1d5ba943[pattern=oes-services-logs//oes-sync-service%i.log, append=true, bufferedIO=true, bufferSize=8192, policy=CompositeTriggeringPolicy(policies=[SizeBasedTriggeringPolicy(size=10485760)]), strategy=DefaultRolloverStrategy(min=1, max=5, useMax=true), advertiseURI=null, layout=%-5p: [%t]: %c - %d{dd MMM yyy HH:mm:ss,SSS} - %m%n, filePermissions=null, fileOwner=null]]
+	at org.apache.logging.log4j.core.appender.AbstractManager.getManager(AbstractManager.java:148)
+	at org.apache.logging.log4j.core.appender.OutputStreamManager.getManager(OutputStreamManager.java:112)
+	at org.apache.logging.log4j.core.appender.rolling.RollingFileManager.getFileManager(RollingFileManager.java:307)
+	at org.apache.logging.log4j.core.appender.RollingFileAppender$Builder.build(RollingFileAppender.java:144)
+	at org.apache.logging.log4j.core.appender.RollingFileAppender$Builder.build(RollingFileAppender.java:65)
+	at org.apache.logging.log4j.core.config.plugins.util.PluginBuilder.build(PluginBuilder.java:124)
+	at org.apache.logging.log4j.core.config.AbstractConfiguration.createPluginObject(AbstractConfiguration.java:1206)
+	at org.apache.logging.log4j.core.config.AbstractConfiguration.createConfiguration(AbstractConfiguration.java:1125)
+	at org.apache.logging.log4j.core.config.AbstractConfiguration.createConfiguration(AbstractConfiguration.java:1117)
+	at org.apache.logging.log4j.core.config.AbstractConfiguration.doConfigure(AbstractConfiguration.java:715)
+	at org.apache.logging.log4j.core.config.AbstractConfiguration.initialize(AbstractConfiguration.java:271)
+	at org.apache.logging.log4j.core.config.AbstractConfiguration.start(AbstractConfiguration.java:324)
+	at org.apache.logging.log4j.core.LoggerContext.setConfiguration(LoggerContext.java:697)
+	at org.apache.logging.log4j.core.LoggerContext.reconfigure(LoggerContext.java:786)
+	at org.apache.logging.log4j.core.LoggerContext.reconfigure(LoggerContext.java:808)
+	at org.apache.logging.log4j.core.LoggerContext.start(LoggerContext.java:311)
+	at org.apache.logging.log4j.core.impl.Log4jContextFactory.getContext(Log4jContextFactory.java:160)
+	at org.apache.logging.log4j.core.impl.Log4jContextFactory.getContext(Log4jContextFactory.java:48)
+	at org.apache.logging.log4j.LogManager.getContext(LogManager.java:139)
+	at org.apache.commons.logging.LogAdapter$Log4jLog.<clinit>(LogAdapter.java:146)
+	at org.apache.commons.logging.LogAdapter$Log4jAdapter.createLog(LogAdapter.java:113)
+	at org.apache.commons.logging.LogAdapter.createLog(LogAdapter.java:95)
+	at org.apache.commons.logging.LogFactoryService.getInstance(LogFactoryService.java:52)
+	at org.apache.commons.logging.LogFactoryService.getInstance(LogFactoryService.java:47)
+	at org.apache.commons.logging.LogFactory.getLog(LogFactory.java:920)
+	at org.springframework.web.context.ContextLoader.initWebApplicationContext(ContextLoader.java:253)
+	at org.springframework.web.context.ContextLoaderListener.contextInitialized(ContextLoaderListener.java:126)
+	at org.apache.catalina.core.StandardContext.listenerStart(StandardContext.java:4003)
+	at org.apache.catalina.core.StandardContext.startInternal(StandardContext.java:4426)
+	at org.apache.catalina.util.LifecycleBase.start(LifecycleBase.java:164)
+	at org.apache.catalina.core.ContainerBase.addChild(ContainerBase.java:564)
+	at org.apache.catalina.core.StandardHost.addChild(StandardHost.java:663)
+	at org.apache.catalina.startup.HostConfig.deployDirectory(HostConfig.java:1084)
+	at org.apache.catalina.startup.HostConfig$DeployDirectory.run(HostConfig.java:1850)
+	at java.base/java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:572)
+	at java.base/java.util.concurrent.FutureTask.run(FutureTask.java:317)
+	at org.apache.tomcat.util.threads.InlineExecutorService.execute(InlineExecutorService.java:81)
+	at java.base/java.util.concurrent.AbstractExecutorService.submit(AbstractExecutorService.java:123)
+	at org.apache.catalina.startup.HostConfig.deployDirectories(HostConfig.java:995)
+	at org.apache.catalina.startup.HostConfig.deployApps(HostConfig.java:380)
+	at org.apache.catalina.startup.HostConfig.start(HostConfig.java:1579)
+	at org.apache.catalina.startup.HostConfig.lifecycleEvent(HostConfig.java:262)
+	at org.apache.catalina.util.LifecycleBase.fireLifecycleEvent(LifecycleBase.java:109)
+	at org.apache.catalina.util.LifecycleBase.setStateInternal(LifecycleBase.java:389)
+	at org.apache.catalina.util.LifecycleBase.setState(LifecycleBase.java:336)
+	at org.apache.catalina.core.ContainerBase.startInternal(ContainerBase.java:741)
+	at org.apache.catalina.core.StandardHost.startInternal(StandardHost.java:780)
+	at org.apache.catalina.util.LifecycleBase.start(LifecycleBase.java:164)
+	at org.apache.catalina.core.ContainerBase$StartChild.call(ContainerBase.java:1162)
+	at org.apache.catalina.core.ContainerBase$StartChild.call(ContainerBase.java:1158)
+	at java.base/java.util.concurrent.FutureTask.run(FutureTask.java:317)
+	at org.apache.tomcat.util.threads.InlineExecutorService.execute(InlineExecutorService.java:81)
+	at java.base/java.util.concurrent.AbstractExecutorService.submit(AbstractExecutorService.java:145)
+	at org.apache.catalina.core.ContainerBase.startInternal(ContainerBase.java:714)
+	at org.apache.catalina.core.StandardEngine.startInternal(StandardEngine.java:201)
+	at org.apache.catalina.util.LifecycleBase.start(LifecycleBase.java:164)
+	at org.apache.catalina.core.StandardService.startInternal(StandardService.java:410)
+	at org.apache.catalina.util.LifecycleBase.start(LifecycleBase.java:164)
+	at org.apache.catalina.core.StandardServer.startInternal(StandardServer.java:864)
+	at org.apache.catalina.util.LifecycleBase.start(LifecycleBase.java:164)
+	at org.apache.catalina.startup.Catalina.start(Catalina.java:756)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at org.apache.catalina.startup.Bootstrap.start(Bootstrap.java:339)
+	at org.apache.catalina.startup.Bootstrap.main(Bootstrap.java:470)
+
+2026-04-24T10:38:59.781262395Z main ERROR Unable to invoke factory method in class org.apache.logging.log4j.core.appender.RollingFileAppender for element RollingFile: java.lang.IllegalStateException: No factory method found for class org.apache.logging.log4j.core.appender.RollingFileAppender
+java.lang.IllegalStateException: No factory method found for class org.apache.logging.log4j.core.appender.RollingFileAppender
+	at org.apache.logging.log4j.core.config.plugins.util.PluginBuilder.findFactoryMethod(PluginBuilder.java:268)
+	at org.apache.logging.log4j.core.config.plugins.util.PluginBuilder.build(PluginBuilder.java:140)
+	at org.apache.logging.log4j.core.config.AbstractConfiguration.createPluginObject(AbstractConfiguration.java:1206)
+	at org.apache.logging.log4j.core.config.AbstractConfiguration.createConfiguration(AbstractConfiguration.java:1125)
+	at org.apache.logging.log4j.core.config.AbstractConfiguration.createConfiguration(AbstractConfiguration.java:1117)
+	at org.apache.logging.log4j.core.config.AbstractConfiguration.doConfigure(AbstractConfiguration.java:715)
+	at org.apache.logging.log4j.core.config.AbstractConfiguration.initialize(AbstractConfiguration.java:271)
+	at org.apache.logging.log4j.core.config.AbstractConfiguration.start(AbstractConfiguration.java:324)
+	at org.apache.logging.log4j.core.LoggerContext.setConfiguration(LoggerContext.java:697)
+	at org.apache.logging.log4j.core.LoggerContext.reconfigure(LoggerContext.java:786)
+	at org.apache.logging.log4j.core.LoggerContext.reconfigure(LoggerContext.java:808)
+	at org.apache.logging.log4j.core.LoggerContext.start(LoggerContext.java:311)
+	at org.apache.logging.log4j.core.impl.Log4jContextFactory.getContext(Log4jContextFactory.java:160)
+	at org.apache.logging.log4j.core.impl.Log4jContextFactory.getContext(Log4jContextFactory.java:48)
+	at org.apache.logging.log4j.LogManager.getContext(LogManager.java:139)
+	at org.apache.commons.logging.LogAdapter$Log4jLog.<clinit>(LogAdapter.java:146)
+	at org.apache.commons.logging.LogAdapter$Log4jAdapter.createLog(LogAdapter.java:113)
+	at org.apache.commons.logging.LogAdapter.createLog(LogAdapter.java:95)
+	at org.apache.commons.logging.LogFactoryService.getInstance(LogFactoryService.java:52)
+	at org.apache.commons.logging.LogFactoryService.getInstance(LogFactoryService.java:47)
+	at org.apache.commons.logging.LogFactory.getLog(LogFactory.java:920)
+	at org.springframework.web.context.ContextLoader.initWebApplicationContext(ContextLoader.java:253)
+	at org.springframework.web.context.ContextLoaderListener.contextInitialized(ContextLoaderListener.java:126)
+	at org.apache.catalina.core.StandardContext.listenerStart(StandardContext.java:4003)
+	at org.apache.catalina.core.StandardContext.startInternal(StandardContext.java:4426)
+	at org.apache.catalina.util.LifecycleBase.start(LifecycleBase.java:164)
+	at org.apache.catalina.core.ContainerBase.addChild(ContainerBase.java:564)
+	at org.apache.catalina.core.StandardHost.addChild(StandardHost.java:663)
+	at org.apache.catalina.startup.HostConfig.deployDirectory(HostConfig.java:1084)
+	at org.apache.catalina.startup.HostConfig$DeployDirectory.run(HostConfig.java:1850)
+	at java.base/java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:572)
+	at java.base/java.util.concurrent.FutureTask.run(FutureTask.java:317)
+	at org.apache.tomcat.util.threads.InlineExecutorService.execute(InlineExecutorService.java:81)
+	at java.base/java.util.concurrent.AbstractExecutorService.submit(AbstractExecutorService.java:123)
+	at org.apache.catalina.startup.HostConfig.deployDirectories(HostConfig.java:995)
+	at org.apache.catalina.startup.HostConfig.deployApps(HostConfig.java:380)
+	at org.apache.catalina.startup.HostConfig.start(HostConfig.java:1579)
+	at org.apache.catalina.startup.HostConfig.lifecycleEvent(HostConfig.java:262)
+	at org.apache.catalina.util.LifecycleBase.fireLifecycleEvent(LifecycleBase.java:109)
+	at org.apache.catalina.util.LifecycleBase.setStateInternal(LifecycleBase.java:389)
+	at org.apache.catalina.util.LifecycleBase.setState(LifecycleBase.java:336)
+	at org.apache.catalina.core.ContainerBase.startInternal(ContainerBase.java:741)
+	at org.apache.catalina.core.StandardHost.startInternal(StandardHost.java:780)
+	at org.apache.catalina.util.LifecycleBase.start(LifecycleBase.java:164)
+	at org.apache.catalina.core.ContainerBase$StartChild.call(ContainerBase.java:1162)
+	at org.apache.catalina.core.ContainerBase$StartChild.call(ContainerBase.java:1158)
+	at java.base/java.util.concurrent.FutureTask.run(FutureTask.java:317)
+	at org.apache.tomcat.util.threads.InlineExecutorService.execute(InlineExecutorService.java:81)
+	at java.base/java.util.concurrent.AbstractExecutorService.submit(AbstractExecutorService.java:145)
+	at org.apache.catalina.core.ContainerBase.startInternal(ContainerBase.java:714)
+	at org.apache.catalina.core.StandardEngine.startInternal(StandardEngine.java:201)
+	at org.apache.catalina.util.LifecycleBase.start(LifecycleBase.java:164)
+	at org.apache.catalina.core.StandardService.startInternal(StandardService.java:410)
+	at org.apache.catalina.util.LifecycleBase.start(LifecycleBase.java:164)
+	at org.apache.catalina.core.StandardServer.startInternal(StandardServer.java:864)
+	at org.apache.catalina.util.LifecycleBase.start(LifecycleBase.java:164)
+	at org.apache.catalina.startup.Catalina.start(Catalina.java:756)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at org.apache.catalina.startup.Bootstrap.start(Bootstrap.java:339)
+	at org.apache.catalina.startup.Bootstrap.main(Bootstrap.java:470)
+
+2026-04-24T10:38:59.782011991Z main DEBUG Building Plugin[name=Appenders, class=org.apache.logging.log4j.core.config.AppendersPlugin].
+2026-04-24T10:38:59.782283796Z main ERROR Null object returned for RollingFile in Appenders.
+2026-04-24T10:38:59.782406409Z main DEBUG createAppenders(={CONSOLE, })
+2026-04-24T10:38:59.782609307Z main DEBUG Building Plugin[name=AppenderRef, class=org.apache.logging.log4j.core.config.AppenderRef].
+2026-04-24T10:38:59.782876920Z main DEBUG createAppenderRef(ref="RollingFile", level="null", Filter=null)
+2026-04-24T10:38:59.783885960Z main DEBUG Building Plugin[name=Logger, class=org.apache.logging.log4j.core.config.LoggerConfig].
+2026-04-24T10:38:59.785800600Z main DEBUG LoggerConfig$Builder(additivity="null", level="INFO", levelAndRefs="null", name="com.opentext.oesConnector", includeLocation="null", ={RollingFile}, ={}, Configuration(/opt/tomcat/webapps/oes-connector/WEB-INF/classes/log4j2.xml), Filter=null)
+2026-04-24T10:38:59.850052591Z main DEBUG Building Plugin[name=AppenderRef, class=org.apache.logging.log4j.core.config.AppenderRef].
+2026-04-24T10:38:59.850455403Z main DEBUG createAppenderRef(ref="RollingFile", level="null", Filter=null)
+2026-04-24T10:38:59.850622985Z main DEBUG Building Plugin[name=Logger, class=org.apache.logging.log4j.core.config.LoggerConfig].
+2026-04-24T10:38:59.850928092Z main DEBUG LoggerConfig$Builder(additivity="null", level="INFO", levelAndRefs="null", name="com.opentext.vaultConnector", includeLocation="null", ={RollingFile}, ={}, Configuration(/opt/tomcat/webapps/oes-connector/WEB-INF/classes/log4j2.xml), Filter=null)
+2026-04-24T10:38:59.851180339Z main DEBUG Building Plugin[name=AppenderRef, class=org.apache.logging.log4j.core.config.AppenderRef].
+2026-04-24T10:38:59.851396451Z main DEBUG createAppenderRef(ref="RollingFile", level="null", Filter=null)
+2026-04-24T10:38:59.851540362Z main DEBUG Building Plugin[name=Logger, class=org.apache.logging.log4j.core.config.LoggerConfig].
+2026-04-24T10:38:59.851840079Z main DEBUG LoggerConfig$Builder(additivity="null", level="INFO", levelAndRefs="null", name="com.opentext.dctmclient", includeLocation="null", ={RollingFile}, ={}, Configuration(/opt/tomcat/webapps/oes-connector/WEB-INF/classes/log4j2.xml), Filter=null)
+2026-04-24T10:38:59.852057183Z main DEBUG Building Plugin[name=AppenderRef, class=org.apache.logging.log4j.core.config.AppenderRef].
+2026-04-24T10:38:59.852305199Z main DEBUG createAppenderRef(ref="CONSOLE", level="null", Filter=null)
+2026-04-24T10:38:59.852413349Z main DEBUG Building Plugin[name=Root, class=org.apache.logging.log4j.core.config.LoggerConfig$RootLogger].
+2026-04-24T10:38:59.853930036Z main DEBUG LoggerConfig$RootLogger$Builder(additivity="null", level="WARN", levelAndRefs="null", includeLocation="null", ={CONSOLE}, ={}, Configuration(/opt/tomcat/webapps/oes-connector/WEB-INF/classes/log4j2.xml), Filter=null)
+2026-04-24T10:38:59.854168917Z main DEBUG Building Plugin[name=Loggers, class=org.apache.logging.log4j.core.config.LoggersPlugin].
+2026-04-24T10:38:59.854729430Z main DEBUG createLoggers(={com.opentext.oesConnector, com.opentext.vaultConnector, com.opentext.dctmclient, root})
+2026-04-24T10:38:59.855026962Z main ERROR Unable to locate appender "RollingFile" for logger config "com.opentext.dctmclient"
+2026-04-24T10:38:59.855132181Z main ERROR Unable to locate appender "RollingFile" for logger config "com.opentext.oesConnector"
+2026-04-24T10:38:59.855217857Z main ERROR Unable to locate appender "RollingFile" for logger config "com.opentext.vaultConnector"
+2026-04-24T10:38:59.856053065Z main DEBUG Configuration XmlConfiguration[location=/opt/tomcat/webapps/oes-connector/WEB-INF/classes/log4j2.xml, lastModified=2026-01-09T13:10:58Z] initialized
+2026-04-24T10:38:59.856185703Z main INFO Starting configuration XmlConfiguration[location=/opt/tomcat/webapps/oes-connector/WEB-INF/classes/log4j2.xml, lastModified=2026-01-09T13:10:58Z]...
+2026-04-24T10:38:59.856443497Z main INFO Start watching for changes to [/opt/tomcat/webapps/oes-connector/WEB-INF/classes/log4j2.xml] every 60 seconds
+2026-04-24T10:38:59.856994223Z main DEBUG Log4j2 ConfigurationScheduler starting 1 threads
+2026-04-24T10:38:59.857728526Z main INFO Configuration XmlConfiguration[location=/opt/tomcat/webapps/oes-connector/WEB-INF/classes/log4j2.xml, lastModified=2026-01-09T13:10:58Z] started.
+2026-04-24T10:38:59.860570940Z main INFO Stopping configuration org.apache.logging.log4j.core.config.DefaultConfiguration@70f3e678...
+2026-04-24T10:38:59.860785007Z main DEBUG Shutting down OutputStreamManager SYSTEM_OUT.false.false-1
+2026-04-24T10:38:59.860926011Z main DEBUG OutputStream closed
+2026-04-24T10:38:59.861035461Z main DEBUG Shut down OutputStreamManager SYSTEM_OUT.false.false-1, all resources released: true
+2026-04-24T10:38:59.861152415Z main DEBUG Appender DefaultConsole-1 stopped with status true
+2026-04-24T10:38:59.861274559Z main INFO Configuration org.apache.logging.log4j.core.config.DefaultConfiguration@70f3e678 stopped.
+2026-04-24T10:38:59.863977298Z main DEBUG org.apache.logging.log4j.core.util.SystemClock supports precise timestamps.
+2026-04-24T10:38:59.864262782Z main DEBUG Reconfiguration complete for context[name=5b67bb7e] at URI /opt/tomcat/webapps/oes-connector/WEB-INF/classes/log4j2.xml (org.apache.logging.log4j.core.LoggerContext@d17c7ec) with optional ClassLoader: null
+2026-04-24T10:38:59.864392653Z main DEBUG Shutdown hook enabled. Registering a new one.
+2026-04-24T10:38:59.865141169Z main DEBUG LoggerContext[name=5b67bb7e, org.apache.logging.log4j.core.LoggerContext@d17c7ec] started OK.
+WARN : [main]: org.springframework.context.support.PostProcessorRegistrationDelegate$BeanPostProcessorChecker.postProcessAfterInitialization - 24 Apr 2026 10:39:03,058 - Bean 'taskExecutor' of type [org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected/applied to a currently created BeanPostProcessor [org.springframework.context.annotation.internalAsyncAnnotationProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies/advisors. If this bean does not have to be post-processed, declare it with ROLE_INFRASTRUCTURE.
+2026-04-24T10:39:03.068328288Z main DEBUG AsyncLogger.ThreadNameStrategy=UNCACHED (user specified null, default is UNCACHED)
+2026-04-24T10:39:03.068597871Z main DEBUG org.apache.logging.log4j.core.util.SystemClock supports precise timestamps.
+WARN : [main]: org.springframework.context.support.PostProcessorRegistrationDelegate$BeanPostProcessorChecker.postProcessAfterInitialization - 24 Apr 2026 10:39:03,071 - Bean 'securityAsyncExecutor' of type [org.springframework.security.task.DelegatingSecurityContextAsyncTaskExecutor] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected/applied to a currently created BeanPostProcessor [org.springframework.context.annotation.internalAsyncAnnotationProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies/advisors. If this bean does not have to be post-processed, declare it with ROLE_INFRASTRUCTURE.
+INFO : [main]: com.opentext.vaultConnector.utils.VaultEnabledStatus.isVaultFeatureEnabled - 24 Apr 2026 10:39:03,680 - checking vault is enabled or not
+INFO : [main]: com.opentext.vaultConnector.utils.VaultProperties.getVaultServicePath - 24 Apr 2026 10:39:03,681 - vault service path/opt/OES-install/dsis/application.properties
+INFO : [main]: com.opentext.vaultConnector.utils.VaultEnabledStatus.isVaultFeatureEnabled - 24 Apr 2026 10:39:03,681 - vault properties file not found, if vault is enabled ensure that the properties file is present
+INFO : [main]: com.opentext.vaultConnector.utils.VaultEnabledStatus.isVaultFeatureEnabled - 24 Apr 2026 10:39:03,682 - Vault enabled status: false
+ERROR: [main]: com.opentext.oesConnector.connector.database.service.impl.DataSourcePasswordDecryptorServiceImpl.getPassword - 24 Apr 2026 10:39:03,750 - Error happend while decrypting password. ERROR: java.lang.IllegalArgumentException: Invalid length.
+INFO : [main]: com.opentext.vaultConnector.utils.VaultEnabledStatus.isVaultFeatureEnabled - 24 Apr 2026 10:39:03,754 - checking vault is enabled or not
+INFO : [main]: com.opentext.vaultConnector.utils.VaultProperties.getVaultServicePath - 24 Apr 2026 10:39:03,754 - vault service path/opt/OES-install/dsis/application.properties
+INFO : [main]: com.opentext.vaultConnector.utils.VaultEnabledStatus.isVaultFeatureEnabled - 24 Apr 2026 10:39:03,754 - vault properties file not found, if vault is enabled ensure that the properties file is present
+INFO : [main]: com.opentext.vaultConnector.utils.VaultEnabledStatus.isVaultFeatureEnabled - 24 Apr 2026 10:39:03,754 - Vault enabled status: false
+ERROR: [main]: com.opentext.oesConnector.connector.database.service.impl.DataSourcePasswordDecryptorServiceImpl.getPassword - 24 Apr 2026 10:39:03,754 - Error happend while decrypting password. ERROR: java.lang.IllegalArgumentException: Invalid length.
+INFO : [main]: com.opentext.vaultConnector.utils.VaultEnabledStatus.isVaultFeatureEnabled - 24 Apr 2026 10:39:03,757 - checking vault is enabled or not
+INFO : [main]: com.opentext.vaultConnector.utils.VaultProperties.getVaultServicePath - 24 Apr 2026 10:39:03,758 - vault service path/opt/OES-install/dsis/application.properties
+INFO : [main]: com.opentext.vaultConnector.utils.VaultEnabledStatus.isVaultFeatureEnabled - 24 Apr 2026 10:39:03,758 - vault properties file not found, if vault is enabled ensure that the properties file is present
+INFO : [main]: com.opentext.vaultConnector.utils.VaultEnabledStatus.isVaultFeatureEnabled - 24 Apr 2026 10:39:03,758 - Vault enabled status: false
+ERROR: [main]: com.opentext.oesConnector.connector.database.service.impl.DataSourcePasswordDecryptorServiceImpl.getPassword - 24 Apr 2026 10:39:03,758 - Error happend while decrypting password. ERROR: java.lang.IllegalArgumentException: Invalid length.
+INFO : [main]: com.opentext.vaultConnector.utils.VaultEnabledStatus.isVaultFeatureEnabled - 24 Apr 2026 10:39:03,765 - checking vault is enabled or not
+INFO : [main]: com.opentext.vaultConnector.utils.VaultProperties.getVaultServicePath - 24 Apr 2026 10:39:03,765 - vault service path/opt/OES-install/dsis/application.properties
+INFO : [main]: com.opentext.vaultConnector.utils.VaultEnabledStatus.isVaultFeatureEnabled - 24 Apr 2026 10:39:03,765 - vault properties file not found, if vault is enabled ensure that the properties file is present
+INFO : [main]: com.opentext.vaultConnector.utils.VaultEnabledStatus.isVaultFeatureEnabled - 24 Apr 2026 10:39:03,765 - Vault enabled status: false
+ERROR: [main]: com.opentext.oesConnector.connector.database.service.impl.DataSourcePasswordDecryptorServiceImpl.getPassword - 24 Apr 2026 10:39:03,766 - Error happend while decrypting password. ERROR: java.lang.IllegalArgumentException: Invalid length.
+INFO : [main]: com.opentext.vaultConnector.utils.VaultEnabledStatus.isVaultFeatureEnabled - 24 Apr 2026 10:39:03,768 - checking vault is enabled or not
+INFO : [main]: com.opentext.vaultConnector.utils.VaultProperties.getVaultServicePath - 24 Apr 2026 10:39:03,768 - vault service path/opt/OES-install/dsis/application.properties
+INFO : [main]: com.opentext.vaultConnector.utils.VaultEnabledStatus.isVaultFeatureEnabled - 24 Apr 2026 10:39:03,769 - vault properties file not found, if vault is enabled ensure that the properties file is present
+INFO : [main]: com.opentext.vaultConnector.utils.VaultEnabledStatus.isVaultFeatureEnabled - 24 Apr 2026 10:39:03,769 - Vault enabled status: false
+ERROR: [main]: com.opentext.oesConnector.connector.database.service.impl.DataSourcePasswordDecryptorServiceImpl.getPassword - 24 Apr 2026 10:39:03,769 - Error happend while decrypting password. ERROR: java.lang.IllegalArgumentException: Invalid length.
+INFO : [main]: com.opentext.vaultConnector.utils.VaultEnabledStatus.isVaultFeatureEnabled - 24 Apr 2026 10:39:03,772 - checking vault is enabled or not
+INFO : [main]: com.opentext.vaultConnector.utils.VaultProperties.getVaultServicePath - 24 Apr 2026 10:39:03,772 - vault service path/opt/OES-install/dsis/application.properties
+INFO : [main]: com.opentext.vaultConnector.utils.VaultEnabledStatus.isVaultFeatureEnabled - 24 Apr 2026 10:39:03,772 - vault properties file not found, if vault is enabled ensure that the properties file is present
+INFO : [main]: com.opentext.vaultConnector.utils.VaultEnabledStatus.isVaultFeatureEnabled - 24 Apr 2026 10:39:03,772 - Vault enabled status: false
+ERROR: [main]: com.opentext.oesConnector.connector.database.service.impl.DataSourcePasswordDecryptorServiceImpl.getPassword - 24 Apr 2026 10:39:03,772 - Error happend while decrypting password. ERROR: java.lang.IllegalArgumentException: Invalid length.
+INFO : [main]: com.opentext.vaultConnector.utils.VaultEnabledStatus.isVaultFeatureEnabled - 24 Apr 2026 10:39:03,775 - checking vault is enabled or not
+INFO : [main]: com.opentext.vaultConnector.utils.VaultProperties.getVaultServicePath - 24 Apr 2026 10:39:03,775 - vault service path/opt/OES-install/dsis/application.properties
+INFO : [main]: com.opentext.vaultConnector.utils.VaultEnabledStatus.isVaultFeatureEnabled - 24 Apr 2026 10:39:03,775 - vault properties file not found, if vault is enabled ensure that the properties file is present
+INFO : [main]: com.opentext.vaultConnector.utils.VaultEnabledStatus.isVaultFeatureEnabled - 24 Apr 2026 10:39:03,775 - Vault enabled status: false
+ERROR: [main]: com.opentext.oesConnector.connector.database.service.impl.DataSourcePasswordDecryptorServiceImpl.getPassword - 24 Apr 2026 10:39:03,776 - Error happend while decrypting password. ERROR: java.lang.IllegalArgumentException: Invalid length.
+INFO : [main]: com.opentext.vaultConnector.utils.VaultEnabledStatus.isVaultFeatureEnabled - 24 Apr 2026 10:39:03,851 - checking vault is enabled or not
+INFO : [main]: com.opentext.vaultConnector.utils.VaultProperties.getVaultServicePath - 24 Apr 2026 10:39:03,851 - vault service path/opt/OES-install/dsis/application.properties
+INFO : [main]: com.opentext.vaultConnector.utils.VaultEnabledStatus.isVaultFeatureEnabled - 24 Apr 2026 10:39:03,852 - vault properties file not found, if vault is enabled ensure that the properties file is present
+INFO : [main]: com.opentext.vaultConnector.utils.VaultEnabledStatus.isVaultFeatureEnabled - 24 Apr 2026 10:39:03,852 - Vault enabled status: false
+ERROR: [main]: com.opentext.oesConnector.connector.database.service.impl.DataSourcePasswordDecryptorServiceImpl.getPassword - 24 Apr 2026 10:39:03,852 - Error happend while decrypting password. ERROR: java.lang.IllegalArgumentException: Invalid length.
+INFO : [main]: com.opentext.vaultConnector.utils.VaultEnabledStatus.isVaultFeatureEnabled - 24 Apr 2026 10:39:03,854 - checking vault is enabled or not
+INFO : [main]: com.opentext.vaultConnector.utils.VaultProperties.getVaultServicePath - 24 Apr 2026 10:39:03,855 - vault service path/opt/OES-install/dsis/application.properties
+INFO : [main]: com.opentext.vaultConnector.utils.VaultEnabledStatus.isVaultFeatureEnabled - 24 Apr 2026 10:39:03,855 - vault properties file not found, if vault is enabled ensure that the properties file is present
+INFO : [main]: com.opentext.vaultConnector.utils.VaultEnabledStatus.isVaultFeatureEnabled - 24 Apr 2026 10:39:03,855 - Vault enabled status: false
+ERROR: [main]: com.opentext.oesConnector.connector.database.service.impl.DataSourcePasswordDecryptorServiceImpl.getPassword - 24 Apr 2026 10:39:03,855 - Error happend while decrypting password. ERROR: java.lang.IllegalArgumentException: Invalid length.
+INFO : [main]: com.opentext.vaultConnector.utils.VaultEnabledStatus.isVaultFeatureEnabled - 24 Apr 2026 10:39:03,858 - checking vault is enabled or not
+INFO : [main]: com.opentext.vaultConnector.utils.VaultProperties.getVaultServicePath - 24 Apr 2026 10:39:03,858 - vault service path/opt/OES-install/dsis/application.properties
+INFO : [main]: com.opentext.vaultConnector.utils.VaultEnabledStatus.isVaultFeatureEnabled - 24 Apr 2026 10:39:03,858 - vault properties file not found, if vault is enabled ensure that the properties file is present
+INFO : [main]: com.opentext.vaultConnector.utils.VaultEnabledStatus.isVaultFeatureEnabled - 24 Apr 2026 10:39:03,858 - Vault enabled status: false
+ERROR: [main]: com.opentext.oesConnector.connector.database.service.impl.DataSourcePasswordDecryptorServiceImpl.getPassword - 24 Apr 2026 10:39:03,859 - Error happend while decrypting password. ERROR: java.lang.IllegalArgumentException: Invalid length.
+INFO : [main]: com.opentext.vaultConnector.utils.VaultEnabledStatus.isVaultFeatureEnabled - 24 Apr 2026 10:39:03,861 - checking vault is enabled or not
+INFO : [main]: com.opentext.vaultConnector.utils.VaultProperties.getVaultServicePath - 24 Apr 2026 10:39:03,862 - vault service path/opt/OES-install/dsis/application.properties
+INFO : [main]: com.opentext.vaultConnector.utils.VaultEnabledStatus.isVaultFeatureEnabled - 24 Apr 2026 10:39:03,862 - vault properties file not found, if vault is enabled ensure that the properties file is present
+INFO : [main]: com.opentext.vaultConnector.utils.VaultEnabledStatus.isVaultFeatureEnabled - 24 Apr 2026 10:39:03,862 - Vault enabled status: false
+ERROR: [main]: com.opentext.oesConnector.connector.database.service.impl.DataSourcePasswordDecryptorServiceImpl.getPassword - 24 Apr 2026 10:39:03,862 - Error happend while decrypting password. ERROR: java.lang.IllegalArgumentException: Invalid length.
+INFO : [main]: com.opentext.vaultConnector.utils.VaultEnabledStatus.isVaultFeatureEnabled - 24 Apr 2026 10:39:03,864 - checking vault is enabled or not
+INFO : [main]: com.opentext.vaultConnector.utils.VaultProperties.getVaultServicePath - 24 Apr 2026 10:39:03,865 - vault service path/opt/OES-install/dsis/application.properties
+INFO : [main]: com.opentext.vaultConnector.utils.VaultEnabledStatus.isVaultFeatureEnabled - 24 Apr 2026 10:39:03,865 - vault properties file not found, if vault is enabled ensure that the properties file is present
+INFO : [main]: com.opentext.vaultConnector.utils.VaultEnabledStatus.isVaultFeatureEnabled - 24 Apr 2026 10:39:03,865 - Vault enabled status: false
+ERROR: [main]: com.opentext.oesConnector.connector.database.service.impl.DataSourcePasswordDecryptorServiceImpl.getPassword - 24 Apr 2026 10:39:03,865 - Error happend while decrypting password. ERROR: java.lang.IllegalArgumentException: Invalid length.
+INFO : [main]: com.opentext.vaultConnector.utils.VaultEnabledStatus.isVaultFeatureEnabled - 24 Apr 2026 10:39:03,866 - checking vault is enabled or not
+INFO : [main]: com.opentext.vaultConnector.utils.VaultProperties.getVaultServicePath - 24 Apr 2026 10:39:03,866 - vault service path/opt/OES-install/dsis/application.properties
+INFO : [main]: com.opentext.vaultConnector.utils.VaultEnabledStatus.isVaultFeatureEnabled - 24 Apr 2026 10:39:03,866 - vault properties file not found, if vault is enabled ensure that the properties file is present
+INFO : [main]: com.opentext.vaultConnector.utils.VaultEnabledStatus.isVaultFeatureEnabled - 24 Apr 2026 10:39:03,866 - Vault enabled status: false
+ERROR: [main]: com.opentext.oesConnector.connector.database.service.impl.DataSourcePasswordDecryptorServiceImpl.getPassword - 24 Apr 2026 10:39:03,866 - Error happend while decrypting password. ERROR: java.lang.IllegalArgumentException: Invalid length.
+WARN : [main]: org.springframework.web.context.support.XmlWebApplicationContext.refresh - 24 Apr 2026 10:39:03,867 - Exception encountered during context initialization - cancelling refresh attempt: org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating bean with name 'notificationServiceConfigProviderImpl': Unsatisfied dependency expressed through field 'setupConfigurationService': Error creating bean with name 'SetupConfigurationService': Unsatisfied dependency expressed through field 'm_adminUserDao': Error creating bean with name 'AdminUserDataDao': Unsatisfied dependency expressed through field 'dataMapper': Error creating bean with name 'adminUserDataMapper' defined in URL [jar:file:/opt/tomcat/webapps/oes-connector/WEB-INF/lib/syncnshare-manual-1.0.0-SNAPSHOT.jar!/com/opentext/oesConnector/connector/database/mapper/AdminUserDataMapper.class]: Unsatisfied dependency expressed through bean property 'sqlSessionFactory': Error creating bean with name 'sqlSessionFactory' defined in class path resource [syncEngineContext.xml]: Cannot resolve reference to bean 'dataSource' while setting bean property 'dataSource'
+Related cause: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'org.springframework.security.config.http.HttpSecurityBeanDefinitionParser$ChildAuthenticationManagerFactoryBean#1': Cannot resolve reference to bean 'org.springframework.security.config.authentication.AuthenticationManagerFactoryBean#1' while setting constructor argument
+Related cause: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'org.springframework.security.config.http.HttpSecurityBeanDefinitionParser$ChildAuthenticationManagerFactoryBean#2': Cannot resolve reference to bean 'org.springframework.security.config.authentication.AuthenticationManagerFactoryBean#2' while setting constructor argument
+Related cause: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'org.springframework.security.config.http.HttpSecurityBeanDefinitionParser$ChildAuthenticationManagerFactoryBean#1': Cannot resolve reference to bean 'org.springframework.security.config.authentication.AuthenticationManagerFactoryBean#1' while setting constructor argument
+Related cause: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'org.springframework.security.config.http.HttpSecurityBeanDefinitionParser$ChildAuthenticationManagerFactoryBean#2': Cannot resolve reference to bean 'org.springframework.security.config.authentication.AuthenticationManagerFactoryBean#2' while setting constructor argument
+Related cause: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'org.springframework.security.config.http.HttpSecurityBeanDefinitionParser$ChildAuthenticationManagerFactoryBean#1': Cannot resolve reference to bean 'org.springframework.security.config.authentication.AuthenticationManagerFactoryBean#1' while setting constructor argument
+Related cause: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'org.springframework.security.config.http.HttpSecurityBeanDefinitionParser$ChildAuthenticationManagerFactoryBean#2': Cannot resolve reference to bean 'org.springframework.security.config.authentication.AuthenticationManagerFactoryBean#2' while setting constructor argument
+Related cause: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'org.springframework.security.config.http.HttpSecurityBeanDefinitionParser$ChildAuthenticationManagerFactoryBean#1': Cannot resolve reference to bean 'org.springframework.security.config.authentication.AuthenticationManagerFactoryBean#1' while setting constructor argument
+Related cause: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'org.springframework.security.config.http.HttpSecurityBeanDefinitionParser$ChildAuthenticationManagerFactoryBean#2': Cannot resolve reference to bean 'org.springframework.security.config.authentication.AuthenticationManagerFactoryBean#2' while setting constructor argument
+Related cause: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'org.springframework.security.config.http.HttpSecurityBeanDefinitionParser$ChildAuthenticationManagerFactoryBean#0': Cannot resolve reference to bean 'org.springframework.security.config.authentication.AuthenticationManagerFactoryBean#0' while setting constructor argument
+Related cause: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'org.springframework.security.config.http.HttpSecurityBeanDefinitionParser$ChildAuthenticationManagerFactoryBean#0': Cannot resolve reference to bean 'org.springframework.security.config.authentication.AuthenticationManagerFactoryBean#0' while setting constructor argument
+Related cause: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'org.springframework.security.config.http.HttpSecurityBeanDefinitionParser$ChildAuthenticationManagerFactoryBean#2': Cannot resolve reference to bean 'org.springframework.security.config.authentication.AuthenticationManagerFactoryBean#2' while setting constructor argument
+Related cause: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'org.springframework.security.config.http.HttpSecurityBeanDefinitionParser$ChildAuthenticationManagerFactoryBean#0': Cannot resolve reference to bean 'org.springframework.security.config.authentication.AuthenticationManagerFactoryBean#0' while setting constructor argument
+Related cause: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'org.springframework.security.config.http.HttpSecurityBeanDefinitionParser$ChildAuthenticationManagerFactoryBean#2': Cannot resolve reference to bean 'org.springframework.security.config.authentication.AuthenticationManagerFactoryBean#2' while setting constructor argument
+Related cause: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'org.springframework.security.config.http.HttpSecurityBeanDefinitionParser$ChildAuthenticationManagerFactoryBean#0': Cannot resolve reference to bean 'org.springframework.security.config.authentication.AuthenticationManagerFactoryBean#0' while setting constructor argument
+Related cause: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'org.springframework.security.config.http.HttpSecurityBeanDefinitionParser$ChildAuthenticationManagerFactoryBean#2': Cannot resolve reference to bean 'org.springframework.security.config.authentication.AuthenticationManagerFactoryBean#2' while setting constructor argument
+Related cause: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'org.springframework.security.config.http.HttpSecurityBeanDefinitionParser$ChildAuthenticationManagerFactoryBean#0': Cannot resolve reference to bean 'org.springframework.security.config.authentication.AuthenticationManagerFactoryBean#0' while setting constructor argument
+Related cause: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'org.springframework.security.config.http.HttpSecurityBeanDefinitionParser$ChildAuthenticationManagerFactoryBean#2': Cannot resolve reference to bean 'org.springframework.security.config.authentication.AuthenticationManagerFactoryBean#2' while setting constructor argument
+Related cause: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'org.springframework.security.config.http.HttpSecurityBeanDefinitionParser$ChildAuthenticationManagerFactoryBean#1': Cannot resolve reference to bean 'org.springframework.security.config.authentication.AuthenticationManagerFactoryBean#1' while setting constructor argument
+Related cause: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'org.springframework.security.config.http.HttpSecurityBeanDefinitionParser$ChildAuthenticationManagerFactoryBean#0': Cannot resolve reference to bean 'org.springframework.security.config.authentication.AuthenticationManagerFactoryBean#0' while setting constructor argument
+Related cause: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'org.springframework.security.config.http.HttpSecurityBeanDefinitionParser$ChildAuthenticationManagerFactoryBean#1': Cannot resolve reference to bean 'org.springframework.security.config.authentication.AuthenticationManagerFactoryBean#1' while setting constructor argument
+Related cause: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'org.springframework.security.config.http.HttpSecurityBeanDefinitionParser$ChildAuthenticationManagerFactoryBean#0': Cannot resolve reference to bean 'org.springframework.security.config.authentication.AuthenticationManagerFactoryBean#0' while setting constructor argument
+Related cause: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'org.springframework.security.config.http.HttpSecurityBeanDefinitionParser$ChildAuthenticationManagerFactoryBean#1': Cannot resolve reference to bean 'org.springframework.security.config.authentication.AuthenticationManagerFactoryBean#1' while setting constructor argument
+Related cause: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'org.springframework.security.config.http.HttpSecurityBeanDefinitionParser$ChildAuthenticationManagerFactoryBean#0': Cannot resolve reference to bean 'org.springframework.security.config.authentication.AuthenticationManagerFactoryBean#0' while setting constructor argument
+Related cause: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'org.springframework.security.config.http.HttpSecurityBeanDefinitionParser$ChildAuthenticationManagerFactoryBean#1': Cannot resolve reference to bean 'org.springframework.security.config.authentication.AuthenticationManagerFactoryBean#1' while setting constructor argument
+Related cause: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'org.springframework.security.config.http.HttpSecurityBeanDefinitionParser$ChildAuthenticationManagerFactoryBean#0': Cannot resolve reference to bean 'org.springframework.security.config.authentication.AuthenticationManagerFactoryBean#0' while setting constructor argument
+Related cause: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'org.springframework.security.config.http.HttpSecurityBeanDefinitionParser$ChildAuthenticationManagerFactoryBean#1': Cannot resolve reference to bean 'org.springframework.security.config.authentication.AuthenticationManagerFactoryBean#1' while setting constructor argument
+Related cause: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'org.springframework.security.config.http.HttpSecurityBeanDefinitionParser$ChildAuthenticationManagerFactoryBean#2': Cannot resolve reference to bean 'org.springframework.security.config.authentication.AuthenticationManagerFactoryBean#2' while setting constructor argument
+Related cause: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'org.springframework.security.config.http.HttpSecurityBeanDefinitionParser$ChildAuthenticationManagerFactoryBean#1': Cannot resolve reference to bean 'org.springframework.security.config.authentication.AuthenticationManagerFactoryBean#1' while setting constructor argument
+Related cause: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'org.springframework.security.config.http.HttpSecurityBeanDefinitionParser$ChildAuthenticationManagerFactoryBean#2': Cannot resolve reference to bean 'org.springframework.security.config.authentication.AuthenticationManagerFactoryBean#2' while setting constructor argument
+Related cause: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'org.springframework.security.config.http.HttpSecurityBeanDefinitionParser$ChildAuthenticationManagerFactoryBean#1': Cannot resolve reference to bean 'org.springframework.security.config.authentication.AuthenticationManagerFactoryBean#1' while setting constructor argument
+Related cause: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'org.springframework.security.config.http.HttpSecurityBeanDefinitionParser$ChildAuthenticationManagerFactoryBean#2': Cannot resolve reference to bean 'org.springframework.security.config.authentication.AuthenticationManagerFactoryBean#2' while setting constructor argument
+Related cause: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'org.springframework.security.config.http.HttpSecurityBeanDefinitionParser$ChildAuthenticationManagerFactoryBean#1': Cannot resolve reference to bean 'org.springframework.security.config.authentication.AuthenticationManagerFactoryBean#1' while setting constructor argument
+Related cause: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'org.springframework.security.config.http.HttpSecurityBeanDefinitionParser$ChildAuthenticationManagerFactoryBean#2': Cannot resolve reference to bean 'org.springframework.security.config.authentication.AuthenticationManagerFactoryBean#2' while setting constructor argument
+Related cause: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'org.springframework.security.config.http.HttpSecurityBeanDefinitionParser$ChildAuthenticationManagerFactoryBean#0': Cannot resolve reference to bean 'org.springframework.security.config.authentication.AuthenticationManagerFactoryBean#0' while setting constructor argument
+Related cause: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'org.springframework.security.config.http.HttpSecurityBeanDefinitionParser$ChildAuthenticationManagerFactoryBean#0': Cannot resolve reference to bean 'org.springframework.security.config.authentication.AuthenticationManagerFactoryBean#0' while setting constructor argument
+Related cause: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'org.springframework.security.config.http.HttpSecurityBeanDefinitionParser$ChildAuthenticationManagerFactoryBean#2': Cannot resolve reference to bean 'org.springframework.security.config.authentication.AuthenticationManagerFactoryBean#2' while setting constructor argument
+Related cause: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'org.springframework.security.config.http.HttpSecurityBeanDefinitionParser$ChildAuthenticationManagerFactoryBean#0': Cannot resolve reference to bean 'org.springframework.security.config.authentication.AuthenticationManagerFactoryBean#0' while setting constructor argument
+Related cause: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'org.springframework.security.config.http.HttpSecurityBeanDefinitionParser$ChildAuthenticationManagerFactoryBean#2': Cannot resolve reference to bean 'org.springframework.security.config.authentication.AuthenticationManagerFactoryBean#2' while setting constructor argument
+Related cause: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'org.springframework.security.config.http.HttpSecurityBeanDefinitionParser$ChildAuthenticationManagerFactoryBean#0': Cannot resolve reference to bean 'org.springframework.security.config.authentication.AuthenticationManagerFactoryBean#0' while setting constructor argument
+Related cause: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'org.springframework.security.config.http.HttpSecurityBeanDefinitionParser$ChildAuthenticationManagerFactoryBean#2': Cannot resolve reference to bean 'org.springframework.security.config.authentication.AuthenticationManagerFactoryBean#2' while setting constructor argument
+Related cause: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'org.springframework.security.config.http.HttpSecurityBeanDefinitionParser$ChildAuthenticationManagerFactoryBean#1': Cannot resolve reference to bean 'org.springframework.security.config.authentication.AuthenticationManagerFactoryBean#1' while setting constructor argument
+Related cause: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'org.springframework.security.config.http.HttpSecurityBeanDefinitionParser$ChildAuthenticationManagerFactoryBean#0': Cannot resolve reference to bean 'org.springframework.security.config.authentication.AuthenticationManagerFactoryBean#0' while setting constructor argument
+Related cause: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'org.springframework.security.config.http.HttpSecurityBeanDefinitionParser$ChildAuthenticationManagerFactoryBean#1': Cannot resolve reference to bean 'org.springframework.security.config.authentication.AuthenticationManagerFactoryBean#1' while setting constructor argument
+Related cause: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'org.springframework.security.config.http.HttpSecurityBeanDefinitionParser$ChildAuthenticationManagerFactoryBean#0': Cannot resolve reference to bean 'org.springframework.security.config.authentication.AuthenticationManagerFactoryBean#0' while setting constructor argument
+Related cause: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'org.springframework.security.config.http.HttpSecurityBeanDefinitionParser$ChildAuthenticationManagerFactoryBean#1': Cannot resolve reference to bean 'org.springframework.security.config.authentication.AuthenticationManagerFactoryBean#1' while setting constructor argument
+Related cause: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'org.springframework.security.config.http.HttpSecurityBeanDefinitionParser$ChildAuthenticationManagerFactoryBean#0': Cannot resolve reference to bean 'org.springframework.security.config.authentication.AuthenticationManagerFactoryBean#0' while setting constructor argument
+Related cause: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'org.springframework.security.config.http.HttpSecurityBeanDefinitionParser$ChildAuthenticationManagerFactoryBean#1': Cannot resolve reference to bean 'org.springframework.security.config.authentication.AuthenticationManagerFactoryBean#1' while setting constructor argument
+Related cause: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'org.springframework.security.config.http.HttpSecurityBeanDefinitionParser$ChildAuthenticationManagerFactoryBean#2': Cannot resolve reference to bean 'org.springframework.security.config.authentication.AuthenticationManagerFactoryBean#2' while setting constructor argument
+Related cause: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'org.springframework.security.config.http.HttpSecurityBeanDefinitionParser$ChildAuthenticationManagerFactoryBean#1': Cannot resolve reference to bean 'org.springframework.security.config.authentication.AuthenticationManagerFactoryBean#1' while setting constructor argument
+Related cause: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'org.springframework.security.config.http.HttpSecurityBeanDefinitionParser$ChildAuthenticationManagerFactoryBean#2': Cannot resolve reference to bean 'org.springframework.security.config.authentication.AuthenticationManagerFactoryBean#2' while setting constructor argument
+Related cause: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'org.springframework.security.config.http.HttpSecurityBeanDefinitionParser$ChildAuthenticationManagerFactoryBean#1': Cannot resolve reference to bean 'org.springframework.security.config.authentication.AuthenticationManagerFactoryBean#1' while setting constructor argument
+Related cause: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'org.springframework.security.config.http.HttpSecurityBeanDefinitionParser$ChildAuthenticationManagerFactoryBean#2': Cannot resolve reference to bean 'org.springframework.security.config.authentication.AuthenticationManagerFactoryBean#2' while setting constructor argument
+Related cause: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'org.springframework.security.config.http.HttpSecurityBeanDefinitionParser$ChildAuthenticationManagerFactoryBean#1': Cannot resolve reference to bean 'org.springframework.security.config.authentication.AuthenticationManagerFactoryBean#1' while setting constructor argument
+Related cause: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'org.springframework.security.config.http.HttpSecurityBeanDefinitionParser$ChildAuthenticationManagerFactoryBean#2': Cannot resolve reference to bean 'org.springframework.security.config.authentication.AuthenticationManagerFactoryBean#2' while setting constructor argument
+Related cause: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'org.springframework.security.config.http.HttpSecurityBeanDefinitionParser$ChildAuthenticationManagerFactoryBean#0': Cannot resolve reference to bean 'org.springframework.security.config.authentication.AuthenticationManagerFactoryBean#0' while setting constructor argument
+Related cause: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'org.springframework.security.config.http.HttpSecurityBeanDefinitionParser$ChildAuthenticationManagerFactoryBean#0': Cannot resolve reference to bean 'org.springframework.security.config.authentication.AuthenticationManagerFactoryBean#0' while setting constructor argument
+Related cause: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'org.springframework.security.config.http.HttpSecurityBeanDefinitionParser$ChildAuthenticationManagerFactoryBean#2': Cannot resolve reference to bean 'org.springframework.security.config.authentication.AuthenticationManagerFactoryBean#2' while setting constructor argument
+Related cause: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'org.springframework.security.config.http.HttpSecurityBeanDefinitionParser$ChildAuthenticationManagerFactoryBean#0': Cannot resolve reference to bean 'org.springframework.security.config.authentication.AuthenticationManagerFactoryBean#0' while setting constructor argument
+Related cause: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'org.springframework.security.config.http.HttpSecurityBeanDefinitionParser$ChildAuthenticationManagerFactoryBean#2': Cannot resolve reference to bean 'org.springframework.security.config.authentication.AuthenticationManagerFactoryBean#2' while setting constructor argument
+Related cause: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'org.springframework.security.config.http.HttpSecurityBeanDefinitionParser$ChildAuthenticationManagerFactoryBean#0': Cannot resolve reference to bean 'org.springframework.security.config.authentication.AuthenticationManagerFactoryBean#0' while setting constructor argument
+Related cause: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'org.springframework.security.config.http.HttpSecurityBeanDefinitionParser$ChildAuthenticationManagerFactoryBean#2': Cannot resolve reference to bean 'org.springframework.security.config.authentication.AuthenticationManagerFactoryBean#2' while setting constructor argument
+Related cause: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'org.springframework.security.config.http.HttpSecurityBeanDefinitionParser$ChildAuthenticationManagerFactoryBean#1': Cannot resolve reference to bean 'org.springframework.security.config.authentication.AuthenticationManagerFactoryBean#1' while setting constructor argument
+Related cause: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'org.springframework.security.config.http.HttpSecurityBeanDefinitionParser$ChildAuthenticationManagerFactoryBean#0': Cannot resolve reference to bean 'org.springframework.security.config.authentication.AuthenticationManagerFactoryBean#0' while setting constructor argument
+Related cause: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'org.springframework.security.config.http.HttpSecurityBeanDefinitionParser$ChildAuthenticationManagerFactoryBean#1': Cannot resolve reference to bean 'org.springframework.security.config.authentication.AuthenticationManagerFactoryBean#1' while setting constructor argument
+Related cause: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'org.springframework.security.config.http.HttpSecurityBeanDefinitionParser$ChildAuthenticationManagerFactoryBean#0': Cannot resolve reference to bean 'org.springframework.security.config.authentication.AuthenticationManagerFactoryBean#0' while setting constructor argument
+Related cause: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'org.springframework.security.config.http.HttpSecurityBeanDefinitionParser$ChildAuthenticationManagerFactoryBean#1': Cannot resolve reference to bean 'org.springframework.security.config.authentication.AuthenticationManagerFactoryBean#1' while setting constructor argument
+Related cause: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'org.springframework.security.config.http.HttpSecurityBeanDefinitionParser$ChildAuthenticationManagerFactoryBean#0': Cannot resolve reference to bean 'org.springframework.security.config.authentication.AuthenticationManagerFactoryBean#0' while setting constructor argument
+Related cause: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'org.springframework.security.config.http.HttpSecurityBeanDefinitionParser$ChildAuthenticationManagerFactoryBean#1': Cannot resolve reference to bean 'org.springframework.security.config.authentication.AuthenticationManagerFactoryBean#1' while setting constructor argument
+Related cause: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'org.springframework.security.config.http.HttpSecurityBeanDefinitionParser$ChildAuthenticationManagerFactoryBean#2': Cannot resolve reference to bean 'org.springframework.security.config.authentication.AuthenticationManagerFactoryBean#2' while setting constructor argument
+Related cause: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'org.springframework.security.config.http.HttpSecurityBeanDefinitionParser$ChildAuthenticationManagerFactoryBean#1': Cannot resolve reference to bean 'org.springframework.security.config.authentication.AuthenticationManagerFactoryBean#1' while setting constructor argument
+Related cause: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'org.springframework.security.config.http.HttpSecurityBeanDefinitionParser$ChildAuthenticationManagerFactoryBean#2': Cannot resolve reference to bean 'org.springframework.security.config.authentication.AuthenticationManagerFactoryBean#2' while setting constructor argument
+Related cause: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'org.springframework.security.config.http.HttpSecurityBeanDefinitionParser$ChildAuthenticationManagerFactoryBean#1': Cannot resolve reference to bean 'org.springframework.security.config.authentication.AuthenticationManagerFactoryBean#1' while setting constructor argument
+Related cause: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'org.springframework.security.config.http.HttpSecurityBeanDefinitionParser$ChildAuthenticationManagerFactoryBean#2': Cannot resolve reference to bean 'org.springframework.security.config.authentication.AuthenticationManagerFactoryBean#2' while setting constructor argument
+Related cause: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'org.springframework.security.config.http.HttpSecurityBeanDefinitionParser$ChildAuthenticationManagerFactoryBean#1': Cannot resolve reference to bean 'org.springframework.security.config.authentication.AuthenticationManagerFactoryBean#1' while setting constructor argument
+Related cause: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'org.springframework.security.config.http.HttpSecurityBeanDefinitionParser$ChildAuthenticationManagerFactoryBean#2': Cannot resolve reference to bean 'org.springframework.security.config.authentication.AuthenticationManagerFactoryBean#2' while setting constructor argument
+Related cause: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'org.springframework.security.config.http.HttpSecurityBeanDefinitionParser$ChildAuthenticationManagerFactoryBean#0': Cannot resolve reference to bean 'org.springframework.security.config.authentication.AuthenticationManagerFactoryBean#0' while setting constructor argument
+Related cause: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'org.springframework.security.config.http.HttpSecurityBeanDefinitionParser$ChildAuthenticationManagerFactoryBean#0': Cannot resolve reference to bean 'org.springframework.security.config.authentication.AuthenticationManagerFactoryBean#0' while setting constructor argument
+Related cause: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'org.springframework.security.config.http.HttpSecurityBeanDefinitionParser$ChildAuthenticationManagerFactoryBean#2': Cannot resolve reference to bean 'org.springframework.security.config.authentication.AuthenticationManagerFactoryBean#2' while setting constructor argument
+Related cause: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'org.springframework.security.config.http.HttpSecurityBeanDefinitionParser$ChildAuthenticationManagerFactoryBean#0': Cannot resolve reference to bean 'org.springframework.security.config.authentication.AuthenticationManagerFactoryBean#0' while setting constructor argument
+Related cause: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'org.springframework.security.config.http.HttpSecurityBeanDefinitionParser$ChildAuthenticationManagerFactoryBean#2': Cannot resolve reference to bean 'org.springframework.security.config.authentication.AuthenticationManagerFactoryBean#2' while setting constructor argument
+Related cause: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'org.springframework.security.config.http.HttpSecurityBeanDefinitionParser$ChildAuthenticationManagerFactoryBean#0': Cannot resolve reference to bean 'org.springframework.security.config.authentication.AuthenticationManagerFactoryBean#0' while setting constructor argument
+Related cause: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'org.springframework.security.config.http.HttpSecurityBeanDefinitionParser$ChildAuthenticationManagerFactoryBean#2': Cannot resolve reference to bean 'org.springframework.security.config.authentication.AuthenticationManagerFactoryBean#2' while setting constructor argument
+Related cause: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'org.springframework.security.config.http.HttpSecurityBeanDefinitionParser$ChildAuthenticationManagerFactoryBean#1': Cannot resolve reference to bean 'org.springframework.security.config.authentication.AuthenticationManagerFactoryBean#1' while setting constructor argument
+Related cause: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'org.springframework.security.config.http.HttpSecurityBeanDefinitionParser$ChildAuthenticationManagerFactoryBean#0': Cannot resolve reference to bean 'org.springframework.security.config.authentication.AuthenticationManagerFactoryBean#0' while setting constructor argument
+Related cause: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'org.springframework.security.config.http.HttpSecurityBeanDefinitionParser$ChildAuthenticationManagerFactoryBean#1': Cannot resolve reference to bean 'org.springframework.security.config.authentication.AuthenticationManagerFactoryBean#1' while setting constructor argument
+Related cause: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'org.springframework.security.config.http.HttpSecurityBeanDefinitionParser$ChildAuthenticationManagerFactoryBean#0': Cannot resolve reference to bean 'org.springframework.security.config.authentication.AuthenticationManagerFactoryBean#0' while setting constructor argument
+Related cause: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'org.springframework.security.config.http.HttpSecurityBeanDefinitionParser$ChildAuthenticationManagerFactoryBean#1': Cannot resolve reference to bean 'org.springframework.security.config.authentication.AuthenticationManagerFactoryBean#1' while setting constructor argument
+Related cause: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'org.springframework.security.config.http.HttpSecurityBeanDefinitionParser$ChildAuthenticationManagerFactoryBean#0': Cannot resolve reference to bean 'org.springframework.security.config.authentication.AuthenticationManagerFactoryBean#0' while setting constructor argument
+Related cause: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'org.springframework.security.config.http.HttpSecurityBeanDefinitionParser$ChildAuthenticationManagerFactoryBean#1': Cannot resolve reference to bean 'org.springframework.security.config.authentication.AuthenticationManagerFactoryBean#1' while setting constructor argument
+Related cause: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'org.springframework.security.config.http.HttpSecurityBeanDefinitionParser$ChildAuthenticationManagerFactoryBean#2': Cannot resolve reference to bean 'org.springframework.security.config.authentication.AuthenticationManagerFactoryBean#2' while setting constructor argument
+ERROR: [main]: org.springframework.web.context.ContextLoader.initWebApplicationContext - 24 Apr 2026 10:39:03,871 - Context initialization failed
+org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating bean with name 'notificationServiceConfigProviderImpl': Unsatisfied dependency expressed through field 'setupConfigurationService': Error creating bean with name 'SetupConfigurationService': Unsatisfied dependency expressed through field 'm_adminUserDao': Error creating bean with name 'AdminUserDataDao': Unsatisfied dependency expressed through field 'dataMapper': Error creating bean with name 'adminUserDataMapper' defined in URL [jar:file:/opt/tomcat/webapps/oes-connector/WEB-INF/lib/syncnshare-manual-1.0.0-SNAPSHOT.jar!/com/opentext/oesConnector/connector/database/mapper/AdminUserDataMapper.class]: Unsatisfied dependency expressed through bean property 'sqlSessionFactory': Error creating bean with name 'sqlSessionFactory' defined in class path resource [syncEngineContext.xml]: Cannot resolve reference to bean 'dataSource' while setting bean property 'dataSource'
+	at org.springframework.beans.factory.annotation.AutowiredAnnotationBeanPostProcessor$AutowiredFieldElement.resolveFieldValue(AutowiredAnnotationBeanPostProcessor.java:787)
+	at org.springframework.beans.factory.annotation.AutowiredAnnotationBeanPostProcessor$AutowiredFieldElement.inject(AutowiredAnnotationBeanPostProcessor.java:767)
+	at org.springframework.beans.factory.annotation.InjectionMetadata.inject(InjectionMetadata.java:146)
+	at org.springframework.beans.factory.annotation.AutowiredAnnotationBeanPostProcessor.postProcessProperties(AutowiredAnnotationBeanPostProcessor.java:509)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.populateBean(AbstractAutowireCapableBeanFactory.java:1459)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:606)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:529)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.lambda$doGetBean$0(AbstractBeanFactory.java:339)
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:373)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:337)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:202)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.instantiateSingleton(DefaultListableBeanFactory.java:1228)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.preInstantiateSingleton(DefaultListableBeanFactory.java:1194)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.preInstantiateSingletons(DefaultListableBeanFactory.java:1130)
+	at org.springframework.context.support.AbstractApplicationContext.finishBeanFactoryInitialization(AbstractApplicationContext.java:990)
+	at org.springframework.context.support.AbstractApplicationContext.refresh(AbstractApplicationContext.java:627)
+	at org.springframework.web.context.ContextLoader.configureAndRefreshWebApplicationContext(ContextLoader.java:394)
+	at org.springframework.web.context.ContextLoader.initWebApplicationContext(ContextLoader.java:274)
+	at org.springframework.web.context.ContextLoaderListener.contextInitialized(ContextLoaderListener.java:126)
+	at org.apache.catalina.core.StandardContext.listenerStart(StandardContext.java:4003)
+	at org.apache.catalina.core.StandardContext.startInternal(StandardContext.java:4426)
+	at org.apache.catalina.util.LifecycleBase.start(LifecycleBase.java:164)
+	at org.apache.catalina.core.ContainerBase.addChild(ContainerBase.java:564)
+	at org.apache.catalina.core.StandardHost.addChild(StandardHost.java:663)
+	at org.apache.catalina.startup.HostConfig.deployDirectory(HostConfig.java:1084)
+	at org.apache.catalina.startup.HostConfig$DeployDirectory.run(HostConfig.java:1850)
+	at java.base/java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:572)
+	at java.base/java.util.concurrent.FutureTask.run(FutureTask.java:317)
+	at org.apache.tomcat.util.threads.InlineExecutorService.execute(InlineExecutorService.java:81)
+	at java.base/java.util.concurrent.AbstractExecutorService.submit(AbstractExecutorService.java:123)
+	at org.apache.catalina.startup.HostConfig.deployDirectories(HostConfig.java:995)
+	at org.apache.catalina.startup.HostConfig.deployApps(HostConfig.java:380)
+	at org.apache.catalina.startup.HostConfig.start(HostConfig.java:1579)
+	at org.apache.catalina.startup.HostConfig.lifecycleEvent(HostConfig.java:262)
+	at org.apache.catalina.util.LifecycleBase.fireLifecycleEvent(LifecycleBase.java:109)
+	at org.apache.catalina.util.LifecycleBase.setStateInternal(LifecycleBase.java:389)
+	at org.apache.catalina.util.LifecycleBase.setState(LifecycleBase.java:336)
+	at org.apache.catalina.core.ContainerBase.startInternal(ContainerBase.java:741)
+	at org.apache.catalina.core.StandardHost.startInternal(StandardHost.java:780)
+	at org.apache.catalina.util.LifecycleBase.start(LifecycleBase.java:164)
+	at org.apache.catalina.core.ContainerBase$StartChild.call(ContainerBase.java:1162)
+	at org.apache.catalina.core.ContainerBase$StartChild.call(ContainerBase.java:1158)
+	at java.base/java.util.concurrent.FutureTask.run(FutureTask.java:317)
+	at org.apache.tomcat.util.threads.InlineExecutorService.execute(InlineExecutorService.java:81)
+	at java.base/java.util.concurrent.AbstractExecutorService.submit(AbstractExecutorService.java:145)
+	at org.apache.catalina.core.ContainerBase.startInternal(ContainerBase.java:714)
+	at org.apache.catalina.core.StandardEngine.startInternal(StandardEngine.java:201)
+	at org.apache.catalina.util.LifecycleBase.start(LifecycleBase.java:164)
+	at org.apache.catalina.core.StandardService.startInternal(StandardService.java:410)
+	at org.apache.catalina.util.LifecycleBase.start(LifecycleBase.java:164)
+	at org.apache.catalina.core.StandardServer.startInternal(StandardServer.java:864)
+	at org.apache.catalina.util.LifecycleBase.start(LifecycleBase.java:164)
+	at org.apache.catalina.startup.Catalina.start(Catalina.java:756)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at org.apache.catalina.startup.Bootstrap.start(Bootstrap.java:339)
+	at org.apache.catalina.startup.Bootstrap.main(Bootstrap.java:470)
+Caused by: org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating bean with name 'SetupConfigurationService': Unsatisfied dependency expressed through field 'm_adminUserDao': Error creating bean with name 'AdminUserDataDao': Unsatisfied dependency expressed through field 'dataMapper': Error creating bean with name 'adminUserDataMapper' defined in URL [jar:file:/opt/tomcat/webapps/oes-connector/WEB-INF/lib/syncnshare-manual-1.0.0-SNAPSHOT.jar!/com/opentext/oesConnector/connector/database/mapper/AdminUserDataMapper.class]: Unsatisfied dependency expressed through bean property 'sqlSessionFactory': Error creating bean with name 'sqlSessionFactory' defined in class path resource [syncEngineContext.xml]: Cannot resolve reference to bean 'dataSource' while setting bean property 'dataSource'
+	at org.springframework.beans.factory.annotation.AutowiredAnnotationBeanPostProcessor$AutowiredFieldElement.resolveFieldValue(AutowiredAnnotationBeanPostProcessor.java:787)
+	at org.springframework.beans.factory.annotation.AutowiredAnnotationBeanPostProcessor$AutowiredFieldElement.inject(AutowiredAnnotationBeanPostProcessor.java:767)
+	at org.springframework.beans.factory.annotation.InjectionMetadata.inject(InjectionMetadata.java:146)
+	at org.springframework.beans.factory.annotation.AutowiredAnnotationBeanPostProcessor.postProcessProperties(AutowiredAnnotationBeanPostProcessor.java:509)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.populateBean(AbstractAutowireCapableBeanFactory.java:1459)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:606)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:529)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.lambda$doGetBean$0(AbstractBeanFactory.java:339)
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:373)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:337)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:202)
+	at org.springframework.beans.factory.config.DependencyDescriptor.resolveCandidate(DependencyDescriptor.java:254)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.doResolveDependency(DefaultListableBeanFactory.java:1770)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.resolveDependency(DefaultListableBeanFactory.java:1653)
+	at org.springframework.beans.factory.annotation.AutowiredAnnotationBeanPostProcessor$AutowiredFieldElement.resolveFieldValue(AutowiredAnnotationBeanPostProcessor.java:784)
+	... 56 more
+Caused by: org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating bean with name 'AdminUserDataDao': Unsatisfied dependency expressed through field 'dataMapper': Error creating bean with name 'adminUserDataMapper' defined in URL [jar:file:/opt/tomcat/webapps/oes-connector/WEB-INF/lib/syncnshare-manual-1.0.0-SNAPSHOT.jar!/com/opentext/oesConnector/connector/database/mapper/AdminUserDataMapper.class]: Unsatisfied dependency expressed through bean property 'sqlSessionFactory': Error creating bean with name 'sqlSessionFactory' defined in class path resource [syncEngineContext.xml]: Cannot resolve reference to bean 'dataSource' while setting bean property 'dataSource'
+	at org.springframework.beans.factory.annotation.AutowiredAnnotationBeanPostProcessor$AutowiredFieldElement.resolveFieldValue(AutowiredAnnotationBeanPostProcessor.java:787)
+	at org.springframework.beans.factory.annotation.AutowiredAnnotationBeanPostProcessor$AutowiredFieldElement.inject(AutowiredAnnotationBeanPostProcessor.java:767)
+	at org.springframework.beans.factory.annotation.InjectionMetadata.inject(InjectionMetadata.java:146)
+	at org.springframework.beans.factory.annotation.AutowiredAnnotationBeanPostProcessor.postProcessProperties(AutowiredAnnotationBeanPostProcessor.java:509)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.populateBean(AbstractAutowireCapableBeanFactory.java:1459)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:606)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:529)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.lambda$doGetBean$0(AbstractBeanFactory.java:339)
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:373)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:337)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:202)
+	at org.springframework.beans.factory.config.DependencyDescriptor.resolveCandidate(DependencyDescriptor.java:254)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.doResolveDependency(DefaultListableBeanFactory.java:1770)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.resolveDependency(DefaultListableBeanFactory.java:1653)
+	at org.springframework.beans.factory.annotation.AutowiredAnnotationBeanPostProcessor$AutowiredFieldElement.resolveFieldValue(AutowiredAnnotationBeanPostProcessor.java:784)
+	... 70 more
+Caused by: org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating bean with name 'adminUserDataMapper' defined in URL [jar:file:/opt/tomcat/webapps/oes-connector/WEB-INF/lib/syncnshare-manual-1.0.0-SNAPSHOT.jar!/com/opentext/oesConnector/connector/database/mapper/AdminUserDataMapper.class]: Unsatisfied dependency expressed through bean property 'sqlSessionFactory': Error creating bean with name 'sqlSessionFactory' defined in class path resource [syncEngineContext.xml]: Cannot resolve reference to bean 'dataSource' while setting bean property 'dataSource'
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.autowireByType(AbstractAutowireCapableBeanFactory.java:1556)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.populateBean(AbstractAutowireCapableBeanFactory.java:1450)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:606)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:529)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.lambda$doGetBean$0(AbstractBeanFactory.java:339)
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:373)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:337)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:202)
+	at org.springframework.beans.factory.config.DependencyDescriptor.resolveCandidate(DependencyDescriptor.java:254)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.doResolveDependency(DefaultListableBeanFactory.java:1770)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.resolveDependency(DefaultListableBeanFactory.java:1653)
+	at org.springframework.beans.factory.annotation.AutowiredAnnotationBeanPostProcessor$AutowiredFieldElement.resolveFieldValue(AutowiredAnnotationBeanPostProcessor.java:784)
+	... 84 more
+Caused by: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'sqlSessionFactory' defined in class path resource [syncEngineContext.xml]: Cannot resolve reference to bean 'dataSource' while setting bean property 'dataSource'
+	at org.springframework.beans.factory.support.BeanDefinitionValueResolver.resolveReference(BeanDefinitionValueResolver.java:377)
+	at org.springframework.beans.factory.support.BeanDefinitionValueResolver.resolveValueIfNecessary(BeanDefinitionValueResolver.java:135)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.applyPropertyValues(AbstractAutowireCapableBeanFactory.java:1725)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.populateBean(AbstractAutowireCapableBeanFactory.java:1474)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:606)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:529)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.lambda$doGetBean$0(AbstractBeanFactory.java:339)
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:373)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:337)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:202)
+	at org.springframework.beans.factory.config.DependencyDescriptor.resolveCandidate(DependencyDescriptor.java:254)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.doResolveDependency(DefaultListableBeanFactory.java:1770)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.resolveDependency(DefaultListableBeanFactory.java:1653)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.autowireByType(AbstractAutowireCapableBeanFactory.java:1541)
+	... 95 more
+Caused by: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'dataSource' defined in class path resource [com/opentext/oesConnector/connector/configuration/DataBaseConfig.class]: Failed to instantiate [javax.sql.DataSource]: Factory method 'dataSource' threw exception with message: Failed to decrypt database password!
+	at org.springframework.beans.factory.support.ConstructorResolver.instantiate(ConstructorResolver.java:657)
+	at org.springframework.beans.factory.support.ConstructorResolver.instantiateUsingFactoryMethod(ConstructorResolver.java:645)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.instantiateUsingFactoryMethod(AbstractAutowireCapableBeanFactory.java:1375)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBeanInstance(AbstractAutowireCapableBeanFactory.java:1205)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:569)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:529)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.lambda$doGetBean$0(AbstractBeanFactory.java:339)
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:373)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:337)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:202)
+	at org.springframework.beans.factory.support.BeanDefinitionValueResolver.resolveReference(BeanDefinitionValueResolver.java:365)
+	... 108 more
+Caused by: org.springframework.beans.BeanInstantiationException: Failed to instantiate [javax.sql.DataSource]: Factory method 'dataSource' threw exception with message: Failed to decrypt database password!
+	at org.springframework.beans.factory.support.SimpleInstantiationStrategy.lambda$instantiate$0(SimpleInstantiationStrategy.java:200)
+	at org.springframework.beans.factory.support.SimpleInstantiationStrategy.instantiateWithFactoryMethod(SimpleInstantiationStrategy.java:89)
+	at org.springframework.beans.factory.support.SimpleInstantiationStrategy.instantiate(SimpleInstantiationStrategy.java:169)
+	at org.springframework.beans.factory.support.ConstructorResolver.instantiate(ConstructorResolver.java:653)
+	... 118 more
+Caused by: java.lang.RuntimeException: Failed to decrypt database password!
+	at com.opentext.oesConnector.connector.database.service.impl.DataSourcePasswordDecryptorServiceImpl.getPassword(DataSourcePasswordDecryptorServiceImpl.java:40)
+	at com.opentext.oesConnector.connector.configuration.DataBaseConfig.dataSource(DataBaseConfig.java:38)
+	at com.opentext.oesConnector.connector.configuration.DataBaseConfig$$SpringCGLIB$$0.CGLIB$dataSource$1(<generated>)
+	at com.opentext.oesConnector.connector.configuration.DataBaseConfig$$SpringCGLIB$$FastClass$$1.invoke(<generated>)
+	at org.springframework.cglib.proxy.MethodProxy.invokeSuper(MethodProxy.java:258)
+	at org.springframework.context.annotation.ConfigurationClassEnhancer$BeanMethodInterceptor.intercept(ConfigurationClassEnhancer.java:400)
+	at com.opentext.oesConnector.connector.configuration.DataBaseConfig$$SpringCGLIB$$0.dataSource(<generated>)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at org.springframework.beans.factory.support.SimpleInstantiationStrategy.lambda$instantiate$0(SimpleInstantiationStrategy.java:172)
+	... 121 more
+24-Apr-2026 10:39:03.873 SEVERE [main] org.apache.catalina.core.StandardContext.startInternal One or more listeners failed to start. Full details will be found in the appropriate container log file
+24-Apr-2026 10:39:03.951 SEVERE [main] org.apache.catalina.core.StandardContext.startInternal Context [/oes-connector] startup failed due to previous errors
+24-Apr-2026 10:39:04.055 WARNING [main] org.apache.catalina.loader.WebappClassLoaderBase.clearReferencesThreads The web application [oes-connector] appears to have started a thread named [Log4j2-TF-2-Scheduled-1] but has failed to stop it. This is very likely to create a memory leak. Stack trace of thread:
+ java.base/jdk.internal.misc.Unsafe.park(Native Method)
+ java.base/java.util.concurrent.locks.LockSupport.parkNanos(LockSupport.java:269)
+ java.base/java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject.awaitNanos(AbstractQueuedSynchronizer.java:1797)
+ java.base/java.util.concurrent.ScheduledThreadPoolExecutor$DelayedWorkQueue.take(ScheduledThreadPoolExecutor.java:1182)
+ java.base/java.util.concurrent.ScheduledThreadPoolExecutor$DelayedWorkQueue.take(ScheduledThreadPoolExecutor.java:899)
+ java.base/java.util.concurrent.ThreadPoolExecutor.getTask(ThreadPoolExecutor.java:1070)
+ java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1130)
+ java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642)
+ java.base/java.lang.Thread.run(Thread.java:1583)
+24-Apr-2026 10:39:04.150 INFO [main] org.apache.catalina.startup.HostConfig.deployDirectory Deployment of web application directory [/opt/tomcat/webapps/oes-connector] has finished in [13,517] ms
+24-Apr-2026 10:39:04.152 INFO [main] org.apache.coyote.AbstractProtocol.start Starting ProtocolHandler ["http-nio-8080"]
+24-Apr-2026 10:39:04.162 INFO [main] org.apache.catalina.startup.Catalina.start Server startup in [13790] milliseconds

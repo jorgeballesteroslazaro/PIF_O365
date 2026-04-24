@@ -1,0 +1,160 @@
+---------------------------------------------------------------------------------------
+ping_database_server
+Pinging db-pg:5432. Successful.
+In handle_oracle_image
+In handle_oracle_image
+2026-04-24T10:39:38.404302793Z main DEBUG Apache Log4j Core 2.25 initializing configuration XmlConfiguration[location=/usr/src/ccsmartview/NotificationService/config/..2026_04_22_14_35_09.2328914136/log4j2.xml, lastModified=2026-04-22T14:35:09.269Z]
+2026-04-24T10:39:38.406022850Z main DEBUG PluginManager 'Core' found 134 plugins
+2026-04-24T10:39:38.406227575Z main DEBUG PluginManager 'Level' found 0 plugins
+2026-04-24T10:39:38.411095600Z main DEBUG Building Plugin[name=Property, class=org.apache.logging.log4j.core.config.Property].
+2026-04-24T10:39:38.475903769Z main DEBUG PluginManager 'TypeConverter' found 26 plugins
+2026-04-24T10:39:38.484779583Z main DEBUG createProperty(name="logPath", value="//usr//src//ccsmartview//logs", Configuration(/usr/src/ccsmartview/NotificationService/config/..2026_04_22_14_35_09.2328914136/log4j2.xml))
+2026-04-24T10:39:38.486409957Z main DEBUG Building Plugin[name=Property, class=org.apache.logging.log4j.core.config.Property].
+2026-04-24T10:39:38.486918560Z main DEBUG createProperty(name="logPattern", value="%-5p: [%t]: [%tid]: %c - %d{dd MMM yyy HH:mm:ss,SSS} - %m%n", Configuration(/usr/src/ccsmartview/NotificationService/config/..2026_04_22_14_35_09.2328914136/log4j2.xml))
+2026-04-24T10:39:38.487143551Z main DEBUG Building Plugin[name=Property, class=org.apache.logging.log4j.core.config.Property].
+2026-04-24T10:39:38.487603709Z main DEBUG createProperty(name="teamsLogAppender", value="TeamsLogAppender", Configuration(/usr/src/ccsmartview/NotificationService/config/..2026_04_22_14_35_09.2328914136/log4j2.xml))
+2026-04-24T10:39:38.487810435Z main DEBUG Building Plugin[name=Property, class=org.apache.logging.log4j.core.config.Property].
+2026-04-24T10:39:38.488198290Z main DEBUG createProperty(name="oesLogAppender", value="OesLogAppender", Configuration(/usr/src/ccsmartview/NotificationService/config/..2026_04_22_14_35_09.2328914136/log4j2.xml))
+2026-04-24T10:39:38.488397176Z main DEBUG Building Plugin[name=Property, class=org.apache.logging.log4j.core.config.Property].
+2026-04-24T10:39:38.488825905Z main DEBUG createProperty(name="teamsLogFile", value="TeamsNotificationService", Configuration(/usr/src/ccsmartview/NotificationService/config/..2026_04_22_14_35_09.2328914136/log4j2.xml))
+2026-04-24T10:39:38.489024685Z main DEBUG Building Plugin[name=Property, class=org.apache.logging.log4j.core.config.Property].
+2026-04-24T10:39:38.489427837Z main DEBUG createProperty(name="oesLogFile", value="OesNotificationService", Configuration(/usr/src/ccsmartview/NotificationService/config/..2026_04_22_14_35_09.2328914136/log4j2.xml))
+2026-04-24T10:39:38.489614989Z main DEBUG Building Plugin[name=Property, class=org.apache.logging.log4j.core.config.Property].
+2026-04-24T10:39:38.490009688Z main DEBUG createProperty(name="logFileExt", value=".log", Configuration(/usr/src/ccsmartview/NotificationService/config/..2026_04_22_14_35_09.2328914136/log4j2.xml))
+2026-04-24T10:39:38.490178776Z main DEBUG Building Plugin[name=Property, class=org.apache.logging.log4j.core.config.Property].
+2026-04-24T10:39:38.490610594Z main DEBUG createProperty(name="rollOverLogFileExt", value=".log", Configuration(/usr/src/ccsmartview/NotificationService/config/..2026_04_22_14_35_09.2328914136/log4j2.xml))
+2026-04-24T10:39:38.490778655Z main DEBUG Building Plugin[name=Property, class=org.apache.logging.log4j.core.config.Property].
+2026-04-24T10:39:38.491231578Z main DEBUG createProperty(name="rollingSize", value="10 MB", Configuration(/usr/src/ccsmartview/NotificationService/config/..2026_04_22_14_35_09.2328914136/log4j2.xml))
+2026-04-24T10:39:38.491410120Z main DEBUG Building Plugin[name=Property, class=org.apache.logging.log4j.core.config.Property].
+2026-04-24T10:39:38.491797584Z main DEBUG createProperty(name="rollOverStrategy", value="5", Configuration(/usr/src/ccsmartview/NotificationService/config/..2026_04_22_14_35_09.2328914136/log4j2.xml))
+2026-04-24T10:39:38.491979577Z main DEBUG Building Plugin[name=Properties, class=org.apache.logging.log4j.core.config.PropertiesPlugin].
+2026-04-24T10:39:38.494825641Z main DEBUG configureSubstitutor(={logPath=//usr//src//ccsmartview//logs, logPattern=%-5p: [%t]: [%tid]: %c - %d{dd MMM yyy HH:mm:ss,SSS} - %m%n, teamsLogAppender=TeamsLogAppender, oesLogAppender=OesLogAppender, teamsLogFile=TeamsNotificationService, oesLogFile=OesNotificationService, logFileExt=.log, rollOverLogFileExt=.log, rollingSize=10 MB, rollOverStrategy=5}, Configuration(/usr/src/ccsmartview/NotificationService/config/..2026_04_22_14_35_09.2328914136/log4j2.xml))
+2026-04-24T10:39:38.497090495Z main DEBUG PluginManager 'Lookup' found 16 plugins
+2026-04-24T10:39:38.497676395Z main DEBUG Building Plugin[name=Route, class=org.apache.logging.log4j.core.appender.routing.Route].
+2026-04-24T10:39:38.499412231Z main DEBUG createRoute(ref="null", key="TeamsLogAppender", Node=Route)
+2026-04-24T10:39:38.500206588Z main DEBUG Building Plugin[name=Route, class=org.apache.logging.log4j.core.appender.routing.Route].
+2026-04-24T10:39:38.500607369Z main DEBUG createRoute(ref="null", key="OesLogAppender", Node=Route)
+2026-04-24T10:39:38.500723834Z main DEBUG Building Plugin[name=Routes, class=org.apache.logging.log4j.core.appender.routing.Routes].
+2026-04-24T10:39:38.507225257Z main DEBUG Routes$Builder(Configuration(/usr/src/ccsmartview/NotificationService/config/..2026_04_22_14_35_09.2328914136/log4j2.xml), pattern="${ctx:logType}", Script=null, ={Route(type=dynamic - type=Route key='TeamsLogAppender'), Route(type=dynamic - type=Route key='OesLogAppender')})
+2026-04-24T10:39:38.568461348Z main DEBUG Building Plugin[name=appender, class=org.apache.logging.log4j.core.appender.routing.RoutingAppender].
+2026-04-24T10:39:38.573722438Z main DEBUG RoutingAppender$Builder(Script=null, Routes({Route(type=dynamic - type=Route key='TeamsLogAppender'),Route(type=dynamic - type=Route key='OesLogAppender')}), RewritePolicy=null, PurgePolicy=null, ignoreExceptions="null", Layout=null, name="RoutingAppender", Configuration(/usr/src/ccsmartview/NotificationService/config/..2026_04_22_14_35_09.2328914136/log4j2.xml), Filter=null, ={})
+2026-04-24T10:39:38.573901213Z main DEBUG Building Plugin[name=layout, class=org.apache.logging.log4j.core.layout.PatternLayout].
+2026-04-24T10:39:38.580233762Z main DEBUG PatternLayout$Builder(pattern="%-5p: [%t]: [%tid]: %c - %d{dd MMM yyy HH:mm:ss,SSS} - %m%n", PatternSelector=null, Configuration(/usr/src/ccsmartview/NotificationService/config/..2026_04_22_14_35_09.2328914136/log4j2.xml), Replace=null, charset="null", alwaysWriteExceptions="null", disableAnsi="null", noConsoleNoAnsi="null", header="null", footer="null")
+2026-04-24T10:39:38.581184605Z main DEBUG PluginManager 'Converter' found 45 plugins
+2026-04-24T10:39:38.674153352Z main DEBUG Building Plugin[name=appender, class=org.apache.logging.log4j.core.appender.ConsoleAppender].
+2026-04-24T10:39:38.676473851Z main DEBUG ConsoleAppender$Builder(target="SYSTEM_OUT", follow="null", direct="null", bufferedIo="null", bufferSize="null", immediateFlush="null", ignoreExceptions="null", PatternLayout(%-5p: [%t]: [%tid]: %c - %d{dd MMM yyy HH:mm:ss,SSS} - %m%n), name="Console", Configuration(/usr/src/ccsmartview/NotificationService/config/..2026_04_22_14_35_09.2328914136/log4j2.xml), Filter=null, ={})
+2026-04-24T10:39:38.678224772Z main DEBUG Starting OutputStreamManager SYSTEM_OUT.false.false
+2026-04-24T10:39:38.678358043Z main DEBUG Building Plugin[name=Appenders, class=org.apache.logging.log4j.core.config.AppendersPlugin].
+2026-04-24T10:39:38.678598061Z main DEBUG createAppenders(={RoutingAppender, Console})
+2026-04-24T10:39:38.678815211Z main DEBUG Building Plugin[name=AppenderRef, class=org.apache.logging.log4j.core.config.AppenderRef].
+2026-04-24T10:39:38.679135134Z main DEBUG createAppenderRef(ref="RoutingAppender", level="null", Filter=null)
+2026-04-24T10:39:38.679906485Z main DEBUG Building Plugin[name=Logger, class=org.apache.logging.log4j.core.config.LoggerConfig].
+2026-04-24T10:39:38.682973116Z main DEBUG LoggerConfig$Builder(additivity="null", level="INFO", levelAndRefs="null", name="com.opentext.teamscc", includeLocation="null", ={RoutingAppender}, ={}, Configuration(/usr/src/ccsmartview/NotificationService/config/..2026_04_22_14_35_09.2328914136/log4j2.xml), Filter=null)
+2026-04-24T10:39:38.684111137Z main DEBUG Building Plugin[name=AppenderRef, class=org.apache.logging.log4j.core.config.AppenderRef].
+2026-04-24T10:39:38.684418036Z main DEBUG createAppenderRef(ref="CONSOLE", level="null", Filter=null)
+2026-04-24T10:39:38.684527717Z main DEBUG Building Plugin[name=Logger, class=org.apache.logging.log4j.core.config.LoggerConfig].
+2026-04-24T10:39:38.684812641Z main DEBUG LoggerConfig$Builder(additivity="null", level="INFO", levelAndRefs="null", name="org.apache.log4j.xml", includeLocation="null", ={CONSOLE}, ={}, Configuration(/usr/src/ccsmartview/NotificationService/config/..2026_04_22_14_35_09.2328914136/log4j2.xml), Filter=null)
+2026-04-24T10:39:38.685012561Z main DEBUG Building Plugin[name=AppenderRef, class=org.apache.logging.log4j.core.config.AppenderRef].
+2026-04-24T10:39:38.685218710Z main DEBUG createAppenderRef(ref="Console", level="null", Filter=null)
+2026-04-24T10:39:38.685326552Z main DEBUG Building Plugin[name=AppenderRef, class=org.apache.logging.log4j.core.config.AppenderRef].
+2026-04-24T10:39:38.685554219Z main DEBUG createAppenderRef(ref="RoutingAppender", level="null", Filter=null)
+2026-04-24T10:39:38.685684278Z main DEBUG Building Plugin[name=Root, class=org.apache.logging.log4j.core.config.LoggerConfig$RootLogger].
+2026-04-24T10:39:38.687100656Z main DEBUG LoggerConfig$RootLogger$Builder(additivity="null", level="WARN", levelAndRefs="null", includeLocation="null", ={Console, RoutingAppender}, ={}, Configuration(/usr/src/ccsmartview/NotificationService/config/..2026_04_22_14_35_09.2328914136/log4j2.xml), Filter=null)
+2026-04-24T10:39:38.687355109Z main DEBUG Building Plugin[name=Loggers, class=org.apache.logging.log4j.core.config.LoggersPlugin].
+2026-04-24T10:39:38.687693625Z main DEBUG createLoggers(={com.opentext.teamscc, org.apache.log4j.xml, root})
+2026-04-24T10:39:38.687978254Z main ERROR Unable to locate appender "CONSOLE" for logger config "org.apache.log4j.xml"
+2026-04-24T10:39:38.688799778Z main DEBUG Configuration XmlConfiguration[location=/usr/src/ccsmartview/NotificationService/config/..2026_04_22_14_35_09.2328914136/log4j2.xml, lastModified=2026-04-22T14:35:09.269Z] initialized
+2026-04-24T10:39:38.688923585Z main INFO Starting configuration XmlConfiguration[location=/usr/src/ccsmartview/NotificationService/config/..2026_04_22_14_35_09.2328914136/log4j2.xml, lastModified=2026-04-22T14:35:09.269Z]...
+2026-04-24T10:39:38.689134740Z main INFO Start watching for changes to [/usr/src/ccsmartview/NotificationService/config/..2026_04_22_14_35_09.2328914136/log4j2.xml] every 5 seconds
+2026-04-24T10:39:38.689494701Z main DEBUG Log4j2 ConfigurationScheduler starting 1 threads
+2026-04-24T10:39:38.691411777Z main INFO Configuration XmlConfiguration[location=/usr/src/ccsmartview/NotificationService/config/..2026_04_22_14_35_09.2328914136/log4j2.xml, lastModified=2026-04-22T14:35:09.269Z] started.
+2026-04-24T10:39:38.693044648Z main INFO Stopping configuration org.apache.logging.log4j.core.config.DefaultConfiguration@1efee8e7...
+2026-04-24T10:39:38.693240410Z main DEBUG Shutting down OutputStreamManager SYSTEM_OUT.false.false-1
+2026-04-24T10:39:38.693347758Z main DEBUG OutputStream closed
+2026-04-24T10:39:38.693454464Z main DEBUG Shut down OutputStreamManager SYSTEM_OUT.false.false-1, all resources released: true
+2026-04-24T10:39:38.693542639Z main DEBUG Appender DefaultConsole-1 stopped with status true
+2026-04-24T10:39:38.693654316Z main INFO Configuration org.apache.logging.log4j.core.config.DefaultConfiguration@1efee8e7 stopped.
+2026-04-24T10:39:38.694895887Z main DEBUG org.apache.logging.log4j.core.util.SystemClock supports precise timestamps.
+2026-04-24T10:39:38.695189076Z main DEBUG Reconfiguration complete for context[name=639fee48] at URI /usr/src/ccsmartview/NotificationService/config/..2026_04_22_14_35_09.2328914136/log4j2.xml (org.apache.logging.log4j.core.LoggerContext@49049a04) with optional ClassLoader: null
+2026-04-24T10:39:38.695321993Z main DEBUG Shutdown hook enabled. Registering a new one.
+2026-04-24T10:39:38.695959396Z main DEBUG LoggerContext[name=639fee48, org.apache.logging.log4j.core.LoggerContext@49049a04] started OK.
+2026-04-24T10:39:38.705180864Z main DEBUG Building Plugin[name=layout, class=org.apache.logging.log4j.core.layout.PatternLayout].
+2026-04-24T10:39:38.705537404Z main DEBUG PatternLayout$Builder(pattern="%-5p: [%t]: [%tid]: %c - %d{dd MMM yyy HH:mm:ss,SSS} - %m%n", PatternSelector=null, Configuration(/usr/src/ccsmartview/NotificationService/config/..2026_04_22_14_35_09.2328914136/log4j2.xml), Replace=null, charset="null", alwaysWriteExceptions="null", disableAnsi="null", noConsoleNoAnsi="null", header="null", footer="null")
+2026-04-24T10:39:38.706608774Z main DEBUG Building Plugin[name=SizeBasedTriggeringPolicy, class=org.apache.logging.log4j.core.appender.rolling.SizeBasedTriggeringPolicy].
+2026-04-24T10:39:38.768951371Z main DEBUG createPolicy(size="10 MB")
+2026-04-24T10:39:38.770650994Z main DEBUG Building Plugin[name=Policies, class=org.apache.logging.log4j.core.appender.rolling.CompositeTriggeringPolicy].
+2026-04-24T10:39:38.770920976Z main DEBUG createPolicy(={SizeBasedTriggeringPolicy(size=10485760)})
+2026-04-24T10:39:38.771156514Z main DEBUG Building Plugin[name=DefaultRolloverStrategy, class=org.apache.logging.log4j.core.appender.rolling.DefaultRolloverStrategy].
+2026-04-24T10:39:38.773400581Z main DEBUG DefaultRolloverStrategy$Builder(max="5", min="null", fileIndex="null", compressionLevel="null", ={}, stopCustomActionsOnError="null", tempCompressedFilePattern="null", Configuration(/usr/src/ccsmartview/NotificationService/config/..2026_04_22_14_35_09.2328914136/log4j2.xml))
+2026-04-24T10:39:38.773569253Z main DEBUG Building Plugin[name=appender, class=org.apache.logging.log4j.core.appender.RollingFileAppender].
+2026-04-24T10:39:38.775854581Z main DEBUG RollingFileAppender$Builder(fileName="//usr//src//ccsmartview//logs//TeamsNotificationService.log", filePattern="//usr//src//ccsmartview//logs//TeamsNotificationService%i.log", append="null", locking="null", Policies(CompositeTriggeringPolicy(policies=[SizeBasedTriggeringPolicy(size=10485760)])), DefaultRolloverStrategy(DefaultRolloverStrategy(min=1, max=5, useMax=true)), advertise="null", advertiseUri="null", createOnDemand="null", filePermissions="null", fileOwner="null", fileGroup="null", bufferedIo="null", bufferSize="null", immediateFlush="null", ignoreExceptions="null", PatternLayout(%-5p: [%t]: [%tid]: %c - %d{dd MMM yyy HH:mm:ss,SSS} - %m%n), name="RollingFileTeams", Configuration(/usr/src/ccsmartview/NotificationService/config/..2026_04_22_14_35_09.2328914136/log4j2.xml), Filter=null, ={})
+2026-04-24T10:39:38.780704770Z main DEBUG Returning file creation time for /usr/src/ccsmartview/logs/TeamsNotificationService.log
+2026-04-24T10:39:38.780877244Z main DEBUG Starting RollingFileManager //usr//src//ccsmartview//logs//TeamsNotificationService.log
+2026-04-24T10:39:38.781794199Z main DEBUG PluginManager 'FileConverter' found 2 plugins
+2026-04-24T10:39:38.783283907Z main DEBUG Setting prev file time to 2026-04-24T10:34:37.000+0000
+2026-04-24T10:39:38.783411074Z main DEBUG Initializing triggering policy CompositeTriggeringPolicy(policies=[SizeBasedTriggeringPolicy(size=10485760)])
+2026-04-24T10:39:38.783504160Z main DEBUG Initializing triggering policy SizeBasedTriggeringPolicy(size=10485760)
+INFO : [main]: [1]: com.opentext.teamscc.core.notification.server.TeamsNotificationServer - 24 Apr 2026 10:39:38,703 - Picked configuration directory as: /usr/src/ccsmartview/NotificationService/config
+2026-04-24T10:39:38.784867068Z main DEBUG Building Plugin[name=layout, class=org.apache.logging.log4j.core.layout.PatternLayout].
+2026-04-24T10:39:38.785192916Z main DEBUG PatternLayout$Builder(pattern="%-5p: [%t]: [%tid]: %c - %d{dd MMM yyy HH:mm:ss,SSS} - %m%n", PatternSelector=null, Configuration(/usr/src/ccsmartview/NotificationService/config/..2026_04_22_14_35_09.2328914136/log4j2.xml), Replace=null, charset="null", alwaysWriteExceptions="null", disableAnsi="null", noConsoleNoAnsi="null", header="null", footer="null")
+2026-04-24T10:39:38.786054840Z main DEBUG Building Plugin[name=SizeBasedTriggeringPolicy, class=org.apache.logging.log4j.core.appender.rolling.SizeBasedTriggeringPolicy].
+2026-04-24T10:39:38.786273570Z main DEBUG createPolicy(size="10 MB")
+2026-04-24T10:39:38.786455142Z main DEBUG Building Plugin[name=Policies, class=org.apache.logging.log4j.core.appender.rolling.CompositeTriggeringPolicy].
+2026-04-24T10:39:38.786613649Z main DEBUG createPolicy(={SizeBasedTriggeringPolicy(size=10485760)})
+2026-04-24T10:39:38.786713043Z main DEBUG Building Plugin[name=DefaultRolloverStrategy, class=org.apache.logging.log4j.core.appender.rolling.DefaultRolloverStrategy].
+2026-04-24T10:39:38.786965015Z main DEBUG DefaultRolloverStrategy$Builder(max="5", min="null", fileIndex="null", compressionLevel="null", ={}, stopCustomActionsOnError="null", tempCompressedFilePattern="null", Configuration(/usr/src/ccsmartview/NotificationService/config/..2026_04_22_14_35_09.2328914136/log4j2.xml))
+2026-04-24T10:39:38.787064039Z main DEBUG Building Plugin[name=appender, class=org.apache.logging.log4j.core.appender.RollingFileAppender].
+2026-04-24T10:39:38.787636297Z main DEBUG RollingFileAppender$Builder(fileName="//usr//src//ccsmartview//logs//OesNotificationService.log", filePattern="//usr//src//ccsmartview//logs//OesNotificationService%i.log", append="null", locking="null", Policies(CompositeTriggeringPolicy(policies=[SizeBasedTriggeringPolicy(size=10485760)])), DefaultRolloverStrategy(DefaultRolloverStrategy(min=1, max=5, useMax=true)), advertise="null", advertiseUri="null", createOnDemand="null", filePermissions="null", fileOwner="null", fileGroup="null", bufferedIo="null", bufferSize="null", immediateFlush="null", ignoreExceptions="null", PatternLayout(%-5p: [%t]: [%tid]: %c - %d{dd MMM yyy HH:mm:ss,SSS} - %m%n), name="RollingFileOes", Configuration(/usr/src/ccsmartview/NotificationService/config/..2026_04_22_14_35_09.2328914136/log4j2.xml), Filter=null, ={})
+2026-04-24T10:39:38.789940557Z main DEBUG Returning file creation time for /usr/src/ccsmartview/logs/OesNotificationService.log
+2026-04-24T10:39:38.790057060Z main DEBUG Starting RollingFileManager //usr//src//ccsmartview//logs//OesNotificationService.log
+2026-04-24T10:39:38.790199789Z main DEBUG PluginManager 'FileConverter' found 2 plugins
+2026-04-24T10:39:38.790398950Z main DEBUG Setting prev file time to 2026-04-24T10:34:37.000+0000
+2026-04-24T10:39:38.793582744Z main DEBUG Initializing triggering policy CompositeTriggeringPolicy(policies=[SizeBasedTriggeringPolicy(size=10485760)])
+2026-04-24T10:39:38.793673904Z main DEBUG Initializing triggering policy SizeBasedTriggeringPolicy(size=10485760)
+INFO : [main]: [1]: com.opentext.teamscc.core.notification.server.TeamsNotificationServer - 24 Apr 2026 10:39:38,784 - Picked configuration directory as: /usr/src/ccsmartview/NotificationService/config
+ERROR: [main]: [1]: com.opentext.teamscc.core.notification.server.TeamsNotificationServer - 24 Apr 2026 10:39:38,804 - Failed to decrypt DB user password.
+ERROR: [main]: [1]: com.opentext.teamscc.core.notification.server.TeamsNotificationServer - 24 Apr 2026 10:39:38,805 - ERROR_CODE: SYSTEM_ERROR_CODE:-1, CC_ERROR_CODE:ERROR_DECRYPT_DB_USER_PWD
+com.opentext.teamscc.core.exceptionhandlers.CCException: java.lang.IllegalArgumentException: Invalid length.
+	at com.opentext.teamscc.core.notification.server.TeamsNotificationServer.decryptDBPassword(TeamsNotificationServer.java:567)
+	at com.opentext.teamscc.core.notification.server.TeamsNotificationServer.initDBConfig(TeamsNotificationServer.java:530)
+	at com.opentext.teamscc.core.notification.server.TeamsNotificationServer.main(TeamsNotificationServer.java:164)
+Caused by: java.lang.IllegalArgumentException: Invalid length.
+	at com.opentext.encryption.Base64Decoder.process(Base64Decoder.java:111)
+	at com.opentext.encryption.PasswordUtils.decrypt(PasswordUtils.java:162)
+	at com.opentext.teamscc.core.notification.server.TeamsNotificationServer.decryptDBPassword(TeamsNotificationServer.java:562)
+	... 2 more
+ERROR: [main]: [1]: com.opentext.teamscc.core.notification.server.TeamsNotificationServer - 24 Apr 2026 10:39:38,806 - Failed to decrypt DB user password.
+ERROR: [main]: [1]: com.opentext.teamscc.core.notification.server.TeamsNotificationServer - 24 Apr 2026 10:39:38,806 - ERROR_CODE: SYSTEM_ERROR_CODE:-1, CC_ERROR_CODE:ERROR_DECRYPT_DB_USER_PWD
+com.opentext.teamscc.core.exceptionhandlers.CCException: java.lang.IllegalArgumentException: Invalid length.
+	at com.opentext.teamscc.core.notification.server.TeamsNotificationServer.decryptDBPassword(TeamsNotificationServer.java:567)
+	at com.opentext.teamscc.core.notification.server.TeamsNotificationServer.initDBConfig(TeamsNotificationServer.java:530)
+	at com.opentext.teamscc.core.notification.server.TeamsNotificationServer.main(TeamsNotificationServer.java:164)
+Caused by: java.lang.IllegalArgumentException: Invalid length.
+	at com.opentext.encryption.Base64Decoder.process(Base64Decoder.java:111)
+	at com.opentext.encryption.PasswordUtils.decrypt(PasswordUtils.java:162)
+	at com.opentext.teamscc.core.notification.server.TeamsNotificationServer.decryptDBPassword(TeamsNotificationServer.java:562)
+	... 2 more
+2026-04-24T10:39:38.807410158Z pool-1-thread-1 DEBUG Stopping LoggerContext[name=639fee48, org.apache.logging.log4j.core.LoggerContext@49049a04]
+2026-04-24T10:39:38.807527686Z pool-1-thread-1 DEBUG Stopping LoggerContext[name=639fee48, org.apache.logging.log4j.core.LoggerContext@49049a04]...
+2026-04-24T10:39:38.808160095Z pool-1-thread-1 INFO Stopping configuration XmlConfiguration[location=/usr/src/ccsmartview/NotificationService/config/..2026_04_22_14_35_09.2328914136/log4j2.xml, lastModified=2026-04-22T14:35:09.269Z]...
+2026-04-24T10:39:38.808456567Z pool-1-thread-1 DEBUG Shutting down RollingFileManager //usr//src//ccsmartview//logs//OesNotificationService.log
+2026-04-24T10:39:38.808560425Z pool-1-thread-1 DEBUG Shutting down RollingFileManager //usr//src//ccsmartview//logs//OesNotificationService.log
+2026-04-24T10:39:38.869040725Z pool-1-thread-1 DEBUG OutputStream closed
+2026-04-24T10:39:38.869312024Z pool-1-thread-1 DEBUG All asynchronous threads have terminated
+2026-04-24T10:39:38.869420037Z pool-1-thread-1 DEBUG RollingFileManager shutdown completed with status true
+2026-04-24T10:39:38.869518796Z pool-1-thread-1 DEBUG Shut down RollingFileManager //usr//src//ccsmartview//logs//OesNotificationService.log, all resources released: true
+2026-04-24T10:39:38.869586666Z pool-1-thread-1 DEBUG Appender RollingFileOes stopped with status true
+2026-04-24T10:39:38.869660186Z pool-1-thread-1 DEBUG Shutting down RollingFileManager //usr//src//ccsmartview//logs//TeamsNotificationService.log
+2026-04-24T10:39:38.869754457Z pool-1-thread-1 DEBUG Shutting down RollingFileManager //usr//src//ccsmartview//logs//TeamsNotificationService.log
+2026-04-24T10:39:38.878186258Z pool-1-thread-1 DEBUG OutputStream closed
+2026-04-24T10:39:38.878343972Z pool-1-thread-1 DEBUG All asynchronous threads have terminated
+2026-04-24T10:39:38.878439522Z pool-1-thread-1 DEBUG RollingFileManager shutdown completed with status true
+2026-04-24T10:39:38.878531214Z pool-1-thread-1 DEBUG Shut down RollingFileManager //usr//src//ccsmartview//logs//TeamsNotificationService.log, all resources released: true
+2026-04-24T10:39:38.878609792Z pool-1-thread-1 DEBUG Appender RollingFileTeams stopped with status true
+2026-04-24T10:39:38.878698761Z pool-1-thread-1 DEBUG Shutting down OutputStreamManager SYSTEM_OUT.false.false
+2026-04-24T10:39:38.878808845Z pool-1-thread-1 DEBUG OutputStream closed
+2026-04-24T10:39:38.878934086Z pool-1-thread-1 DEBUG Shut down OutputStreamManager SYSTEM_OUT.false.false, all resources released: true
+2026-04-24T10:39:38.879039242Z pool-1-thread-1 DEBUG Appender Console stopped with status true
+2026-04-24T10:39:38.879504897Z pool-1-thread-1 DEBUG Log4j2 ConfigurationScheduler shutting down threads in java.util.concurrent.ScheduledThreadPoolExecutor@2805d709[Running, pool size = 1, active threads = 0, queued tasks = 1, completed tasks = 0]
+2026-04-24T10:39:38.879818338Z pool-1-thread-1 INFO Configuration XmlConfiguration[location=/usr/src/ccsmartview/NotificationService/config/..2026_04_22_14_35_09.2328914136/log4j2.xml, lastModified=2026-04-22T14:35:09.269Z] stopped.
+2026-04-24T10:39:38.880037556Z pool-1-thread-1 DEBUG Stopped LoggerContext[name=639fee48, org.apache.logging.log4j.core.LoggerContext@49049a04] with status true
