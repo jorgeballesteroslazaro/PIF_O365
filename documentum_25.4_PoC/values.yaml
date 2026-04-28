@@ -329,7 +329,7 @@ global:
 
   # Description: Indicates if the Swagger documentation is available for Client REST API or Smart View. 
   # Set this variable to true to disable Swagger documentation for Client REST API or Smart View. 
-  removeDocumentation: true
+  removeDocumentation: false
 
   # Description: Register OpenText Documentum Content Management for Microsoft 365 in Microsoft Entra Admin Center for tenant ID. 
   mstenantid: "c1c86fed-0aa0-465e-92be-5b97e2b584f9"
