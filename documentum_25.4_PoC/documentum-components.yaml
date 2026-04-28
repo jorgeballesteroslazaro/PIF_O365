@@ -143,7 +143,7 @@ global:
   # Teams Integration
   smartviewm365:
     # Description: Indicates if the OpenText Documentum Content Management for Microsoft 365 pod deployment is enabled.
-    enabled: false
+    enabled: true
   # OES Connector
   oesconnector:
     # Description: Indicates if the OpenText Documentum Content Management Online Editing Service pod deployment is enabled.
