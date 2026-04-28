@@ -850,7 +850,7 @@ d2rest:
       component: smartviewm365
 
       # Description: Image of the OpenText Documentum CM for Microsoft 365 custom configuration.
-      image: aws-spa-ecr-pocdocumentum-02:ot-dctm-smartviewm365customjar-25.4
+      image: aws-spa-ecr-pocdocumentum-02:ot-dctm-smartviewm365customjar-25.4.1
 
       # Description: Indicates command executed as part of the init container.
       command: [ '/bin/sh', '-c', 'yes | cp -prf /opt/D2-install/custom/* /customdir/' ]
