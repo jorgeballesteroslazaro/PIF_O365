@@ -177,7 +177,7 @@ otds:
         cpu: 2000m
         memory: 1.5Gi
 d2classic:
-  replicaCount: 0
+  replicaCount: 1
   docbroker:
     count: *docbroker_count
   graylog:
@@ -328,7 +328,7 @@ xPlore-OneD:
       persistence:
         size: 8Gi
 smartviewm365:
-  replicaCount: 0
+  replicaCount: 1
   graylog:
     PVCSize: 4Gi 
   extension:
