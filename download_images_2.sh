@@ -19,7 +19,7 @@ aws ecr get-login-password --region "${REGION}" \
 IMAGES=(
 #"ot-dctm-client-rest:25.4.1"
 #"ot-dctm-client-smartview:25.4.1"
-"ot-dctm-smartviewm365customjar-25.4.1"
+"ot-dctm-smartviewm365customjar:25.4.1"
 #"ot-dctm-client-config:25.4.1"
 #"ot-dctm-tomcat:25.4.1"
 #"ot-dctm-dsis:25.4.1"

@@ -161,12 +161,12 @@ otds:
     customSecretName:
 
     ## Description: Internal service port. Typically, 8080 for http and 8443 for https.
-    targetPort: 8080
+    targetPort: 443
 
     ## Description: Protocol provided by the OTDS Kubernetes service.
     ## Set to https if the OTDS service should be exposed using https rather than http.
     ## Note: This protocol is not used on the ingress.
-    protocol: http
+    protocol: https
 
     ## Description: Required if protocol is set to https.
     ## Name of the Kubernetes secret of type kubernetes.io/tls.
