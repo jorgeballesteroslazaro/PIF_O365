@@ -113,7 +113,7 @@ spec:
 {{- end }}
                 key: OTDS_DB_ADMIN_PASSWORD
           - name: DB_NAME
-            value: {{ template "otdsdb.url.name" . }}
+            value: otdsdb
           - name: DB_ADMIN_DB
             value: {{ default "postgres" .Values.global.database.adminDatabase }}
           - name: DB_ADMIN
