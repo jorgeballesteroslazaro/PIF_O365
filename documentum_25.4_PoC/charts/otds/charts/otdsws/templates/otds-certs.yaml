@@ -1,15 +1,15 @@
-{{- if eq .Values.enableCustomizedTruststore true }}
+{{- if .Values.enableCustomizedTruststore }}
 apiVersion: v1
 kind: Secret
 metadata:
   name: {{ template "otdsws.name" . }}-certs
-{{- if and .Values.migration.enabled .Values.migration.preUpgradeJob.enabled .Release.IsUpgrade}}
+{{- if and .Values.migration.enabled .Values.migration.preUpgradeJob.enabled .Release.IsUpgrade }}
   annotations:
-    "meta.helm.sh/release-name": {{ .Release.Name }}
+    "meta.helm.sh/release-name": {{ .Release.Name | quote }}
 {{- if .Values.global.namespace }}
-    "meta.helm.sh/release-namespace": {{ .Values.global.namespace }}
+    "meta.helm.sh/release-namespace": {{ .Values.global.namespace | quote }}
 {{- else }}
-    "meta.helm.sh/release-namespace": {{ .Release.Namespace }}
+    "meta.helm.sh/release-namespace": {{ .Release.Namespace | quote }}
 {{- end }}
     "helm.sh/hook": pre-upgrade
     "helm.sh/hook-weight": "-5"
@@ -19,20 +19,16 @@ metadata:
   namespace: {{ .Values.global.namespace }}
 {{- end }}
   labels:
-    {{- include (printf "%s%s" .Chart.Name ".labels" ) . | nindent 4 }}
+    {{- include (printf "%s%s" .Chart.Name ".labels") . | nindent 4 }}
+type: Opaque
 data:
 {{- if .Values.singleCaCert }}
-{{/*
-Support single cert file
-*/}}
-  rootCA.crt: |-
-    {{ .Values.singleCaCert | b64enc }}
+  rootCA.crt: {{ .Values.singleCaCert | b64enc | quote }}
 {{- else }}
-  {{ range $path, $_ :=  .Files.Glob  "certificates/*" }}
-  {{ $subdir := dir $path }}
-  {{ $currentFilename := ($path | replace (printf "%s/" $subdir) "" ) }}
-  {{ $currentFilename | indent 2 }}: |-
-      {{ tpl ($.Files.Get $path) $ | b64enc }}
-  {{ end }}
+{{- range $path, $_ := .Files.Glob "certificates/*" }}
+{{- $subdir := dir $path }}
+{{- $currentFilename := ($path | replace (printf "%s/" $subdir) "") }}
+  {{ $currentFilename }}: {{ tpl ($.Files.Get $path) $ | b64enc | quote }}
+{{- end }}
 {{- end }}
 {{- end }}

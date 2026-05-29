@@ -221,7 +221,7 @@ otdsws:
   ## Used to import self-signed or private CA certificates.
   ## Certificates to import must be placed in /certificates directory of the Helm chart or specified
   ## with set-file option.
-  enableCustomizedTruststore: false
+  enableCustomizedTruststore: true
   ## singleCaCert can be used to provide a single certificate file using --set-file
   ## This method can be used in lieu of placing certificates in the /certificates directory of the Helm chart
   singleCaCert: |
