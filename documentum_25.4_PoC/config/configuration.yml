@@ -198,7 +198,7 @@ otds:
 
     # Description: Allows the import of custom certificates into the JVM truststore. This variable is used to import self-signed or private CA certificates.                                                             
     # The certificates that you want to import must be placed in the /certificates/ directory of the Helm chart or specified with the setfile option.                            
-    enableCustomizedTruststore: false
+    enableCustomizedTruststore: true
 
     # Description: Indicates to use the sample config.yml file in the otdsws chart directory to apply a specific 
     # set of configuration on the initial run when the database is populated.
