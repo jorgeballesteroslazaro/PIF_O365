@@ -76,7 +76,12 @@ Establish the DB type from the JDBC URL
 Establish the DB name from the JDBC URL
 */}}
 {{- define "otdsdb.url.name" -}}
-  {{ required "A valid otdsws.otdsdb.url is required!" .Values.otdsdb.url | trimPrefix "jdbc:postgresql://" | regexFind "[^/]+$" | regexFind "[^?]+" | quote }}
+{{- required "A valid otdsws.otdsdb.url is required!" .Values.otdsdb.url
+    | trimPrefix "jdbc:postgresql://"
+    | regexReplaceAll "\\?.*$" ""
+    | regexReplaceAll "^.*/" ""
+    | quote
+}}
 {{- end -}}
 {{/*
 Create String of database extensions with ',' as separator.
