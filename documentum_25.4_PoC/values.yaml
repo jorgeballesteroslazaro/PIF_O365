@@ -338,10 +338,10 @@ global:
   msClientId: "1962684a-9c30-4880-bf0e-d695e991bce7"
 
   # Description: Database IP to be connected.
-  db_hostname: &db_hostname db-pg
+  db_hostname: &db_hostname aws-spa-rdscluster-01-pocdocumentum-02.cluster-c9660w2cor0g.eu-south-2.rds.amazonaws.com
 
   # Description: User name of the database.
-  databaseusername: postgres
+  databaseusername: rdsmasteruser
 
   # Description: Database port to be connected.
   dbport: 5432
@@ -352,10 +352,10 @@ global:
   dbtype: postgres
 
   # Description: Indicates to enable SSL for database. Set the value to true to enable the SSL database for PostgreSQL or Oracle.
-  db_ssl: false
+  db_ssl: true
 
   # Description: SSL connection mode that is used to deploy the SSL-enabled PostgreSQL database. The valid values are prefer, require, verify-ca, and verify-full.
-  db_ssl_mode: <ssl_mode>
+  db_ssl_mode: verify-full
 
   # Description: Schema name of the JDBC database. For example, public.
   # Note: For the Oracle database, set the value to oracle.

@@ -225,7 +225,7 @@ otds:
       # for the URL which includes sslDBRootCert (for example, postgres SSL connection). The location of sslrootcert is: /opt/config/certificates/dbRootCA.crt
       # jdbc:postgresql://postgres.domain.local:5432/otdsdb?ssl=true&sslmode=verify-ca&sslrootcert=/opt/config/certificates/dbRootCA.crt
       #url: jdbc:postgresql://db-pg:5432/postgres
-      url: jdbc:postgresql://db-pg:5432/otdsdb
+      url: jdbc:postgresql://aws-spa-rdscluster-01-pocdocumentum-02.cluster-c9660w2cor0g.eu-south-2.rds.amazonaws.com:5432/otdsdb?ssl=true&sslmode=verify-full&sslfactory=org.postgresql.ssl.DefaultJavaSSLFactory&sslrootcert=/opt/config/certificates/dbRootCA.crt
 
       # Description: By default, OTDS uses a database schema named otds. If you set this option to true, the default schema assigned to the database user account is used instead.
       # This is required on a shared Oracle database.
@@ -239,8 +239,8 @@ otds:
         enabled: true
 
         # Description: Defines the admin account (for example, 'postgres').
-        dbAdmin: postgres
-        dbAdminPassword: Training_2026_25_4
+        dbAdmin: rdsmasteruser
+        dbAdminPassword: 0|H:akSs]p46ZWraeb_T!<I.KaX_
 
         # Description: Defines the extensions to be created on the database.
         # The pg_trgm extension is required.
@@ -5197,7 +5197,8 @@ notificationservice:
       # 4. For SSL PostgreSQL: jdbc:postgresql://<db_hostname>:<db_port>/<db_name>?ssl=true&sslmode=verify-ca
       # For Oracle driverClassName: oracle.jdbc.driver.OracleDriver
       # For Postgresql driverClassName: org.postgresql.Driver
-      url: jdbc:postgresql://db-pg:5432/svns?escapeSyntaxCallMode=callIfNoReturn
+      #url: jdbc:postgresql://db-pg:5432/svns?escapeSyntaxCallMode=callIfNoReturn
+      url: jdbc:postgresql://aws-spa-rdscluster-01-pocdocumentum-02.cluster-c9660w2cor0g.eu-south-2.rds.amazonaws.com:5432/svns?ssl=true&sslmode=verify-full&sslfactory=org.postgresql.ssl.DefaultJavaSSLFactory&sslrootcert=/opt/config/certificates/dbRootCA.crt
 
       # Description: Database name when Oracle non-SSL is used and net service name when Oracle SSL database server is used.
       db_servicename: <oracle_tls_servicename>
