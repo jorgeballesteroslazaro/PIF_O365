@@ -1,4 +1,3 @@
-{{- if eq .Values.enabled true }}
 {{- $customsecretname := default .Values.global.existingSecret .Values.customSecretName -}}
 ########################################################################
 # OpenText Directory Services (OTDS)

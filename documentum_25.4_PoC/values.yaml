@@ -425,7 +425,8 @@ otds:
       ## username specifies the account for the database connection
       # Description: This variable uses the value that you specified for otdsUserName in Global Variables.
       username: *otds_db_username
-
+      url:
+        name: otdsdb
     # Description: This variable uses the value that you specified for documentumserviceaccount in Global Variables. 
     serviceAccountName: *documentum_service_account
     # Description: pvc.* defines a persistent volume claim
