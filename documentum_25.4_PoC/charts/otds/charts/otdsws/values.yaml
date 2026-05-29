@@ -241,7 +241,7 @@ otdsdb:
   ## This is OPTIONAL! Typically the database is pre-created by IAC or otherwise by a system administrator.
   ## This feature is currently only supported with PostgreSQL
   automaticDatabaseCreation:
-    enabled: false
+    enabled: true
     ## dbAdmin defines the admin account (e.g. 'postgres').
     dbAdmin:
     ## dbAdminPassword defines password for the dbAdmin account
