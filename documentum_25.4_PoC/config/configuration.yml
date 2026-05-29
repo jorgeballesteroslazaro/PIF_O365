@@ -166,7 +166,7 @@ otds:
     ## Description: Protocol provided by the OTDS Kubernetes service.
     ## Set to https if the OTDS service should be exposed using https rather than http.
     ## Note: This protocol is not used on the ingress.
-    protocol: https
+    protocol: http
 
     ## Description: Required if protocol is set to https.
     ## Name of the Kubernetes secret of type kubernetes.io/tls.
