@@ -70,14 +70,11 @@ Establish the DB port from the JDBC URL
 Establish the DB type from the JDBC URL
 */}}
 {{- define "otdsdb.url.type" -}}
-  {{ required "A valid otdsws.otdsdb.url is required!" .Values.otdsdb.url | trimPrefix "jdbc:" | regexFind "^[^:]+" | quote }}
+{{ "otdsdb" | quote }}
 {{- end -}}
 {{/*
 Establish the DB name from the JDBC URL
 */}}
-{{- define "otdsdb.url.type" -}}
-{{ "otdsdb" | quote }}
-{{- end -}}
 {{/*
 Create String of database extensions with ',' as separator.
 */}}
