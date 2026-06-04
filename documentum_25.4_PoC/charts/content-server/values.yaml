@@ -164,11 +164,13 @@ database:
   databaseServiceName:
   port:
   name: ""
-  sslEnabled:
-  sslCertPath: .postgresql/root.crt
-  sslMode:
+  sslEnabled: true
+#  sslCertPath: .postgresql/root.crt
+  sslCertPath: /opt/dctm/config_db/dbRootCA.crt
+  sslMode: verify-full
   paasEnv: false
   docbaseOwnerPasswordChange: false
+  certificate: ""
 ### Thumbnail Server ###
 thumbnailServer:
   configure: true
@@ -460,6 +462,9 @@ extraInitContainers:
 
 ### extra Volumes ###
 extraVolumes:
+  - name: db-root-cert
+    configMap:
+      name: db-root-cert
 
 ### To configure the logging levels of the applications which are not part of out of the box JMS, add the volume and volumeMount as below for mapping the application config map with the volume. Below is the example of JMS/ServerApps application. 
 
@@ -475,6 +480,10 @@ extraVolumes:
 
 ### extra Volume Mounts ###
 extraVolumeMounts:
+  - name: db-root-cert
+    mountPath: /opt/dctm/config_db/dbRootCA.crt
+    subPath: dbRootCA.crt
+    readOnly: true
 
 ### Please ensure to update the path of the log4j2.properties file as per your application
 
