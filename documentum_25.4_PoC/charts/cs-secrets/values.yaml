@@ -63,7 +63,24 @@ s3Store:
   s3StoreCredentialID: nocredentials
   s3StoreCredentialKEY: nocredentials
   ### S3 Store ssl certificate, below value is for (otx-sgws01-l000.otxlab.net) change accordnigly ###
-  certificate: ""
+  certificate: |
+    -----BEGIN CERTIFICATE-----
+    MIICzDCCAbSgAwIBAgIJAOd7/dcwQv9dMA0GCSqGSIb3DQEBCwUAMBcxFTATBgNV
+    BAMMDCoub3R4bGFiLm5ldDAeFw0xODAxMDMxODUyMTdaFw0yODAxMDExODUyMTda
+    MBcxFTATBgNVBAMMDCoub3R4bGFiLm5ldDCCASIwDQYJKoZIhvcNAQEBBQADggEP
+    ADCCAQoCggEBAMbvOwEkeDIgua+tMEQkp7qAr59K9mzFjAlPp4Ng4dYTa5T8JH/A
+    t28K7TGHj2hl2PZEhN177xtBl1U2LAufE5fbItqVQu1JPnYr4wrOdyA6Aiz7yR7w
+    KblDiQdtz3BCLcQy+PURxfR9LQhY2AKxt4DUtpMbLG2FYwbCiOToW/yF1e2f0BaN
+    MAOQxvqqZbCgZv3UagoROX+ZX7F3SZES6bGuPwufo80tGX+3ZgpblRSVf+z8ANIv
+    zuNGL29OIYSBXg+vdH0lNb+XYCFd3tP3/hLRC992WSDibf4phgrD4VC1I9qUN7B1
+    eN2iemVGtSs9jO/IW4zHBMN8UxG8PErqyj8CAwEAAaMbMBkwFwYDVR0RBBAwDoIM
+    Ki5vdHhsYWIubmV0MA0GCSqGSIb3DQEBCwUAA4IBAQAUX6bZDeKKkMXxOV1DgQGq
+    w4QUvtqYkxQhwPPXP9cbVaA6fJ359HzJkrggP63Ko9e+xcI9OiYMlZ6xfnkzMMUs
+    EYw2l62BnxHXYPqN0h5NqDm1BT/UK4prHecRzyjw18RyQf80/1QQlSULCwfloWfh
+    PFC9AyJv/CVpqTswi8+OmVyT7dIUHAoPFGUTyJ2U5jD7QyI1ifqN+QmN0aXH//QP
+    glZkTA57ZvbLRwT8atpRh+a4VsDioTHuJAhc1C6H49kAq2wCd2vGUalvMPk2Q3p2
+    YVui1RhsHuFm2UPApDFvtYvKXdm0Ma+jBoBqu1Ofita6kFLn6M4MGKHkiZ4qY8Gm
+    -----END CERTIFICATE-----
 
 ### Rest Store ###
 restStore:
@@ -72,8 +89,6 @@ restStore:
   restStoreCredentialKEY: 
   ## rest Store ssl certificate, below value is for (azure blob store) change accordnigly ###
   azurecertificate: ""
-  ## rest Store ssl certificate, below value is for (gcp blob store) change accordnigly ###
-  gcpcertificate: ""
 
 ### newrelic ###
 newrelic:
