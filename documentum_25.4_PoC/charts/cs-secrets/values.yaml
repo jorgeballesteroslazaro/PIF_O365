@@ -2,7 +2,7 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 secret:
-  name:
+  name: 
 
 docbroker:
   certificate:
@@ -45,8 +45,8 @@ openshifttls:
   
 ### Database ###
 database:
-  userName: postgres
-  password:
+  userName: rdsmasteruser
+  password: 0|H:akSs]p46ZWraeb_T!<I.KaX_
   certificate: ""
 
 ### Email Server ###

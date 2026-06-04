@@ -165,7 +165,6 @@ database:
   port:
   name: ""
   sslEnabled: true
-#  sslCertPath: .postgresql/root.crt
   sslCertPath: /opt/dctm/config_db/dbRootCA.crt
   sslMode: verify-full
   paasEnv: false
