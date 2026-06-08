@@ -65,7 +65,7 @@ global:
   otdsEnabled: &otds_enabled true
 
   # Description: Database user name to connect to OTDS.
-  otdsUserName: &otds_db_username postgres
+  otdsUserName: &otds_db_username rdsmasteruser
 
   # Description: Default name for Classic View web application.
   d2classicWebappName: &d2classic_webapp_name D2
