@@ -341,7 +341,7 @@ global:
   db_hostname: &db_hostname db-pg
 
   # Description: User name of the database.
-  databaseusername: postgres
+  databaseusername: rdsmasteruser
 
   # Description: Database port to be connected.
   dbport: 5432
