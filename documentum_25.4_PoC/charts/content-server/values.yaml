@@ -165,7 +165,8 @@ database:
   port:
   name: ""
   sslEnabled: true
-  sslCertPath: /opt/dctm/config_db/dbRootCA.crt
+  #sslCertPath: /opt/dctm/config_db/dbRootCA.crt
+  sslCertPath: /home/dmadmin/.postgresql/root.crt
   sslMode: verify-full
   paasEnv: false
   docbaseOwnerPasswordChange: false
