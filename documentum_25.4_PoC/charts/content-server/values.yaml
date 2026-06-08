@@ -485,7 +485,11 @@ extraVolumeMounts:
     mountPath: /home/dmadmin/.postgresql/root.crt
     subPath: dbRootCA.crt
     readOnly: true
-
+  - name: db-root-cert
+    mountPath: /root/.postgresql/root.crt
+    subPath: dbRootCA.crt
+    readOnly: true
+    
 ### Please ensure to update the path of the log4j2.properties file as per your application
 
 #- mountPath: /opt/dctm/tomcat9.0.58/webapps/DmMethods/WEB-INF/classes/log4j2.properties
