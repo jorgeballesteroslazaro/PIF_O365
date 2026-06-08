@@ -194,7 +194,7 @@ deployment:
 secret: 
  name: cc-secret 
  type: Opaque
- DB_PASSWORD: 0|H:akSs]p46ZWraeb_T!<I.KaX_
+ DB_PASSWORD: Fj*4W5<QDll5Ogq~?gITdu3HuPex
  
 useCertificate:
 dbr:  

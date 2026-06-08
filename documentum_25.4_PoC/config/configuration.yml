@@ -240,7 +240,7 @@ otds:
 
         # Description: Defines the admin account (for example, 'postgres').
         dbAdmin: rdsmasteruser
-        dbAdminPassword: 0|H:akSs]p46ZWraeb_T!<I.KaX_
+        dbAdminPassword: Fj*4W5<QDll5Ogq~?gITdu3HuPex
 
         # Description: Defines the extensions to be created on the database.
         # The pg_trgm extension is required.
