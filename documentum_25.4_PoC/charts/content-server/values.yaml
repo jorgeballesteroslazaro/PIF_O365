@@ -163,7 +163,7 @@ database:
   host:
   databaseServiceName:
   port:
-  name: "postgres"
+  name: "dm_PIF_docbase"
   sslEnabled: true
   #sslCertPath: /opt/dctm/config_db/dbRootCA.crt
   sslCertPath: /home/dmadmin/.postgresql/root.crt
