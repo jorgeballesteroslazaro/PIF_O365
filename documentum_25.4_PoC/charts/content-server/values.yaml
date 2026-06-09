@@ -354,6 +354,7 @@ custom:
   markerFiles:
   useInitContainers: true
 
+
 ### newrelic agent configuration. ###
 newrelic:
   enable:
@@ -458,6 +459,9 @@ extraEnv:
   - name: REMOVE_MEMBERS_DELETED_GRP
     value: "F"      
     
+custom:
+  useInitContainers: true
+
 extraInitContainers:
   - name: import-db-ca-into-java
     image: aws-spa-ecr-pocdocumentum-02:ot-dctm-server-25.4
@@ -480,7 +484,6 @@ extraInitContainers:
         mountPath: /home/dmadmin/.postgresql/root.crt
         subPath: dbRootCA.crt
         readOnly: true
-
 ### extra Volumes ###
 extraVolumes:
   - name: db-root-cert
