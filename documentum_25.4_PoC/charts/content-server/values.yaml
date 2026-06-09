@@ -461,6 +461,7 @@ extraEnv:
     
 extraInitContainers:
   - name: import-db-ca-into-java
+    component: custom               # ← ESTA ERA LA CL
     image: aws-spa-ecr-pocdocumentum-02:ot-dctm-server-25.4
     command:
       [ '/bin/sh', '-c', 'echo "Importing RDS CA into Java truststore..." && keytool -importcert -alias aws-rds-ca -file /home/dmadmin/.postgresql/root.crt -keystore /opt/jdk-21.0.9+10/lib/security/cacerts -storepass changeit -noprompt']
