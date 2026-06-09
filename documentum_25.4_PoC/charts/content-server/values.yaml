@@ -352,7 +352,7 @@ custom:
   versions: 
  ### Provide the marker file names of client products in any order separated by comma. Before CS copying the custom scripts, these marker files presence are verified. 
   markerFiles:
-  useInitContainers: false
+  useInitContainers: true
 
 ### newrelic agent configuration. ###
 newrelic:
