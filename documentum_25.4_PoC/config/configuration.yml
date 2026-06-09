@@ -1331,7 +1331,7 @@ dctm-rest:
 
   custom:
     # Description: Indicates to use custom init containers.
-    useInitContainers: false
+    useInitContainers: true
 
     # Description: Details of existing volume, if any.
     existVolumePv:
