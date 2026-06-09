@@ -460,17 +460,19 @@ extraEnv:
     
 extraInitContainers:
   - name: import-db-ca-into-java
-    image: aws-spa-ecr-pocdocumentum-02:ot-dctm-server-24.4
-    imagePullPolicy: IfNotPresent
+    image: aws-spa-ecr-pocdocumentum-02:ot-dctm-server-25.4
+    securityContext:
+      runAsUser: 0
+      runAsNonRoot: false
     command:
       - /bin/sh
       - -c
       - |
-        echo "Importing DB CA into Java truststore..."
+        echo "Importing RDS CA into Java truststore..."
         keytool -importcert \
-          -alias db-root-ca \
+          -alias aws-rds-ca \
           -file /home/dmadmin/.postgresql/root.crt \
-          -keystore $JAVA_HOME/lib/security/cacerts \
+          -keystore /opt/jdk-21.0.9+10/lib/security/cacerts \
           -storepass changeit \
           -noprompt
     volumeMounts:
