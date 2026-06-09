@@ -388,7 +388,7 @@ cs-secrets:
 
   database:
     # Description: User name to access the database.
-    userName: postgres
+    userName: rdsmasteruser
 
   # Description: Email Server.
   email:
