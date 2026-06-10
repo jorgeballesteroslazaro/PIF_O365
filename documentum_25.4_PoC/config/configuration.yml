@@ -987,10 +987,10 @@ content-server:
       value: "true"
     - name: CERTIFICATE_1
       value: ""
-    - name: <docbase_name>_resource_id
-      value: ""
-    - name: <docbase_name>_secretKey
-      value: ""
+    - name: PIF_resource_id
+      value: "3229ec72-f877-42f4-a577-bbaaf0cf2818"
+    - name: PIF_secretKey
+      value: "EalzoqgGCf1doqaH8ZebtQ=="
     - name: TOKENTIMEOUT
       value: "30"
     - name: INACTIVE_DELETED_USER
@@ -1006,10 +1006,10 @@ content-server:
     - name: MIGRATE_LDAP_USERS
       value: "F"
     - name: MIGRATE_LDAP_DOCBASES
-      value: "<docbase_name>"
+      value: ""
     - name: LDAP_CONFIGS_TOKENIZER
       value: ","
-    - name: <docbase_name>_MIGRATE_LDAP_CONFIGS
+    - name: PIF_MIGRATE_LDAP_CONFIGS
       value: ""
     - name: isCORSAllowed
       value: "false"
