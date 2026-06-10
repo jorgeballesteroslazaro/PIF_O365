@@ -200,11 +200,11 @@ spec:
           value: {{ .Values.database.databaseServiceName | default .Values.global.db_service  }}
         - name: DATABASE_SSL_SUPPORT
           value: {{ (empty (.Values.database.sslEnabled | quote) | ternary .Values.global.db_ssl .Values.database.sslEnabled) | quote }}
-#        - name: DATABASE_SSL_CERTIFICATE
-#          valueFrom:
-#            secretKeyRef:
-#              name: {{ .Values.secret.name | default .Values.global.csSecrets }}
-#              key: dbCertificate
+        - name: DATABASE_SSL_CERTIFICATE
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.secret.name | default .Values.global.csSecrets }}
+              key: dbCertificate
         - name: DATABASE_SSL_MODE
           value: {{ .Values.database.sslMode | default .Values.global.db_ssl_mode | quote }}
         - name: DATABASE_SSL_CERT_PATH

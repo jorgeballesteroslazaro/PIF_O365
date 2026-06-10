@@ -30,7 +30,7 @@ global:
 
   db:
     # Description: Indicates if the database pod deployment is enabled.
-    enabled: true
+    enabled: false
 
   # Messaging Service
   dctm-dms:
