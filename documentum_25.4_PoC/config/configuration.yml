@@ -980,6 +980,7 @@ content-server:
 
   # Description: Performance tuning parameter for consecutive sessions thread count
   concurrentSessions: "100"
+  
 
   # Description: Additional environment variables. You can use this section and its variables according to your requirement.
   extraEnv:
