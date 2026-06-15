@@ -28,7 +28,7 @@ data:
           <Console name="CONSOLE" target="SYSTEM_OUT">
               <PatternLayout pattern="%-5p: [%t]: %c - %d{dd MMM yyy HH:mm:ss,SSS} - %m%n"/>
           </Console>
-          <RollingFile name="RollingFile" fileName="//{{ .Values.tomcat.catalinaHome }}//webapps//{{ .Values.env.webappName }}//logs//oes-connector.log" filePattern="//opt/tomcat//webapps//oes-connector//logs//oes-connector%i.log">
+          <RollingFile name="RollingFile" fileName="{{ .Values.tomcat.catalinaHome }}/webapps/{{ .Values.env.webappName }}/logs/oes-connector.log" filePattern="/opt/tomcat/webapps/oes-connector/logs/oes-connector%i.log">
               <PatternLayout>
                   <pattern>%-5p: [%t]: %c - %d{dd MMM yyy HH:mm:ss,SSS} - %m%n</pattern>
               </PatternLayout>
