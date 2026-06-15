@@ -21,6 +21,10 @@ data:
   setup.properties: |
     notificationserviceHost = {{ .Values.notificationServicePrefix }}-grpc-service
     notificationservicePort = {{ .Values.configMap.setupConfig.notificationservicePort  }}
+    sourceRepoName = PIF
+    sourceRepoUser = dmadmin
+    sourceRepoPassword = Training_2026_25_4
+    sourceRepoUrl = http://d2rest:8080/d2-rest
   log4j2.xml: |
     <?xml version="1.0" encoding="UTF-8"?>
     <Configuration status ="debug" monitorInterval="5">
