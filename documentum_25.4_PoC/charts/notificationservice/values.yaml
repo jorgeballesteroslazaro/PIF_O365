@@ -68,7 +68,7 @@ configMap:
     mstenantid: 
     msclientid: 
     mssecret: 
-    d2resturl: 
+    d2resturl: http://d2rest:8080/d2-rest
     otdsserverurl: 
     otdsclientid:
     proxyhost: 

@@ -30,11 +30,7 @@ data:
     ms-tenant-id = {{ .Values.configMap.extApiconfig.mstenantid |  default .Values.global.mstenantid }}
     ms-client-id = {{ .Values.configMap.extApiconfig.msclientid |  default .Values.global.msClientId }}
     ms-secret = {{ .Values.configMap.extApiconfig.mssecret }}
-    D2DocumentumRestURL = {{- $value := (.Values.configMap.extApiconfig.d2resturl) | default (include "documentum.publicIngress" .) }}
-                    {{- if eq $value (include "documentum.publicIngress" .)}}
-                      {{- $value = printf  "%s/%s" $value .Values.global.d2restWebappName }}
-                    {{- end }}
-                    {{- $value }}
+    D2DocumentumRestURL = http://d2rest:8080/d2-rest
     otdsUrl = {{ .Values.configMap.extApiconfig.otdsserverurl  | default (include "documentum.publicOtdsSvcUrl" .)}}
     otdsClientId = {{ .Values.configMap.extApiconfig.otdsclientid  }}
     proxy-host= {{ .Values.configMap.extApiconfig.proxyhost | default .Values.global.proxy.host}}
