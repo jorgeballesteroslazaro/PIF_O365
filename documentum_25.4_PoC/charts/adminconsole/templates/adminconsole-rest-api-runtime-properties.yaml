@@ -140,6 +140,9 @@ data:
     rest.ext.yaml.package=com.opentext.dctm.admin.rest.script
 
     rest.paging.max.size=10000
+    
+    rest.security.headers.x_frame_options.disabled=false
+    rest.security.headers.x_frame_options.policy=SAMEORIGIN
 
     {{- if $configFileAppendsValues := .Values.restApiRuntime.rest_api_runtime_properties }}
     {{ $configFileAppendsValues | indent 4 }}
