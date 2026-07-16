@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: db-root-cert
+data:
+  dbRootCA.crt: |
+{{ .Files.Get "certificates/dbRootCA.crt" | indent 4 }}
